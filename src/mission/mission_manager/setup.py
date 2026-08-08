@@ -37,6 +37,7 @@ setup(
     entry_points={
         "console_scripts": [
             "mission_manager_node = mission_manager.mission_manager_node:main",
+            "runtime_readiness_adapter_node = mission_manager.runtime_readiness_adapter_node:main",
             "njord-task = mission_manager.njord_task:main",
         ],
     },
