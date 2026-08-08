@@ -180,7 +180,7 @@ def _parse_task(
             raise RegistryError(f"non-runnable task {task_id!r} requires a reason")
         return TaskDefinition(task_id, display_name, availability, reason=reason)
     executor = _required_string(raw, "executor", task_id)
-    if executor not in {"dummy", "waypoint_sequence", "staged_docking"}:
+    if executor not in {"dummy", "waypoint_sequence", "staged_docking", "task2_mppi"}:
         raise RegistryError(f"task {task_id!r} references unknown executor {executor!r}")
     route_package = _optional_string(raw, "route_package")
     route = _required_string(raw, "route", task_id)

@@ -1,0 +1,125 @@
+/buoy_detections:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/cmd_vel:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/cmd_vel_manual:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/debug/current_force:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/debug/dob_estimate:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/diagnostics:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/emg:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/events/write_split:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/green:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/joy:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/livox/imu:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/livox/lidar:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/parameter_events:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/red:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/rosout:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/tf:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/thruster_command:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/virtual_obstacles:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/yellow:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/zed2i/depth/image:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/zed2i/left/camera_info:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/zed2i/left/image_rect:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/zed2i/points:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/zed2i/right/camera_info:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile
+/zed2i/right/image_rect:
+  history: keep_last
+  depth: 10
+  reliability: reliable
+  durability: volatile

@@ -129,6 +129,15 @@
         "/set_pose": {
           "visible": true
         },
+        "/mppi/crm_costmap": {
+          "visible": true,
+          "colorMode": "custom",
+          "minColor": "#ff000000",
+          "maxColor": "#ff0000ff",
+          "unknownColor": "#00000000",
+          "invalidColor": "#00000000",
+          "alpha": 1
+        },
         "/sim_obstacles": {
           "visible": true,
           "colorField": "z",

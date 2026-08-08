@@ -22,7 +22,13 @@ from njord_interfaces.action import RunTask
 from njord_interfaces.msg import ControlState, MissionStatus, TaskInfo
 from njord_interfaces.srv import GetMissionStatus, ListTasks, SetControlMode, StartTask, StopTask
 
-from .executors import DummyExecutor, ExecutorStatus, StagedDockingExecutor, WaypointSequenceExecutor
+from .executors import (
+    DummyExecutor,
+    ExecutorStatus,
+    StagedDockingExecutor,
+    Task2MppiExecutor,
+    WaypointSequenceExecutor,
+)
 from .nav2_profiles import Nav2ProfileApplicationManager, Nav2ProfileCatalog, Nav2ProfileError
 from .state_machine import MissionState, MissionStateMachine, ResultCode, StartRequest
 from .task_registry import (
@@ -135,6 +141,10 @@ class MissionManager(Node):
         self._machine = MissionStateMachine()
         self._loader = WaypointConfigLoader()
         self._active_executor = None
+        self._task2_enabled_pub = self.create_publisher(
+            Bool, "/mission/task2/enabled", _STATUS_QOS
+        )
+        self._set_task2_enabled(False)
         self._active_route: Route | None = None
         self._pending_start = None
         self._active_task: TaskDefinition | None = None
@@ -459,11 +469,18 @@ class MissionManager(Node):
             )
             executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
+        elif task.executor == "task2_mppi":
+            executor = Task2MppiExecutor(self._set_task2_enabled)
+            executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
+                           self._executor_complete(execution_id))
         elif task.executor == "dummy":
             executor = DummyExecutor()
             executor.start(execution_id, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
         self._active_executor = executor
+
+    def _set_task2_enabled(self, enabled: bool) -> None:
+        self._task2_enabled_pub.publish(Bool(data=enabled))
 
     def _create_wait_timer(self, seconds: float, callback: Callable[[], None]):
         return self.create_timer(seconds if seconds > 0 else 0.001, callback, callback_group=self._cb_group)

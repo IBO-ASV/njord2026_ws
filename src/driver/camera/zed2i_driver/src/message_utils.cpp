@@ -6,6 +6,7 @@
 #include <cstring>
 #include <limits>
 #include <stdexcept>
+#include <vector>
 
 namespace zed2i_driver
 {
@@ -19,7 +20,7 @@ int bytes_per_pixel(const cv::Mat & image)
 
 }  // namespace
 
-sensor_msgs::msg::Image::UniquePtr mat_to_image_msg(
+sensor_msgs::msg::Image mat_to_image_msg(
   const cv::Mat & image,
   const std::string & encoding,
   const std::string & frame_id,
@@ -29,24 +30,18 @@ sensor_msgs::msg::Image::UniquePtr mat_to_image_msg(
     throw std::runtime_error("cannot convert an empty cv::Mat to sensor_msgs::msg::Image");
   }
 
-  auto msg = std::make_unique<sensor_msgs::msg::Image>();
-  msg->header.stamp = stamp;
-  msg->header.frame_id = frame_id;
-  msg->height = static_cast<uint32_t>(image.rows);
-  msg->width = static_cast<uint32_t>(image.cols);
-  msg->encoding = encoding;
-  msg->is_bigendian = false;
-  msg->step = static_cast<uint32_t>(image.cols * bytes_per_pixel(image));
-  msg->data.resize(static_cast<size_t>(msg->step) * msg->height);
-  if (image.isContinuous() && image.step == msg->step) {
-    std::memcpy(msg->data.data(), image.data, msg->data.size());
-  } else {
-    for (int row = 0; row < image.rows; ++row) {
-      std::memcpy(
-        msg->data.data() + static_cast<size_t>(row) * msg->step,
-        image.ptr(row), msg->step);
-    }
-  }
+  const cv::Mat contiguous = image.isContinuous() ? image : image.clone();
+
+  sensor_msgs::msg::Image msg;
+  msg.header.stamp = stamp;
+  msg.header.frame_id = frame_id;
+  msg.height = static_cast<uint32_t>(contiguous.rows);
+  msg.width = static_cast<uint32_t>(contiguous.cols);
+  msg.encoding = encoding;
+  msg.is_bigendian = false;
+  msg.step = static_cast<uint32_t>(contiguous.cols * bytes_per_pixel(contiguous));
+  msg.data.resize(static_cast<size_t>(msg.step) * msg.height);
+  std::memcpy(msg.data.data(), contiguous.data, msg.data.size());
   return msg;
 }
 
@@ -83,7 +78,7 @@ sensor_msgs::msg::CameraInfo make_camera_info_msg(
   return msg;
 }
 
-sensor_msgs::msg::PointCloud2::UniquePtr depth_to_point_cloud_msg(
+sensor_msgs::msg::PointCloud2 depth_to_point_cloud_msg(
   const cv::Mat & depth_m,
   double fx,
   double fy,
@@ -100,21 +95,8 @@ sensor_msgs::msg::PointCloud2::UniquePtr depth_to_point_cloud_msg(
   }
 
   stride = std::max(1, stride);
-  auto msg = std::make_unique<sensor_msgs::msg::PointCloud2>();
-  msg->header.stamp = stamp;
-  msg->header.frame_id = frame_id;
-  msg->height = 1;
-  msg->is_bigendian = false;
-  msg->is_dense = true;
-
-  sensor_msgs::PointCloud2Modifier modifier(*msg);
-  modifier.setPointCloud2FieldsByString(1, "xyz");
-  const auto point_rows = static_cast<size_t>((depth_m.rows + stride - 1) / stride);
-  const auto point_columns = static_cast<size_t>((depth_m.cols + stride - 1) / stride);
-  const auto max_points = point_rows * point_columns;
-  modifier.resize(max_points);
-
-  size_t point_count = 0;
+  std::vector<cv::Vec3f> points;
+  points.reserve(static_cast<size_t>((depth_m.rows / stride) * (depth_m.cols / stride)));
 
   for (int v = 0; v < depth_m.rows; v += stride) {
     const float * row = depth_m.ptr<float>(v);
@@ -126,89 +108,35 @@ sensor_msgs::msg::PointCloud2::UniquePtr depth_to_point_cloud_msg(
 
       const float x = static_cast<float>((static_cast<double>(u) - cx) * z / fx);
       const float y = static_cast<float>((static_cast<double>(v) - cy) * z / fy);
-      auto * point_data = msg->data.data() + point_count * msg->point_step;
-      std::memcpy(point_data + msg->fields[0].offset, &x, sizeof(x));
-      std::memcpy(point_data + msg->fields[1].offset, &y, sizeof(y));
-      std::memcpy(point_data + msg->fields[2].offset, &z, sizeof(z));
-      ++point_count;
+      points.emplace_back(x, y, z);
     }
   }
 
-  msg->width = static_cast<uint32_t>(point_count);
-  msg->row_step = msg->width * msg->point_step;
-  msg->data.resize(msg->row_step);
+  sensor_msgs::msg::PointCloud2 msg;
+  msg.header.stamp = stamp;
+  msg.header.frame_id = frame_id;
+  msg.height = 1;
+  msg.width = static_cast<uint32_t>(points.size());
+  msg.is_bigendian = false;
+  msg.is_dense = true;
 
-  return msg;
-}
-
-njord_interfaces::msg::BuoyDetectionArray to_detection_array_msg(
-  const std::vector<PositionedDetection> & detections,
-  const std::string & frame_id, const rclcpp::Time & stamp)
-{
-  njord_interfaces::msg::BuoyDetectionArray message;
-  message.header.stamp = stamp;
-  message.header.frame_id = frame_id;
-  message.detections.reserve(detections.size());
-  for (const auto & item : detections) {
-    njord_interfaces::msg::BuoyDetection detection;
-    detection.class_id = static_cast<uint8_t>(std::clamp(item.detection.class_id, 0, 255));
-    detection.confidence = std::clamp(item.detection.confidence, 0.0F, 1.0F);
-    detection.position.x = item.position_base[0];
-    detection.position.y = item.position_base[1];
-    detection.position.z = item.position_base[2];
-    switch (item.source) {
-      case PositionSource::kZedDepth:
-        detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_ZED_DEPTH;
-        break;
-      case PositionSource::kLidarFused:
-        detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_LIDAR_FUSED;
-        break;
-      default:
-        detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_NONE;
-        detection.position.x = std::numeric_limits<double>::quiet_NaN();
-        detection.position.y = std::numeric_limits<double>::quiet_NaN();
-        detection.position.z = std::numeric_limits<double>::quiet_NaN();
-        break;
-    }
-    if (detection.position_source != njord_interfaces::msg::BuoyDetection::POSITION_NONE &&
-      (!std::isfinite(detection.position.x) || !std::isfinite(detection.position.y) ||
-      !std::isfinite(detection.position.z))) {
-      detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_NONE;
-      detection.position.x = std::numeric_limits<double>::quiet_NaN();
-      detection.position.y = std::numeric_limits<double>::quiet_NaN();
-      detection.position.z = std::numeric_limits<double>::quiet_NaN();
-    }
-    message.detections.push_back(detection);
-  }
-  return message;
-}
-
-sensor_msgs::msg::PointCloud2::UniquePtr wall_points_to_cloud_msg(
-  const std::vector<WallPoint> & points, const std::string & frame_id,
-  const rclcpp::Time & stamp)
-{
-  auto message = std::make_unique<sensor_msgs::msg::PointCloud2>();
-  message->header.stamp = stamp;
-  message->header.frame_id = frame_id;
-  message->height = 1;
-  message->is_bigendian = false;
-  message->is_dense = true;
-  sensor_msgs::PointCloud2Modifier modifier(*message);
+  sensor_msgs::PointCloud2Modifier modifier(msg);
   modifier.setPointCloud2FieldsByString(1, "xyz");
   modifier.resize(points.size());
-  size_t count = 0;
+
+  sensor_msgs::PointCloud2Iterator<float> x(msg, "x");
+  sensor_msgs::PointCloud2Iterator<float> y(msg, "y");
+  sensor_msgs::PointCloud2Iterator<float> z(msg, "z");
   for (const auto & point : points) {
-    if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z)) continue;
-    auto * data = message->data.data() + count * message->point_step;
-    std::memcpy(data + message->fields[0].offset, &point.x, sizeof(float));
-    std::memcpy(data + message->fields[1].offset, &point.y, sizeof(float));
-    std::memcpy(data + message->fields[2].offset, &point.z, sizeof(float));
-    ++count;
+    *x = point[0];
+    *y = point[1];
+    *z = point[2];
+    ++x;
+    ++y;
+    ++z;
   }
-  message->width = static_cast<uint32_t>(count);
-  message->row_step = message->width * message->point_step;
-  message->data.resize(message->row_step);
-  return message;
+
+  return msg;
 }
 
 }  // namespace zed2i_driver

@@ -1,0 +1,108 @@
+/**:
+  ros__parameters:
+    # =================================================================
+    # YOLO11s detector node parameters (yolo11_node)
+    # Values marked [TUNE] need human tuning against the real boat/course.
+    # =================================================================
+
+    # --- Model / Input ------------------------------------------------
+    # [TUNE] model_path: path to the YOLO11s weights.
+    # Empty string "" resolves to <yolo pkg share>/config/yolo11s.pt
+    # (or config/yolo11s.engine when backend is "tensorrt").
+    #
+    # IMPORTANT: yolo11s.pt / yolo11s.engine are NOT shipped in this
+    # repository. Place the trained weights (.pt) or TensorRT engine
+    # (.engine) into src/detection/yolo/config/ before colcon build, or
+    # point this parameter (or the yolo_model_path launch argument) at an
+    # absolute path. A ".engine" path runs the Ultralytics TensorRT backend.
+    model_path: ""
+
+    # device: inference device, "cpu" or "cuda:0".
+    # Ignored for .engine files (an engine runs on the device it was built on).
+    device: "cuda:0"
+
+    # backend: expected model format, "pytorch" (.pt) or "tensorrt" (.engine).
+    # Mismatches with the model_path extension are logged; the actual backend
+    # always follows the file extension.
+    backend: "pytorch"
+
+    # [TUNE] imgsz: inference input size. For an engine this MUST match the
+    # imgsz used at export time.
+    imgsz: 640
+
+    # [TUNE] conf_threshold / iou_threshold / max_det: detection thresholds
+    # and the maximum number of detections per frame.
+    conf_threshold: 0.25
+    iou_threshold: 0.45
+    max_det: 20
+
+    # classes: class-id filter passed to predict(). Empty list [] = all
+    # classes. Example: [0, 2] detects only ids 0 and 2.
+    classes: []
+
+    # use_half: FP16 inference for the PyTorch backend. Only meaningful on
+    # CUDA devices; ignored for .engine (precision is baked in at export).
+    use_half: true
+
+    # --- Topics -------------------------------------------------------
+    camera_topic: "/camera/image_raw"
+    camera_info_topic: "/camera/camera_info"
+    detections_topic: "/yolo/detections"
+    buoy_roi_topic: "/buoy_roi"
+
+    # --- Rate limiting (lower = lighter) ------------------------------
+    # [TUNE] inference_hz: YOLO inference rate. Frames arriving faster than
+    # this are dropped (never queued). 0.0 = run on every frame (heavy).
+    inference_hz: 5.0
+    # debug_image_hz: publish rate of yolo/debug_image.
+    debug_image_hz: 2.0
+    # publish_debug_image: false skips all drawing work entirely.
+    publish_debug_image: true
+
+    # --- Image ROI crop (fractions 0.0-1.0 of the image) --------------
+    # When use_roi_crop is true, only the given region is handed to YOLO
+    # (e.g. cut off sky and own hull). Published bboxes are mapped back to
+    # full-image coordinates.
+    use_roi_crop: false
+    roi_x_min: 0.0
+    roi_x_max: 1.0
+    roi_y_min: 0.0
+    roi_y_max: 1.0
+    # draw_roi_rect: draw the ROI rectangle on the debug image.
+    draw_roi_rect: true
+
+    # --- BuoyRoi output (/buoy_roi, same semantics as main.py) --------
+    roi_frame_id: "base_link"
+    # fixed_range_m: fixed range proposal [m] (monocular camera gives no
+    # range, so a fixed value is published, as in main.py).
+    fixed_range_m: 5.0
+    # roi_range_half: BuoyRoi.r_range, half-width of the range search [m].
+    roi_range_half: 2.0
+    # camera_fov_deg: horizontal FOV used to convert pixel center to bearing.
+    camera_fov_deg: 90.0
+    # roi_theta_min_deg: minimum BuoyRoi.theta_range [deg].
+    roi_theta_min_deg: 2.0
+
+    # --- Class-name role/color mapping --------------------------------
+    # All class-name string logic is configured here; the node hardcodes
+    # nothing. [''] (a single empty string) is a "not set" placeholder
+    # because ROS 2 YAML cannot express a typed empty string array.
+    #
+    # enable_color_estimation: estimate the buoy color from HSV pixels
+    # inside the bbox when the class name does not name a color.
+    enable_color_estimation: true
+
+    # [TUNE] class_names: optional override of class id -> name (index =
+    # class id). [''] = use the names embedded in the trained model.
+    # Example: ["red_buoy", "green_buoy", "yellow_buoy", "north_cardinal"]
+    class_names: [""]
+
+    # [TUNE] buoy_class_names: class names (case-insensitive, exact match)
+    # that count as buoys for the /buoy_roi output. [''] = every detected
+    # class counts as a buoy candidate.
+    # Example: ["red_buoy", "green_buoy", "yellow_buoy"]
+    buoy_class_names: [""]
+
+    # color_class_map: color keywords. If a class name contains one of these
+    # keywords, that color is used directly and HSV estimation is skipped.
+    color_class_map: ["red", "green", "yellow", "black", "white", "blue", "orange"]

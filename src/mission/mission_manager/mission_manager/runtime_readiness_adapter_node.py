@@ -18,6 +18,7 @@ from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_msgs.msg import Bool
+from sensor_msgs.msg import PointCloud2
 from tf2_ros import Buffer, TransformListener
 
 from .readiness_evidence import (
@@ -46,6 +47,7 @@ class RuntimeReadinessAdapter(Node):
         super().__init__("runtime_readiness_adapter")
         self.declare_parameter("collision_monitor_topic", "/collision_monitor_state")
         self.declare_parameter("buoy_detection_topic", "/buoy_detections_3d")
+        self.declare_parameter("task2_perception_topic", "/task2/points_filtered")
         self.declare_parameter("target_frame", "map")
         self.declare_parameter(
             "dynamic_gate_frames",
@@ -61,6 +63,9 @@ class RuntimeReadinessAdapter(Node):
         self._buoy_seen_at: Optional[float] = None
         self._buoy_header_stamp: Optional[float] = None
         self._buoy_header_frame = ""
+        self._task2_perception_seen_at: Optional[float] = None
+        self._task2_perception_header_stamp: Optional[float] = None
+        self._task2_perception_header_frame = ""
         self._target_frame = str(self.get_parameter("target_frame").value)
         self._gate_frames = tuple(str(frame) for frame in self.get_parameter(
             "dynamic_gate_frames").value)
@@ -81,6 +86,12 @@ class RuntimeReadinessAdapter(Node):
             BuoyDetectionArray,
             str(self.get_parameter("buoy_detection_topic").value),
             self._on_buoy_detections,
+            10,
+        )
+        self._task2_perception_sub = self.create_subscription(
+            PointCloud2,
+            str(self.get_parameter("task2_perception_topic").value),
+            self._on_task2_perception,
             10,
         )
         # Do not use Node._publishers: it is rclpy's internal list of all
@@ -106,6 +117,12 @@ class RuntimeReadinessAdapter(Node):
         self._buoy_header_stamp = _stamp_seconds(message.header.stamp)
         self._buoy_header_frame = message.header.frame_id
 
+    def _on_task2_perception(self, message: PointCloud2) -> None:
+        """Treat a fresh filtered Task 2 cloud as task-specific perception evidence."""
+        self._task2_perception_seen_at = self._now_seconds()
+        self._task2_perception_header_stamp = _stamp_seconds(message.header.stamp)
+        self._task2_perception_header_frame = message.header.frame_id
+
     def _gate_transform_stamps(self) -> tuple[Optional[float], ...]:
         stamps = []
         for frame in self._gate_frames:
@@ -127,13 +144,21 @@ class RuntimeReadinessAdapter(Node):
             float(self.get_parameter("collision_monitor_timeout_sec").value),
             self._collision_action_type,
         )
-        perception = buoy_perception_ready(
+        buoy_perception = buoy_perception_ready(
             self._buoy_seen_at,
             now,
             float(self.get_parameter("buoy_perception_timeout_sec").value),
             self._buoy_header_stamp,
             self._buoy_header_frame,
         )
+        task2_perception = buoy_perception_ready(
+            self._task2_perception_seen_at,
+            now,
+            float(self.get_parameter("buoy_perception_timeout_sec").value),
+            self._task2_perception_header_stamp,
+            self._task2_perception_header_frame,
+        )
+        perception = buoy_perception or task2_perception
         gate_tf = dynamic_gate_tf_ready(
             self._gate_transform_stamps(),
             now,

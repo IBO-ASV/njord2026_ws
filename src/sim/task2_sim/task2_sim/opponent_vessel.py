@@ -51,11 +51,31 @@ class OpponentVesselNode(Node):
         self.vessel_height_m = float(self.declare_parameter("vessel_height_m", 3.0).value)
         self.marker_line_width_m = float(self.declare_parameter("marker_line_width_m", 0.08).value)
 
-        self.start_x, self.start_y = _get_xy(
+        # GPS point 用の座標
+        # start_xy / goal_xy は GPS marker の位置として使う
+        self.gps_start_x, self.gps_start_y = _get_xy(
             self.declare_parameter("start_xy", [60.0, 0.0]).value, (60.0, 0.0)
         )
-        self.goal_x, self.goal_y = _get_xy(
+        self.gps_goal_x, self.gps_goal_y = _get_xy(
             self.declare_parameter("goal_xy", [0.0, 0.0]).value, (0.0, 0.0)
+        )
+
+        # 他船移動用の座標
+        # opponent_start_xy / opponent_goal_xy があればそちらを使う
+        # なければ従来互換として start_xy / goal_xy を使う
+        self.start_x, self.start_y = _get_xy(
+            self.declare_parameter(
+                "opponent_start_xy",
+                [self.gps_start_x, self.gps_start_y],
+            ).value,
+            (self.gps_start_x, self.gps_start_y),
+        )
+        self.goal_x, self.goal_y = _get_xy(
+            self.declare_parameter(
+                "opponent_goal_xy",
+                [self.gps_goal_x, self.gps_goal_y],
+            ).value,
+            (self.gps_goal_x, self.gps_goal_y),
         )
         self.footprint_vertices = _parse_vertices(
             self.declare_parameter(
@@ -204,14 +224,51 @@ class OpponentVesselNode(Node):
 
     def publish_gps_markers(self, stamp):
         markers = MarkerArray()
-        markers.markers.append(self.make_gps_sphere(stamp, 0, self.goal_x, self.goal_y, 0.2, 0.8, 1.0))
+
+        # GPS point 5
         markers.markers.append(
-            self.make_gps_label(stamp, 1, self.goal_x, self.goal_y + 0.9, self.goal_label)
+            self.make_gps_sphere(
+                stamp,
+                0,
+                self.gps_goal_x,
+                self.gps_goal_y,
+                0.2,
+                0.8,
+                1.0,
+            )
         )
-        markers.markers.append(self.make_gps_sphere(stamp, 2, self.start_x, self.start_y, 1.0, 0.8, 0.1))
         markers.markers.append(
-            self.make_gps_label(stamp, 3, self.start_x, self.start_y + 0.9, self.start_label)
+            self.make_gps_label(
+                stamp,
+                1,
+                self.gps_goal_x,
+                self.gps_goal_y + 0.9,
+                self.goal_label,
+            )
         )
+
+        # GPS point 6
+        markers.markers.append(
+            self.make_gps_sphere(
+                stamp,
+                2,
+                self.gps_start_x,
+                self.gps_start_y,
+                1.0,
+                0.8,
+                0.1,
+            )
+        )
+        markers.markers.append(
+            self.make_gps_label(
+                stamp,
+                3,
+                self.gps_start_x,
+                self.gps_start_y + 0.9,
+                self.start_label,
+            )
+        )
+
         self.gps_marker_pub.publish(markers)
 
     def on_timer(self):

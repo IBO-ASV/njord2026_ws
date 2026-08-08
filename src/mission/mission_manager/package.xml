@@ -12,6 +12,7 @@
   <depend>nav_msgs</depend>
   <depend>njord_interfaces</depend>
   <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>launch</depend>

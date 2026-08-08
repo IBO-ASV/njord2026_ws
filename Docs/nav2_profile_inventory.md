@@ -25,7 +25,7 @@ use the Humble spelling as their compatibility baseline.
 | Planner | NavFn | Theta* | Theta* | Plugin topology / lifecycle reconfiguration |
 | Global costmap layers | obstacle, inflation | obstacle, inflation | static field boundary, obstacle, inflation | Plugin topology / lifecycle reconfiguration |
 | Obstacle inputs | Livox plus virtual wall | `/pointcloud` | `/pointcloud` | Lifecycle reconfiguration |
-| Collision monitor | configured and lifecycle-managed | absent from the legacy profile | configured and lifecycle-managed | Plugin topology; must be verified, not inferred |
+| Collision monitor | configured and lifecycle-managed | configured and lifecycle-managed on `/pointcloud` | configured and lifecycle-managed | Plugin topology; must be verified, not inferred |
 | Frames/odometry | primarily `odom`, local odometry | `map`, global odometry | mixed `map`/`odom`, global odometry | Lifecycle reconfiguration |
 | Frequencies and limits | baseline ASV tuning | Task 2 tuning | higher-rate docking tuning | Potentially dynamic, but not yet certified |
 
@@ -66,9 +66,9 @@ the lifecycle sequence for controller, planner, both costmaps, BT navigator,
 velocity smoother, and collision monitor; prove effective command output is ZERO;
 atomically apply or restore parameters; reactivate nodes; and verify action servers,
 TF, costmap outputs, `/cmd_vel_nav`, and the collision-monitor state topic. The
-current explicit process graph also starts collision monitor independently of each
-legacy profile's lifecycle list, so that ownership must be reconciled before Task 2
-can be certified for live switching.
+current explicit process graph and every resident profile include collision monitor.
+That makes Task 2 startup topology match the canonical velocity pipeline, but does
+not make live profile switching certified.
 
 Regenerate the factored files after intentionally changing a legacy full profile:
 

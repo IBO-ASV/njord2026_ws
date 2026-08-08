@@ -16,4 +16,4 @@ generated_file="$(mktemp)"
 
 mv "${generated_file}" "${package_dir}/dist/extension.js"
 cd "${package_dir}"
-zip -r -FS gnss-map-telemetry-0.2.2.foxe package.json dist
+zip -r -FS gnss-map-telemetry-0.2.4.foxe package.json dist

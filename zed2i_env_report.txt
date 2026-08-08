@@ -1,0 +1,68 @@
+===== DATE =====
+2026年  6月 29日 月曜日 17:30:15 JST
+
+===== OS =====
+Distributor ID:	Ubuntu
+Description:	Ubuntu 22.04.5 LTS
+Release:	22.04
+Codename:	jammy
+
+===== ROS =====
+ROS_DISTRO=humble
+
+===== Python =====
+Python 3.10.12
+
+===== NVIDIA =====
+Mon Jun 29 17:30:15 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 550.163.01             Driver Version: 550.163.01     CUDA Version: 12.4     |
+|-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3060        Off |   00000000:01:00.0  On |                  N/A |
+|  0%   44C    P2             40W /  170W |     690MiB /  12288MiB |     15%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI        PID   Type   Process name                              GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A      1364      G   /usr/lib/xorg/Xorg                            180MiB |
+|    0   N/A  N/A      1523    C+G   ...libexec/gnome-remote-desktop-daemon        185MiB |
+|    0   N/A  N/A      1577      G   /usr/bin/gnome-shell                           87MiB |
+|    0   N/A  N/A     55332      G   /usr/share/code/code                           54MiB |
+|    0   N/A  N/A     97629      G   ...irefox/8462/usr/lib/firefox/firefox         28MiB |
+|    0   N/A  N/A    580833      G   /opt/Foxglove/foxglove-studio                 112MiB |
++-----------------------------------------------------------------------------------------+
+
+===== ZED SDK =====
+/usr/local/bin/ZED_Explorer
+/usr/local/bin/ZED_Diagnostic
+Stereolabs ZED SDK Version : 4.0.8
+doc
+firmware
+get_python_api.py
+include
+lib
+resources
+samples
+settings
+tools
+zed-config-version.cmake
+zed-config.cmake
+
+===== USB =====
+No ZED/Stereolabs device found by lsusb
+
+===== VIDEO DEVICES =====
+
+===== ROS2 ZED PACKAGES =====
+zed_components
+zed_interfaces
+zed_ros2
+zed_wrapper

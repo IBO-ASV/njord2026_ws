@@ -41,6 +41,7 @@ setup(
         'console_scripts': [
             'yolo_node = yolo.main:main',
             'yolo_cuda_node = yolo.main:cuda_main',
+            'yolo11_node = yolo.yolo11_node:main',
             'yolo_fusion_node = yolo.fusion_main:main',
         ],
     },

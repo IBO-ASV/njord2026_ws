@@ -23,7 +23,15 @@ ament_target_dependencies(
   tf2
   tf2_ros)
 
-install(TARGETS gnss_map_telemetry_test_publisher
+add_executable(norway_waypoint_publisher src/norway_waypoint_publisher.cpp)
+ament_target_dependencies(
+  norway_waypoint_publisher
+  rclcpp
+  sensor_msgs)
+
+install(TARGETS
+  gnss_map_telemetry_test_publisher
+  norway_waypoint_publisher
   DESTINATION lib/${PROJECT_NAME})
 install(DIRECTORY launch
   DESTINATION share/${PROJECT_NAME})

@@ -1,0 +1,91 @@
+# MPPI planner parameters for the real-vessel Task 2 stack (planner_node).
+#
+# Every value below is the CURRENT DEFAULT, i.e. the literal that was
+# previously hardcoded in asv_trajectory_planner/mppi_torch.py and
+# crm_torch.py. Human tuning is expected on the vessel; RECORD ANY CHANGE
+# (value + date + reason) next to the parameter you touch.
+#
+# Spec-name -> code mapping (where names do not match 1:1):
+#   mppi.lambda                -> MPPItorch _lambda (MPPI temperature)
+#   mppi.num_samples           -> MPPItorch nb_sample
+#   mppi.dt                    -> MPPItorch pred_dt (simdt)
+#   mppi.path_cost_weight      -> MPPIPlanner div_cost (deviation from the GPS line)
+#   mppi.collision_cost_weight -> does NOT exist as a single value; the CRM
+#                                 collision cost is rescaled between
+#                                 mppi.collision_cost_min (col_cost_min) and
+#                                 mppi.collision_cost_max (col_cost_max).
+#   mppi.control_cost_weight   -> MPPIPlanner norm_cost (input-deviation cost)
+#   mppi.safe_distance         -> does NOT exist as a single value; the CRM
+#                                 bumper is an ellipse with per-side gains in
+#                                 multiples of LOA (crm_torch RIGHT/LEFT/FORE/
+#                                 AFT_AX_GAIN) -> mppi.safe_distance_*_loa,
+#                                 plus the virtual-gate / buoy geometry below.
+
+planner_node:
+  ros__parameters:
+    # Planning loop rate [Hz] (pre-existing parameter, kept as-is).
+    planning_frequency: 2.0  # current default - human tuning expected; record any change
+
+    # Measured buoy positions from the YOLO + LiDAR fusion pipeline.  These
+    # are the normal source for buoy_outside_cost; GPS-derived virtual buoys
+    # remain available only for fallback experiments.
+    buoy_detections_topic: "/buoy_detections"
+    use_detected_buoys: true
+    use_virtual_buoys: false
+    buoy_detection_timeout_sec: 1.0
+    buoy_merge_distance_m: 1.0
+
+    mppi:
+      # Prediction horizon [steps] and step [s] (225 * 0.1 s = 22.5 s lookahead).
+      horizon: 225           # current default - human tuning expected; record any change
+      dt: 0.1                # current default - human tuning expected; record any change
+
+      # Number of sampled control sequences per solve.
+      num_samples: 5000      # current default - human tuning expected; record any change
+
+      # MPPI temperature (code: _lambda).
+      lambda: 12.0           # current default - human tuning expected; record any change
+
+      # Control sampling noise sigma: [rudder rate deg/s, acceleration m/s^2]
+      # (code: sigma = [35, 0.0]).
+      control_noise_sigma: [35.0, 0.0]  # current default - human tuning expected; record any change
+
+      # Target speed [m/s] (code: targU = 2 kn = 2*1852/3600 = 1.0289 m/s).
+      target_speed: 1.0288888888888889  # current default - human tuning expected; record any change
+
+      # Deviation-from-GPS-line cost (code: div_cost).
+      path_cost_weight: 150.0  # current default - human tuning expected; record any change
+
+      # CRM collision cost rescaling range (code: col_cost_min / col_cost_max).
+      collision_cost_min: 10.0  # current default - human tuning expected; record any change
+      collision_cost_max: 50.0  # current default - human tuning expected; record any change
+
+      # Virtual gate attraction cost, used only when use_virtual_buoys=true.
+      gate_cost_weight: 3.0   # current default - human tuning expected; record any change
+
+      # Measured-buoy outside-corridor cost (code: buoy_cost_weight literal).
+      buoy_cost_weight: 120.0  # current default - human tuning expected; record any change
+
+      # Squared error to target speed (code: speed_cost).
+      speed_cost_weight: 0.1  # current default - human tuning expected; record any change
+
+      # Input-deviation ("norm") cost (code: norm_cost).
+      control_cost_weight: 0.2  # current default - human tuning expected; record any change
+
+      # Own/other ship length overall [m] used by CRM bumper scaling.
+      loa: 2.0                # current default - human tuning expected; record any change
+
+      # CRM bumper safe distances, in multiples of LOA
+      # (code: crm_torch RIGHT/LEFT/FORE/AFT_AX_GAIN).
+      safe_distance_right_loa: 3.2  # current default - human tuning expected; record any change
+      safe_distance_left_loa: 1.6   # current default - human tuning expected; record any change
+      safe_distance_fore_loa: 6.4   # current default - human tuning expected; record any change
+      safe_distance_aft_loa: 1.6    # current default - human tuning expected; record any change
+
+      # Virtual gate half width [m], used only when use_virtual_buoys=true.
+      gate_half_width_m: 4.0  # current default - human tuning expected; record any change
+
+      # Buoy outside-margin [m] and longitudinal gating sigma [m]
+      # (code: margin_m / longitudinal_sigma_m literals in buoy_outside_cost).
+      buoy_margin_m: 1.0            # current default - human tuning expected; record any change
+      buoy_longitudinal_sigma_m: 8.0  # current default - human tuning expected; record any change

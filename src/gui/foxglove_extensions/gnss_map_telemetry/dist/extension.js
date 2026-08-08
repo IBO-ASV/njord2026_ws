@@ -19,6 +19,40 @@ const TF_TOPIC = "/tf";
 const TF_STATIC_TOPIC = "/tf_static";
 const WORLD_FRAME = "map";
 const VESSEL_FRAME = "base_link";
+const WAYPOINT_TOPICS = Object.freeze({
+  "/visualization/norway_waypoints/start": {label: "Start", color: "#ffffff"},
+  ...Object.fromEntries(Array.from({length: 10}, (_, index) => {
+    const id = index + 1;
+    return [`/visualization/norway_waypoints/task1/wp_1_${id}`, {label: `T1 1.${id}`, color: "#ffd54f"}];
+  })),
+  "/visualization/norway_waypoints/task1/gps1": {label: "T1 GPS 1", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task1/gps2": {label: "T1 GPS 2", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task1/gps3": {label: "T1 GPS 3", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task1/wp_3_1_pass_south": {label: "T1 3.1 S", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task1/wp_3_2_pass_north": {label: "T1 3.2 N", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task1/wp_3_3_pass_south": {label: "T1 3.3 S", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task1/gps4": {label: "T1 GPS 4", color: "#ffd54f"},
+  "/visualization/norway_waypoints/task2/gps5": {label: "T2 GPS 5", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gate1_red": {label: "T2 gate 1 red", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gate1_center": {label: "T2 gate 1", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gate1_green": {label: "T2 gate 1 green", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gate2_red": {label: "T2 gate 2 red", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gate2_center": {label: "T2 gate 2", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gate2_green": {label: "T2 gate 2 green", color: "#ff5252"},
+  "/visualization/norway_waypoints/task2/gps6": {label: "T2 GPS 6", color: "#ff5252"},
+  "/visualization/norway_waypoints/task3_1/gps7": {label: "T3.1 GPS 7", color: "#4fc3f7"},
+  "/visualization/norway_waypoints/task3_1/corridor_gate": {label: "T3.1 corridor", color: "#4fc3f7"},
+  "/visualization/norway_waypoints/task3_1/gps8_gate": {label: "T3.1 GPS 8", color: "#4fc3f7"},
+  "/visualization/norway_waypoints/task3_1/berth_approach": {label: "T3.1 berth approach", color: "#4fc3f7"},
+  "/visualization/norway_waypoints/task3_1/berth": {label: "T3.1 berth", color: "#4fc3f7"},
+  "/visualization/norway_waypoints/task3_1/undock_exit": {label: "T3.1 undock", color: "#4fc3f7"},
+  "/visualization/norway_waypoints/task3_2/gps9": {label: "T3.2 GPS 9", color: "#ab47bc"},
+  "/visualization/norway_waypoints/task3_2/corridor_gate": {label: "T3.2 corridor", color: "#ab47bc"},
+  "/visualization/norway_waypoints/task3_2/gps9_gate": {label: "T3.2 gate", color: "#ab47bc"},
+  "/visualization/norway_waypoints/task3_2/berth_approach": {label: "T3.2 berth approach", color: "#ab47bc"},
+  "/visualization/norway_waypoints/task3_2/berth": {label: "T3.2 berth", color: "#ab47bc"},
+  "/visualization/norway_waypoints/task3_2/gps10_finish": {label: "T3.2 GPS 10", color: "#ab47bc"},
+});
 
 const PANEL_CSS = `
 .gnss-map-root{height:100%;position:relative;overflow:hidden;background:#15202b}
@@ -178,8 +212,39 @@ function initGnssMapTelemetry(context) {
 
   const state = {};
   const transforms = new Map();
+  const waypointMarkers = new Map();
   let marker;
   let centered = false;
+  let waypointsCentered = false;
+  let waypointFitTimer;
+
+  function updateWaypoint(topic, message) {
+    if (!Number.isFinite(message.latitude) || !Number.isFinite(message.longitude)) return;
+    const waypoint = WAYPOINT_TOPICS[topic];
+    const position = [message.latitude, message.longitude];
+    let waypointMarker = waypointMarkers.get(topic);
+    if (!waypointMarker) {
+      waypointMarker = L.circleMarker(position, {
+        radius: 7, color: waypoint.color, fillColor: waypoint.color, fillOpacity: 0.9, weight: 2,
+      }).bindTooltip(waypoint.label, {direction: "top", offset: [0, -7]});
+      waypointMarker.addTo(map);
+      waypointMarkers.set(topic, waypointMarker);
+      scheduleWaypointFit();
+    } else {
+      waypointMarker.setLatLng(position);
+    }
+  }
+
+  function scheduleWaypointFit() {
+    if (waypointsCentered || waypointFitTimer) return;
+    waypointFitTimer = setTimeout(() => {
+      waypointFitTimer = undefined;
+      const positions = [...waypointMarkers.values()].map((item) => item.getLatLng());
+      if (positions.length > 1) map.fitBounds(L.latLngBounds(positions), {padding: [40, 40], maxZoom: 17, animate: false});
+      else if (positions.length === 1) map.setView(positions[0], 16, {animate: false});
+      waypointsCentered = positions.length > 0;
+    }, 200);
+  }
 
   function updateTransforms(message) {
     for (const stamped of message?.transforms || []) {
@@ -221,12 +286,15 @@ function initGnssMapTelemetry(context) {
       '<div class="gnss-telemetry-separator">',
       `SOG&nbsp;&nbsp; ${format(state.speedMps, 2, " m/s")}</div>`,
       `BAT&nbsp;&nbsp; ${format(state.batteryPercent, 0, " %")}</div>`,
+      '<div class="gnss-telemetry-separator">',
+      `WP&nbsp;&nbsp;&nbsp; ${waypointMarkers.size} / ${Object.keys(WAYPOINT_TOPICS).length}</div>`,
     ].join("");
   }
 
   context.subscribe([
     {topic: FIX_TOPIC}, {topic: SPEED_TOPIC}, {topic: BATTERY_PERCENT_TOPIC},
     {topic: TF_TOPIC}, {topic: TF_STATIC_TOPIC},
+    ...Object.keys(WAYPOINT_TOPICS).map((topic) => ({topic})),
   ]);
   context.watch("currentFrame");
   context.onRender = (renderState, done) => {
@@ -242,6 +310,8 @@ function initGnssMapTelemetry(context) {
           state.batteryPercent = message.data;
         } else if (event.topic === TF_TOPIC || event.topic === TF_STATIC_TOPIC) {
           updateTransforms(message);
+        } else if (WAYPOINT_TOPICS[event.topic]) {
+          updateWaypoint(event.topic, message);
         }
       }
       updateMarker();
@@ -256,6 +326,7 @@ function initGnssMapTelemetry(context) {
   renderLegend();
 
   return () => {
+    if (waypointFitTimer) clearTimeout(waypointFitTimer);
     resizeObserver.disconnect();
     map.remove();
     root.replaceChildren();

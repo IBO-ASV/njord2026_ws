@@ -21,7 +21,7 @@ from launch.actions import (
 )
 from launch.conditions import IfCondition, UnlessCondition
 from launch.launch_description_sources import AnyLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -230,6 +230,12 @@ def generate_launch_description():
         ["launch", "mission.launch.py"],
         IfCondition(enable_mission_manager),
         {"active_nav2_profile": active_nav2_profile},
+    )
+
+    task2_mission_adapter_launch = include_launch(
+        "robot",
+        ["launch", "task2_mission_adapter.launch.py"],
+        IfCondition(PythonExpression(["'", active_nav2_profile, "' == 'task2'"])),
     )
 
     thruster_launch = include_launch(
@@ -558,6 +564,7 @@ def generate_launch_description():
             command_arbiter,
             control_manager_launch,
             mission_manager_launch,
+            task2_mission_adapter_launch,
             thruster_launch,
             thruster_serial,
             bms_serial,

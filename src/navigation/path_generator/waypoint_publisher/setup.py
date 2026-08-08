@@ -27,6 +27,7 @@ setup(
     entry_points={
         "console_scripts": [
             "waypoint_publisher_node = waypoint_publisher.waypoint_publisher_node:main",
+            "task2_gate_midpoint_publisher = waypoint_publisher.task2_gate_midpoint_publisher:main",
         ],
     },
 )

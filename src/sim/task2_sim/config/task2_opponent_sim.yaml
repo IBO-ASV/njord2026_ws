@@ -5,28 +5,35 @@ opponent_vessel_node:
     footprint_topic: "/sim/opponent_vessel_footprint"
     marker_topic: "/sim/opponent_vessel_outline"
     gps_marker_topic: "/sim/task2_gps_markers"
-    start_label: "GPS point 6"
-    goal_label: "GPS point 5"
+    start_label: "Opponent start"
+    goal_label: "Opponent goal"
     publish_rate_hz: 10.0
-    start_delay_s: 3.0
-    speed_mps: 1.0289
+    start_delay_s: 0.0
+    speed_mps: 1.2861                     # [m/s] = 2.5 kn
     start_xy: [60.0, 0.0]
+    # Cross the own vessel's straight route at (40.0, 0.0).  At 2.5 kn,
+    # the opponent travels 50 m in the same 38.88 s that the own vessel
+    # (2.0 kn) needs to reach this point from (0.0, 0.0).
+    opponent_start_xy: [40.0, -50.0]
     goal_xy: [0.0, 0.0]
-    disturbance_amp_m: 0.3
+    opponent_goal_xy: [40.0, 50.0]
+    disturbance_amp_m: 0.0                # straight-line assumption
     disturbance_freq_hz: 0.1
-    vessel_height_m: 3.0
+    # disturbance_amp_m: 0.3
+    # disturbance_freq_hz: 0.1
+    vessel_height_m: 1.2
     marker_line_width_m: 0.08
     footprint_vertices:
-      - 2.0
+      - 0.9
       - 0.0
       - 0.0
-      - 1.0
-      - -2.0
-      - 1.0
-      - -2.0
-      - -1.0
+      - 0.45
+      - -0.9
+      - 0.45
+      - -0.9
+      - -0.45
       - 0.0
-      - -1.0
+      - -0.45
 
 ideal_lidar_pointcloud_node:
   ros__parameters:

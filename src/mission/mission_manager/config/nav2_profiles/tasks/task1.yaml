@@ -125,26 +125,7 @@ velocity_smoother:
     velocity_timeout: 1.0
 collision_monitor:
   ros__parameters:
-    base_frame_id: base_link
     odom_frame_id: odom
-    cmd_vel_in_topic: /cmd_vel_smoothed
-    cmd_vel_out_topic: /cmd_vel_nav
-    state_topic: collision_monitor_state
-    transform_tolerance: 0.2
-    source_timeout: 1.0
-    base_shift_correction: true
-    stop_pub_timeout: 2.0
-    polygons:
-    - FootprintApproach
-    FootprintApproach:
-      type: polygon
-      action_type: approach
-      footprint_topic: /local_costmap/published_footprint
-      time_before_collision: 1.2
-      simulation_time_step: 0.1
-      min_points: 6
-      visualize: false
-      enabled: true
     observation_sources:
     - livox
     livox:
@@ -188,14 +169,3 @@ docking_server:
       projection_time: 5.0
       simulation_step: 0.1
       dock_collision_threshold: 0.3
-lifecycle_manager:
-  ros__parameters:
-    node_names:
-    - controller_server
-    - smoother_server
-    - planner_server
-    - behavior_server
-    - bt_navigator
-    - waypoint_follower
-    - velocity_smoother
-    - collision_monitor

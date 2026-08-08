@@ -1,0 +1,16 @@
+# Requirements for the dedicated Jetson YOLO11 venv.
+#
+# Policy (see Docs/yolo11s_jetson_setup.md):
+# - ROS 2 / cv_bridge / ZED SDK stay on the system Python (never in the venv).
+# - Create the venv with --system-site-packages and install ONLY this file
+#   into it.
+# - torch / torchvision are intentionally EXCLUDED from this file:
+#   use NVIDIA wheels. On Jetson, torch must come from the NVIDIA-provided
+#   JetPack-matched wheel; a PyPI `pip install torch` overwrites it with a
+#   CPU-only build and silently kills CUDA.
+# - numpy must stay <2.0: numpy 2.x breaks cv_bridge and the ROS Python
+#   stack shipped with the system.
+# - ultralytics pinned to the version validated in the main requirements.txt.
+
+ultralytics==8.3.237
+numpy>=1.26.0,<2.0.0

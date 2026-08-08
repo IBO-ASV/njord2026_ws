@@ -8,6 +8,15 @@
   <xacro:property name="lidar_x" value="0.5" />
   <xacro:property name="lidar_y" value="0.0" />
   <xacro:property name="lidar_z" value="0.8" />
+  <!--
+    NOMINAL 180-deg roll for upside-down Mid360 mounting - MEASURE and update
+    before trusting perception/GLIM; this URDF is the ONLY inversion
+    correction point; do not re-rotate in nodes. Perception nodes must simply
+    transform livox_frame -> base_link via TF.
+  -->
+  <xacro:property name="lidar_roll" value="3.14159265358979" />
+  <xacro:property name="lidar_pitch" value="0" />
+  <xacro:property name="lidar_yaw" value="0" />
 
   <xacro:property name="imu_x" value="0.0" />
   <xacro:property name="imu_y" value="0.0" />
@@ -102,6 +111,7 @@
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="livox_frame"/>
+    <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="${lidar_roll} ${lidar_pitch} ${lidar_yaw}"/>
     <!-- The MID-360 is mounted upside down: preserve its origin while
          rotating its frame 180 degrees around the vehicle X axis. -->
     <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="3.141592653589793 0 0"/>

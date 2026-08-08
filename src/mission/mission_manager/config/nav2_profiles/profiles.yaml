@@ -23,8 +23,8 @@ profiles:
       planner_plugin: nav2_theta_star_planner::ThetaStarPlanner
       global_costmap_plugins: [obstacle_layer, inflation_layer]
       lifecycle_nodes: [controller_server, smoother_server, planner_server, behavior_server,
-        bt_navigator, waypoint_follower, velocity_smoother]
-      collision_monitor: false
+        bt_navigator, waypoint_follower, velocity_smoother, collision_monitor]
+      collision_monitor: true
     required_actions: [/navigate_through_poses]
     required_topics: [/cmd_vel_nav, /local_costmap/costmap_raw, /pointcloud]
   task3:

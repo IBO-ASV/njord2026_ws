@@ -30,7 +30,6 @@ _GENERATE_LAUNCH_DESCRIPTION_FILES = [
     "glim_um982_localization.launch.py",
     "minipc_bringup.launch.py",
     "task1.launch.py",
-    "task2.launch.py",
     "task3.launch.py",
     "networking.launch.py",
 ]
@@ -146,7 +145,7 @@ def test_minipc_bringup_starts_the_autonomy_supervisor_once():
     assert 'executable="autonomy_supervisor_node"' in minipc_source
     assert '"enable_autonomy_supervisor",' in minipc_source
 
-    for filename in ["task1.launch.py", "task2.launch.py", "task3.launch.py"]:
+    for filename in ["task1.launch.py", "task3.launch.py"]:
         assert "autonomy_supervisor_node" not in _read_launch_source(filename)
 
 

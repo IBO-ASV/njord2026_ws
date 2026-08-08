@@ -1,0 +1,144 @@
+# Task 2 parameter file
+# =====================
+# This is the single source of Task 2-specific tuning.  It is supplied to
+# every Task 2 perception node launched by task2_autonomy.launch.py and the
+# rosbag-only task2_bag_perception.launch.py.
+# Generic package defaults remain in their own packages; do not put general
+# platform settings here.
+#
+# Values marked HUMAN must be checked on the physical vessel.
+
+# ---------------------------------------------------------------------------
+# LiDAR cloud preparation: /livox/lidar -> /task2/points_filtered
+# ---------------------------------------------------------------------------
+task2_cloud_filter:
+  ros__parameters:
+    input_topic: "/livox/lidar"             # Raw Livox PointCloud2 input
+    output_topic: "/task2/points_filtered"  # Input for Task 2 PCL pipeline
+    visual_output_topic: "/task2/points_filtered_visual"  # Display only
+    publish_visual_z_mirror: true            # Does not affect recognition
+    output_frame: "base_link"
+    min_range_m: 1.5                         # [m] remove own-hull near field
+    max_range_m: 40.0                        # [m] required encounter range
+    voxel_leaf_size_m: 0.0                   # Downsampling is below (0.15 m)
+    accumulation_frames: 1                   # Never merge raw frame history
+    process_rate_hz: 5.0                     # [Hz] latest frame only; 0=all
+    # Emergency-only pre-rotation.  The URDF TF is normally authoritative.
+    lidar_inverted: false
+    lidar_roll_deg: 0.0
+    lidar_pitch_deg: 0.0
+    lidar_yaw_deg: 0.0
+    # HUMAN: water surface height relative to base_link.
+    waterline_z_m: 0.0                       # [m]
+    water_remove_min_z_m: -0.3               # [m] water-band lower edge
+    water_remove_max_z_m: 0.15               # [m] water-band upper edge
+    water_plane_distance_threshold_m: 0.05   # [m] used only if RANSAC=true
+    water_plane_normal_z_min: 0.9
+    water_plane_max_height_error_m: 0.3      # [m]
+    use_water_plane_ransac: false            # fixed water band is cheaper
+    # HUMAN: own-vessel bounding box; points inside are removed.
+    self_crop_min_x: -1.2
+    self_crop_max_x: 1.2
+    self_crop_min_y: -0.8
+    self_crop_max_y: 0.8
+    self_crop_min_z: -0.5
+    self_crop_max_z: 1.5
+    # Visualization parameters only; they do not enter recognition.
+    publish_self_marker: true
+    self_marker_topic: "/task2/self_vessel_marker"
+    self_marker_publish_rate_hz: 1.0
+    self_marker_yaw_deg: 0.0
+    object_min_z_m: -0.2                     # [m] retained object height
+    object_max_z_m: 4.0                       # [m] retained object height
+    publish_debug: false                      # debug clouds stay disabled
+
+# ---------------------------------------------------------------------------
+# Candidate selection and absolute target velocity output
+# ---------------------------------------------------------------------------
+opponent_selector:
+  ros__parameters:
+    tracked_objects_topic: "/tracked_objects"
+    ego_odom_topic: "/odometry/filtered/local"
+    twist_topic: "/other_ship/twist"         # map-frame, absolute [m/s]
+    map_frame: "map"
+    base_frame: "base_link"
+    opponent_frame: "opponent_vessel"
+    confirmed_only: true
+    max_distance_m: 60.0                      # [m] track selection distance
+    selection_policy: "nearest"               # nearest|min_tcpa|track_id
+    target_track_id: -1
+    # Catamaran horizontal dimensions. Height is intentionally not gated.
+    min_length_m: 1.2                          # [m], expected about 1.8 m
+    max_length_m: 2.5                          # [m], includes measurement error
+    min_width_m: 0.5                           # [m], expected about 0.9 m
+    max_width_m: 1.5                           # [m], includes measurement error
+    min_point_count: 0                         # 0 disables this optional gate
+    stale_timeout_sec: 2.0                     # [s]
+    publish_rate_hz: 10.0                      # [Hz] output update rate
+    twist_lowpass_alpha: 0.3
+    # Task 2 launch selects straight_line; standard remains available.
+    motion_filter_mode: "standard"            # standard|straight_line
+    straight_min_hit_count: 10                 # 5 Hz -> roughly 2 s history
+    straight_max_velocity_stddev_mps: 0.30     # [m/s] largest horizontal std-dev
+    # When LiDAR briefly loses a confirmed vessel, keep publishing this
+    # constant-velocity prediction.  0 disables coasting; expiry is silent.
+    straight_coast_timeout_sec: 2.0            # [s]
+    # Operator-facing speed gate. Twist output remains SI m/s.
+    min_absolute_speed_knots: 2.0              # [kn]
+    max_absolute_speed_knots: 3.0              # [kn]
+
+# ---------------------------------------------------------------------------
+# PCL preprocessing: compact, current-frame cloud for Task 2 only
+# ---------------------------------------------------------------------------
+preprocessing_node:
+  ros__parameters:
+    voxel_leaf_x: 0.15                         # [m] voxel downsampling
+    voxel_leaf_y: 0.15
+    voxel_leaf_z: 0.15
+    roi_min_x: -10.0                           # [m] retain short rear sector
+    roi_max_x: 40.0                            # [m] forward encounter sector
+    roi_min_y: -25.0                           # [m] port/starboard sector
+    roi_max_y: 25.0
+    roi_min_z: -1.0                            # [m]
+    roi_max_z: 4.0                             # [m]
+    min_range: 1.5                             # [m]
+    max_range: 40.0                            # [m]
+    accumulate_frames: false                   # avoids KD-tree inflation
+    num_accumulate_frames: 1
+    input_queue_depth: 1                       # drop stale clouds
+    base_frame: "base_link"
+
+# ---------------------------------------------------------------------------
+# Water/ground removal: lower RANSAC cost after water-band removal above
+# ---------------------------------------------------------------------------
+ground_remover_node:
+  ros__parameters:
+    method: "ransac"
+    ransac_distance_threshold: 0.2             # [m]
+    ransac_max_iterations: 80                  # generic default is 150
+    min_z_ground: -1.0                         # [m]
+    max_z_ground: 0.5                          # [m]
+    sensor_height: 1.5                         # [m], HUMAN: LiDAR height
+    publish_ground_cloud: false
+    input_queue_depth: 1                       # drop stale clouds
+
+# ---------------------------------------------------------------------------
+# Euclidean clustering: reject sea clutter and oversized structures early
+# ---------------------------------------------------------------------------
+cluster_node:
+  ros__parameters:
+    cluster_tolerance: 1.0                     # [m] neighbouring-point link
+    min_cluster_size: 30                       # [points] reject tiny clutter
+    max_cluster_size: 10000                    # [points] reject large structures
+    min_cluster_height: 0.2                    # [m]
+    max_cluster_height: 4.0                    # [m]
+    max_cluster_horizontal_size: 5.0           # [m]
+    publish_each_cluster: false
+    input_queue_depth: 1                       # drop stale clouds
+
+# ---------------------------------------------------------------------------
+# EKF tracker: Task 2 straight-line confirmation window
+# ---------------------------------------------------------------------------
+ship_tracker_node:
+  ros__parameters:
+    straight_hits_to_confirm: 10               # 5 Hz -> roughly 2 s to confirm
