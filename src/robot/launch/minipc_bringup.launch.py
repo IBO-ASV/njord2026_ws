@@ -87,6 +87,7 @@ def generate_launch_description():
         "back_cam_jpeg_ground_video_fps"
     )
     enable_nav2 = LaunchConfiguration("enable_nav2")
+    active_nav2_profile = LaunchConfiguration("active_nav2_profile")
     enable_control_manager = LaunchConfiguration("enable_control_manager")
     enable_mission_manager = LaunchConfiguration("enable_mission_manager")
     enable_diagnostics = LaunchConfiguration("enable_diagnostics")
@@ -228,7 +229,7 @@ def generate_launch_description():
         "mission_manager",
         ["launch", "mission.launch.py"],
         IfCondition(enable_mission_manager),
-        {"active_nav2_profile": LaunchConfiguration("active_nav2_profile")},
+        {"active_nav2_profile": active_nav2_profile},
     )
 
     thruster_launch = include_launch(
@@ -345,6 +346,7 @@ def generate_launch_description():
         "robot",
         ["launch", "nav2.launch.py"],
         IfCondition(enable_nav2),
+        {"active_nav2_profile": active_nav2_profile},
     )
 
     # The supervisor owns the readiness and liveness signals consumed by the

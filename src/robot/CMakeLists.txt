@@ -62,6 +62,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_livox_config test/test_livox_config.py)
   ament_add_pytest_test(test_launch_roles test/test_launch_roles.py)
+  ament_add_pytest_test(test_nav2_profile_startup test/test_nav2_profile_startup.py)
   ament_add_pytest_test(test_platform_manifest test/test_platform_manifest.py)
 endif()
 

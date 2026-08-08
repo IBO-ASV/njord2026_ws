@@ -38,11 +38,28 @@ configuration.
 
 `Nav2ProfileApplicationManager` is intentionally `startup_only`:
 
+- `minipc_bringup.launch.py` passes one `active_nav2_profile` value to both the
+  resident Nav2 graph and Mission Manager;
+- `nav2.launch.py` resolves that profile from the installed catalog for the
+  running `ROS_DISTRO`, validates its typed topology, and materializes the full
+  parameter mapping before any Nav2 process is launched;
 - a task matching the resident profile is accepted without changing Nav2;
 - a different profile returns `CONFIGURATION_FAILED` and leaves the active profile
   unchanged;
 - active and requested profiles are published in `MissionStatus`;
-- the common base and overlays perform no ROS parameter or lifecycle calls.
+- the common base and overlays perform no live ROS parameter or lifecycle calls.
+
+Select Task 2 or Task 3 only when starting the persistent role bringup:
+
+```bash
+ros2 launch robot minipc_bringup.launch.py active_nav2_profile:=task2
+```
+
+Changing the launch argument later is not a runtime switch. Stop the task, return
+to MANUAL, and restart the role bringup with the desired profile. A Mission request
+for any other profile remains fail-closed. The `params_file` argument on
+`nav2.launch.py` is retained only for legacy comparison launches; persistent role
+bringup does not expose or use that override.
 
 Live switching remains a material design decision. A safe implementation must own
 the lifecycle sequence for controller, planner, both costmaps, BT navigator,
