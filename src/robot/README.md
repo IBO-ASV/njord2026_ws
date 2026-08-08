@@ -24,6 +24,9 @@ ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
 # miniPC: task selection uses the persistent Mission Manager
 njord-task check task1
 njord-task start task1 --auto
+njord-task status
+njord-task stop       # cancels the mission and requests MANUAL via Mode Manager
+njord-task manual     # explicitly requests MANUAL via Mode Manager
 ```
 
 minipc_bringup.launch.py / jetson_bringup.launch.py は各端末で一度だけ起動する。
