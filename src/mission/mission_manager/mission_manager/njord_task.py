@@ -12,6 +12,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 
 from njord_interfaces.action import RunTask
+from njord_interfaces.msg import MissionStatus
 from njord_interfaces.srv import GetMissionStatus, ListTasks, SetControlMode, StartTask, StopTask
 
 
@@ -48,7 +49,23 @@ def _parser() -> argparse.ArgumentParser:
     start.add_argument("--dry-run", action="store_true")
     stop = commands.add_parser("stop")
     stop.add_argument("--execution-id", default="", help="defaults to the current mission execution")
+    commands.add_parser(
+        "manual",
+        help="request MANUAL through the canonical control Mode Manager",
+    )
     return parser
+
+
+def _stop_request(execution_id: str) -> StopTask.Request:
+    """Build the safe stop request used by the CLI.
+
+    StopTask performs cancellation first and then delegates the MANUAL handoff
+    to the canonical Mode Manager when this flag is set.
+    """
+    request = StopTask.Request()
+    request.execution_id = execution_id
+    request.return_to_manual = True
+    return request
 
 
 def main(argv=None) -> int:
@@ -64,6 +81,13 @@ def main(argv=None) -> int:
         if args.command == "status":
             status = client.call(client.status_client, GetMissionStatus.Request()).status
             print(f"state={status.state} task={status.task_id or '-'} execution={status.execution_id or '-'}")
+            requested_mode = "AUTO" if status.requested_control_mode == MissionStatus.MODE_AUTO else "MANUAL"
+            effective_source = {
+                MissionStatus.SOURCE_MANUAL: "MANUAL",
+                MissionStatus.SOURCE_AUTO: "AUTO",
+                MissionStatus.SOURCE_ZERO: "ZERO",
+            }.get(status.effective_control_source, str(status.effective_control_source))
+            print(f"requested_mode={requested_mode} effective_source={effective_source}")
             print(
                 f"nav2_profile={status.active_nav2_profile or '-'} "
                 f"requested_profile={status.requested_nav2_profile or '-'}"
@@ -103,10 +127,15 @@ def main(argv=None) -> int:
             if not execution_id:
                 print("no active execution", file=sys.stderr)
                 return 2
-            request = StopTask.Request()
-            request.execution_id = execution_id
-            request.return_to_manual = False
+            request = _stop_request(execution_id)
             response = client.call(client.stop_client, request)
+            print(response.message)
+            return 0 if response.accepted else 2
+        if args.command == "manual":
+            request = SetControlMode.Request()
+            request.requested_mode = SetControlMode.Request.MODE_MANUAL
+            request.request_id = f"njord-task-manual-{uuid.uuid4()}"
+            response = client.call(client.set_mode_client, request)
             print(response.message)
             return 0 if response.accepted else 2
     except RuntimeError as exc:

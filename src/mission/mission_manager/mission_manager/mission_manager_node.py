@@ -150,6 +150,11 @@ class MissionManager(Node):
         self._active_control_policy = ""
         self._runtime_readiness = {name: False for name in RUNTIME_READINESS_FEATURES}
         self._requested_nav2_profile = ""
+        # A stop request can arrive while Mode Manager is still starting. Keep
+        # the MANUAL handoff pending and retry from the regular callback thread;
+        # never mutate control mode locally or block a ROS service callback.
+        self._manual_mode_pending: set[str] = set()
+        self._manual_mode_requested: set[str] = set()
 
         registry_path = self._registry_path()
         shares = {"waypoint_publisher": self._waypoint_share_path()}
@@ -246,7 +251,9 @@ class MissionManager(Node):
         while rclpy.ok():
             with self._lock:
                 if goal_handle.is_cancel_requested:
-                    self._stop(execution_id)
+                    # Action cancellation has the same safe handoff semantics
+                    # as the operator stop service.
+                    self._stop(execution_id, return_to_manual=True)
                 snapshot = self._machine.snapshot
                 result = self._action_results.get(execution_id)
                 feedback = self._feedback(snapshot)
@@ -276,7 +283,9 @@ class MissionManager(Node):
 
     def _on_stop(self, request, response):
         with self._lock:
-            accepted, message = self._stop(request.execution_id)
+            accepted, message = self._stop(
+                request.execution_id, return_to_manual=request.return_to_manual
+            )
         response.accepted = accepted
         response.message = message
         return response
@@ -479,18 +488,68 @@ class MissionManager(Node):
                 self._complete(execution_id, mapping[result.status], result.message)
         return complete
 
-    def _stop(self, execution_id: str) -> tuple[bool, str]:
+    def _stop(self, execution_id: str, *, return_to_manual: bool = False) -> tuple[bool, str]:
         if not self._machine.is_current(execution_id) or not self._machine.active:
             return False, "execution is not active"
+        was_canceling = self._machine.snapshot.state == MissionState.CANCELING
         self._machine.begin_cancel(execution_id)
         self._publish_task_readiness(False, False, "")
         self._pending_start = None
-        if self._active_executor:
+        if self._active_executor and not was_canceling:
             self._active_executor.cancel(execution_id)
-        else:
+        elif not self._active_executor and not was_canceling:
             self._complete(execution_id, ResultCode.CANCELED, "task canceled before navigation started")
+        manual_message = ""
+        if return_to_manual:
+            self._manual_mode_pending.add(execution_id)
+            if self._request_manual_mode(execution_id):
+                self._manual_mode_pending.discard(execution_id)
+                manual_message = "; MANUAL request submitted"
+            else:
+                manual_message = "; MANUAL request pending (Mode Manager unavailable)"
         self._publish_status()
-        return True, "cancellation requested"
+        return True, "cancellation requested" + manual_message
+
+    def _request_manual_mode(self, execution_id: str) -> bool:
+        """Request MANUAL through Mode Manager after mission cancellation.
+
+        The mission manager does not own requested mode state. If the service is
+        not ready yet, the execution remains in ``_manual_mode_pending`` and
+        :meth:`_tick` retries once the persistent control stack is available.
+        """
+        if execution_id in self._manual_mode_requested:
+            return True
+        if not self._mode_client.service_is_ready():
+            return False
+        request = SetControlMode.Request()
+        request.requested_mode = SetControlMode.Request.MODE_MANUAL
+        request.request_id = f"{execution_id}:stop-manual"
+        try:
+            future = self._mode_client.call_async(request)
+        except Exception as exc:
+            self.get_logger().error(f"Could not request MANUAL from Mode Manager: {exc}")
+            return False
+        self._manual_mode_requested.add(execution_id)
+        future.add_done_callback(
+            lambda response_future: self._on_manual_mode_requested(response_future, execution_id)
+        )
+        return True
+
+    def _on_manual_mode_requested(self, future, execution_id: str) -> None:
+        try:
+            response = future.result()
+        except Exception as exc:
+            self.get_logger().error(f"Mode Manager MANUAL request failed: {exc}")
+            with self._lock:
+                self._manual_mode_requested.discard(execution_id)
+                self._manual_mode_pending.add(execution_id)
+            return
+        if response is None or not response.accepted:
+            message = response.message if response is not None else "no response"
+            self.get_logger().error(f"Mode Manager rejected MANUAL request: {message}")
+            with self._lock:
+                self._manual_mode_requested.discard(execution_id)
+                self._manual_mode_pending.add(execution_id)
 
     def _complete(self, execution_id: str, code: ResultCode, message: str) -> None:
         if not self._machine.finish(execution_id, code, message):
@@ -520,6 +579,9 @@ class MissionManager(Node):
 
     def _tick(self) -> None:
         with self._lock:
+            for execution_id in tuple(self._manual_mode_pending):
+                if self._request_manual_mode(execution_id):
+                    self._manual_mode_pending.discard(execution_id)
             if self._pending_start and self._auto_permitted:
                 execution_id, task = self._pending_start
                 self._begin_executor(execution_id, task)
