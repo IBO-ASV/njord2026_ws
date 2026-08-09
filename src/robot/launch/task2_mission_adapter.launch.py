@@ -17,7 +17,6 @@ from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDesc
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
-from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
 
@@ -74,14 +73,6 @@ def generate_launch_description():
         "planner_real.launch.py",
         {"own_odom_topic": own_odom_topic, "mission_gate_required": "true"},
     )
-    readiness = Node(
-        package="asv_trajectory_planner",
-        executable="task2_autonomy_ready_node",
-        name="task2_autonomy_ready",
-        output="screen",
-        parameters=[{"path_topic": "/planned_path_pruned", "action_name": "/follow_path"}],
-    )
-
     return LaunchDescription([
         DeclareLaunchArgument("own_odom_topic", default_value="/odometry/filtered/global"),
         DeclareLaunchArgument("enable_ship_tracking", default_value="true"),
@@ -92,5 +83,4 @@ def generate_launch_description():
         perception,
         GroupAction(condition=IfCondition(enable_ship_tracking), actions=[tracking]),
         mppi,
-        readiness,
     ])

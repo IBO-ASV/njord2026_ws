@@ -95,6 +95,9 @@ def generate_launch_description():
             "auto_cmd_vel_topic": "/cmd_vel_nav",
         },
     )
+    # This explicit comparison launch does not start the persistent
+    # autonomy_supervisor. Retain its local FollowPath readiness publisher
+    # until the legacy graph is removed.
     autonomy_ready = Node(
         package="asv_trajectory_planner",
         executable="task2_autonomy_ready_node",
@@ -106,7 +109,6 @@ def generate_launch_description():
             "path_timeout_sec": 2.0,
         }],
     )
-
     return LaunchDescription([
         DeclareLaunchArgument("enable_lidar", default_value="true"),
         DeclareLaunchArgument("enable_ship_tracking", default_value="true"),

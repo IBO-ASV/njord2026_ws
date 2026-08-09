@@ -9,7 +9,12 @@ def test_task2_mission_adapter_keeps_persistent_owners_and_uses_mission_gate():
     assert '"planner_real.launch.py"' in text
     assert "/mission/task2/enabled" in text
     assert '"mission_gate_required": "true"' in text
-    for forbidden in ("thruster_driver", "command_arbiter_node", "navigation_launch_task2.py"):
+    for forbidden in (
+        "thruster_driver",
+        "command_arbiter_node",
+        "navigation_launch_task2.py",
+        "task2_autonomy_ready",
+    ):
         assert forbidden not in text
 
 
