@@ -2,10 +2,22 @@ from math import pi
 
 from mission_manager.geodesy import HomeDatum, wgs84_to_enu
 from mission_manager.ground_link_failsafe import GroundLinkReturnEvaluator
+from mission_manager.mission_manager_node import _inside_polygon
 from mission_manager.waypoint_config import WaypointConfigLoader
 
 
 HOME = HomeDatum(63.44066402076241, 10.423546644308498, pi / 2)
+TASK1_GEOFENCE = (
+    (63.4425015840437, 10.425425594877604),
+    (63.44254465796626, 10.423516825161146),
+    (63.44023787054595, 10.423581769383954),
+    (63.44052427917343, 10.422408930243455),
+)
+
+
+def test_task1_geofence_keeps_the_course_inside_and_rejects_an_outside_fix():
+    assert _inside_polygon(63.4418690222, 10.4242793, TASK1_GEOFENCE)
+    assert not _inside_polygon(63.443, 10.424, TASK1_GEOFENCE)
 
 
 def test_home_is_enu_origin_and_geographic_waypoint_loads(tmp_path):

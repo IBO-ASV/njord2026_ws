@@ -1,0 +1,7 @@
+# WGS84 keep-in polygon for Task 1. The boundary is evaluated directly against
+# the GNSS fix, so it remains valid even when the map origin changes.
+vertices:
+  - {latitude: 63.4425015840437, longitude: 10.425425594877604}
+  - {latitude: 63.44254465796626, longitude: 10.423516825161146}
+  - {latitude: 63.44023787054595, longitude: 10.423581769383954}
+  - {latitude: 63.44052427917343, longitude: 10.422408930243455}

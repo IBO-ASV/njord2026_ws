@@ -21,6 +21,7 @@ from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.task import Future
+from sensor_msgs.msg import NavSatFix
 from std_msgs.msg import Bool, Empty, Float64, String
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -41,6 +42,7 @@ from .task_registry import (
     RegistryError,
     TaskDefinition,
     TaskRegistry,
+    load_yaml,
     required_runtime_readiness,
 )
 from .waypoint_config import Route, Waypoint, WaypointConfigLoader
@@ -51,6 +53,16 @@ _STATUS_QOS = QoSProfile(
     reliability=ReliabilityPolicy.RELIABLE,
     durability=DurabilityPolicy.TRANSIENT_LOCAL,
 )
+
+
+def _inside_polygon(latitude: float, longitude: float, vertices: tuple[tuple[float, float], ...]) -> bool:
+    inside = False
+    for (lat_a, lon_a), (lat_b, lon_b) in zip(vertices, vertices[1:] + vertices[:1]):
+        if (lat_a > latitude) != (lat_b > latitude) and longitude < (
+            (lon_b - lon_a) * (latitude - lat_a) / (lat_b - lat_a) + lon_a
+        ):
+            inside = not inside
+    return inside
 
 
 class _RosNavigationClient:
@@ -186,6 +198,7 @@ class MissionManager(Node):
         self.declare_parameter("active_nav2_profile", "")
         self.declare_parameter("auto_permission_timeout_sec", 30.0)
         self.declare_parameter("coordinate_projection_timeout_sec", 10.0)
+        self.declare_parameter("task1_geofence_file", "")
         self._lock = threading.RLock()
         self._cb_group = ReentrantCallbackGroup()
         self._machine = MissionStateMachine()
@@ -214,6 +227,7 @@ class MissionManager(Node):
         self._task_requirements_ready = False
         self._active_control_policy = ""
         self._runtime_readiness = {name: False for name in RUNTIME_READINESS_FEATURES}
+        self._task1_geofence = self._load_task1_geofence()
         self._pending_failsafe_return = False
         self._failsafe_return_count = 0
 
@@ -260,6 +274,10 @@ class MissionManager(Node):
             Empty, "/mission/failsafe/return_home", self._on_failsafe_return, _STATUS_QOS,
             callback_group=self._cb_group,
         )
+        self.create_subscription(
+            NavSatFix, "/sensor/vehicle_gnss/fix/raw", self._on_gnss_fix, 10,
+            callback_group=self._cb_group,
+        )
         for name in RUNTIME_READINESS_FEATURES:
             self.create_subscription(
                 Bool,
@@ -299,6 +317,20 @@ class MissionManager(Node):
         if configured:
             return Path(configured)
         return Path(__file__).resolve().parents[1] / "config" / "task_registry.yaml"
+
+    def _load_task1_geofence(self) -> tuple[tuple[float, float], ...]:
+        configured = str(self.get_parameter("task1_geofence_file").value)
+        path = Path(configured) if configured else Path(__file__).resolve().parents[1] / "config" / "task1_geofence.yaml"
+        raw = load_yaml(path).get("vertices")
+        if not isinstance(raw, list) or len(raw) < 3:
+            raise RegistryError("Task1 geofence requires at least three vertices")
+        try:
+            vertices = tuple((float(point["latitude"]), float(point["longitude"])) for point in raw)
+        except (KeyError, TypeError, ValueError) as error:
+            raise RegistryError("Task1 geofence vertices require latitude and longitude") from error
+        if not all(-90 <= latitude <= 90 and -180 <= longitude <= 180 for latitude, longitude in vertices):
+            raise RegistryError("Task1 geofence has an invalid coordinate")
+        return vertices
 
     @staticmethod
     def _waypoint_share_path() -> Path:
@@ -838,6 +870,19 @@ class MissionManager(Node):
             snapshot = self._machine.snapshot
             if self._machine.active:
                 self._stop(snapshot.execution_id, return_to_manual=False)
+
+    def _on_gnss_fix(self, message: NavSatFix) -> None:
+        if not math.isfinite(message.latitude) or not math.isfinite(message.longitude):
+            return
+        with self._lock:
+            task = self._active_task
+            snapshot = self._machine.snapshot
+            if (
+                task is not None and task.control_policy == "task1" and self._requested_mode == MissionStatus.MODE_AUTO
+                and self._machine.active and not _inside_polygon(message.latitude, message.longitude, self._task1_geofence)
+            ):
+                self.get_logger().error("Task1 geofence breached; stopping AUTO")
+                self._stop(snapshot.execution_id, return_to_manual=True)
 
     def _on_runtime_readiness(self, name: str, message: Bool) -> None:
         with self._lock:
