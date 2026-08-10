@@ -25,6 +25,15 @@ def test_coordinate_projection_has_a_bounded_failure_path():
     assert "ResultCode.CONFIGURATION_FAILED" in source
 
 
+def test_coordinate_projection_serializes_fromll_requests():
+    source = NODE_SOURCE.read_text(encoding="utf-8")
+    start = source.index("    def _start_coordinate_projection")
+    finish = source.index("    def _finish_coordinate_projection", start)
+    projection = source[start:finish]
+    assert "self._project_next_waypoint()" in projection
+    assert projection.count("call_async(projection_request)") == 1
+
+
 def test_persistent_minipc_bringup_starts_the_task1_wall_node():
     source = (REPO_ROOT / "src" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
         encoding="utf-8"
