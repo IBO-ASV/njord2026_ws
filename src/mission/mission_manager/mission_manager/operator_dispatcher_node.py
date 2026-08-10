@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 import rclpy
+from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_srvs.srv import Trigger
 
+from njord_interfaces.action import RunTask
 from njord_interfaces.msg import MissionStatus, Nav2RuntimeStatus, OperatorCommand, OperatorResponse
 from njord_interfaces.srv import GetMissionStatus, SetControlMode, StartTask, StopTask
 
@@ -31,6 +33,7 @@ class OperatorDispatcher(Node):
         self.create_subscription(ControlState, "/control/state", self._control_state, _STATUS_QOS)
         self._mode = self.create_client(SetControlMode, "/control/set_mode")
         self._start = self.create_client(StartTask, "/mission/start_task")
+        self._run = ActionClient(self, RunTask, "/mission/run_task")
         self._stop = self.create_client(StopTask, "/mission/stop_task")
         self._um982 = self.create_client(Trigger, "/sensor/vehicle_gnss/hot_restart")
 
@@ -66,6 +69,44 @@ class OperatorDispatcher(Node):
         except Exception as error:
             self._respond(command, OperatorResponse.FAILED, str(error))
 
+    def _check(self, command):
+        if not self._run.server_is_ready():
+            self._respond(
+                command, OperatorResponse.UNAVAILABLE, "/mission/run_task is unavailable"
+            )
+            return
+        goal = RunTask.Goal()
+        goal.task_id, goal.dry_run, goal.request_id = (
+            command.task_id, True, str(command.request_id)
+        )
+        self._run.send_goal_async(goal).add_done_callback(
+            lambda future: self._check_goal(command, future)
+        )
+
+    def _check_goal(self, command, future):
+        try:
+            handle = future.result()
+            if not handle.accepted:
+                self._respond(command, OperatorResponse.REJECTED, "task check rejected")
+                return
+            handle.get_result_async().add_done_callback(
+                lambda result: self._check_result(command, result)
+            )
+        except Exception as error:
+            self._respond(command, OperatorResponse.FAILED, str(error))
+
+    def _check_result(self, command, future):
+        try:
+            result = future.result().result
+            code = (
+                OperatorResponse.OK
+                if result.result_code == RunTask.Result.SUCCEEDED
+                else OperatorResponse.REJECTED
+            )
+            self._respond(command, code, result.message)
+        except Exception as error:
+            self._respond(command, OperatorResponse.FAILED, str(error))
+
     def _command(self, command):
         if command.target != OperatorCommand.MINIPC:
             self._respond(command, OperatorResponse.UNAVAILABLE, "Jetson relay is unavailable")
@@ -76,9 +117,11 @@ class OperatorDispatcher(Node):
             if not command.task_id:
                 self._respond(command, OperatorResponse.REJECTED, "task_id is required")
                 return
+            if command.command == OperatorCommand.TASK_CHECK:
+                self._check(command)
+                return
             request = StartTask.Request(task_id=command.task_id,
-                request_auto_mode=command.command == OperatorCommand.TASK_START,
-                dry_run=command.command == OperatorCommand.TASK_CHECK, request_id=str(command.request_id))
+                request_auto_mode=True, dry_run=False, request_id=str(command.request_id))
             self._call(command, self._start, request)
         elif command.command == OperatorCommand.TASK_STOP:
             if not self._status.execution_id:

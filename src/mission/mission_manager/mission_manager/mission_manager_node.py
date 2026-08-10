@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import asyncio
 import math
 import threading
 from pathlib import Path
@@ -21,6 +20,7 @@ from rclpy.action import ActionClient, ActionServer, CancelResponse, GoalRespons
 from rclpy.callback_groups import ReentrantCallbackGroup
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
+from rclpy.task import Future
 from std_msgs.msg import Bool, Empty, Float64, String
 from visualization_msgs.msg import Marker, MarkerArray
 
@@ -342,8 +342,16 @@ class MissionManager(Node):
                 else:
                     goal_handle.abort()
                 return self._action_result(code, message, execution_id)
-            await asyncio.sleep(0.1)
+            await self._wait(0.1)
         return self._action_result(ResultCode.INTERNAL_ERROR, "ROS shutdown", execution_id)
+
+    async def _wait(self, seconds: float) -> None:
+        future = Future(executor=self.executor)
+        timer = self.create_timer(seconds, lambda: future.done() or future.set_result(None))
+        try:
+            await future
+        finally:
+            self.destroy_timer(timer)
 
     def _on_start(self, request, response):
         with self._lock:
@@ -531,8 +539,9 @@ class MissionManager(Node):
         # above.  Publish it before requesting AUTO so AUTO admission does not
         # depend on a Nav2 goal that has not been sent yet.
         self._activate_task_readiness(decision.execution_id, task)
-        self._machine.transition(MissionState.CONFIGURING, execution_id=decision.execution_id,
-                                 stage="configure", message="task route validated")
+        if self._machine.snapshot.state != MissionState.CONFIGURING:
+            self._machine.transition(MissionState.CONFIGURING, execution_id=decision.execution_id,
+                                     stage="configure", message="task route validated")
         if request.dry_run:
             self._navigation.publish_preview(route.waypoints)
             self._complete(decision.execution_id, ResultCode.SUCCEEDED, "dry run validated route and profile")
@@ -976,4 +985,6 @@ def main(args=None) -> None:
         rclpy.logging.get_logger("mission_manager").fatal(f"mission registry invalid: {exc}")
         raise
     finally:
+        if "node" in locals():
+            node.destroy_node()
         rclpy.shutdown()
