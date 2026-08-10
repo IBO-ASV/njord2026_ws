@@ -64,7 +64,7 @@ def test_auto_permission_lists_all_failed_interlocks():
         inhibit_codes=INHIBITS,
     )
     assert not decision.auto_permitted
-    assert [code for code, _ in decision.reasons] == [1, 5, 10]
+    assert [code for code, _ in decision.reasons] == [1, 5, 8, 10]
 
 
 def test_no_task_policy_does_not_evaluate_task_specific_requirements():
@@ -91,7 +91,7 @@ def test_auto_permission_requires_ok_enabled_health_signal():
             nav2_ready=True,
             task_ready=True,
             task_requirements_ready=True,
-            health_states={"ground_station_heartbeat": 1, "driver_heartbeat": 4},
+            health_states={"ground_station_heartbeat": 1, "driver_heartbeat": 4, "gnss": 1},
         ),
         health_ok_state=1,
         health_disabled_state=5,
@@ -111,7 +111,7 @@ def test_auto_permission_does_not_wait_for_a_navigation_command():
             nav2_ready=True,
             task_ready=True,
             task_requirements_ready=True,
-            health_states={"ground_station_heartbeat": 1},
+            health_states={"ground_station_heartbeat": 1, "gnss": 1},
         ),
         health_ok_state=1,
         health_disabled_state=5,

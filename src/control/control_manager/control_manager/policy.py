@@ -50,7 +50,9 @@ TASK_BOOLEAN_REQUIREMENTS = frozenset(
         "require_dynamic_gate_tf",
     }
 )
-TASK_POLICY_REQUIREMENTS = TASK_BOOLEAN_REQUIREMENTS | {"require_ground_station"}
+TASK_POLICY_REQUIREMENTS = TASK_BOOLEAN_REQUIREMENTS | {
+    "require_ground_station", "require_rtk_fix"
+}
 HEALTH_REQUIREMENT_SIGNALS = {
     "require_ground_station": "ground_station_heartbeat",
     "require_driver_heartbeat": "driver_heartbeat",

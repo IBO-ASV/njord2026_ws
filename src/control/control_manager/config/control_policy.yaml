@@ -35,6 +35,7 @@ control_policy:
 
   task2:
     require_ground_station: true
+    require_rtk_fix: false
     require_waypoint_plan: true
     require_collision_monitor: true
     require_buoy_perception: true
@@ -42,6 +43,7 @@ control_policy:
 
   task3:
     require_ground_station: true
+    require_rtk_fix: false
     require_waypoint_plan: true
     require_collision_monitor: true
     require_buoy_perception: false
@@ -51,6 +53,7 @@ control_policy:
   # policy is used only after the timed GNSS/compass return-home failsafe gate.
   return_home:
     require_ground_station: false
+    require_rtk_fix: false
     require_waypoint_plan: true
     require_collision_monitor: false
     require_buoy_perception: false
