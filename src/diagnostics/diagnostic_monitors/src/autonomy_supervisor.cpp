@@ -28,7 +28,7 @@ public:
     action_name_ = declare_parameter<std::string>(
       "action_name", "/navigate_through_poses");
     waypoint_topic_ = declare_parameter<std::string>(
-      "waypoint_topic", "/task_waypoints");
+      "waypoint_topic", "/task/plan");
     action_status_topic_ = declare_parameter<std::string>(
       "action_status_topic", action_name_ + "/_action/status");
     update_period_sec_ = declare_parameter<double>("update_period_sec", 0.2);

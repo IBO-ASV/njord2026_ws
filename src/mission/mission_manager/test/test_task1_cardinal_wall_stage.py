@@ -40,3 +40,9 @@ def test_persistent_minipc_bringup_starts_the_task1_wall_node():
     )
     assert 'executable="cardinal_wall_publisher"' in source
     assert '"wall_enable_topic": "/task1/cardinal_wall_enable"' in source
+
+
+def test_autonomy_supervisor_observes_the_mission_plan_topic():
+    source = (REPO_ROOT / "src" / "diagnostics" / "diagnostic_monitors" /
+              "src" / "autonomy_supervisor.cpp").read_text(encoding="utf-8")
+    assert '"waypoint_topic", "/task/plan"' in source

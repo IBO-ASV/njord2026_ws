@@ -51,7 +51,7 @@ TASK_BOOLEAN_REQUIREMENTS = frozenset(
     }
 )
 TASK_POLICY_REQUIREMENTS = TASK_BOOLEAN_REQUIREMENTS | {
-    "require_ground_station", "require_rtk_fix"
+    "require_ground_station", "require_nav2_ready", "require_rtk_fix"
 }
 HEALTH_REQUIREMENT_SIGNALS = {
     "require_ground_station": "ground_station_heartbeat",

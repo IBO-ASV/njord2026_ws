@@ -27,6 +27,7 @@ control_policy:
   # 各ポリシーに明記する（省略不可）。
   task1:
     require_ground_station: true
+    require_nav2_ready: true
     require_rtk_fix: true            # keep-in boundary needs a fresh GNSS fix
     require_waypoint_plan: true       # 有効なウェイポイント経路が読み込まれていること
     require_collision_monitor: false  # Nav2 Collision Monitor が有効であること
@@ -35,6 +36,7 @@ control_policy:
 
   task2:
     require_ground_station: true
+    require_nav2_ready: false
     require_rtk_fix: false
     require_waypoint_plan: true
     require_collision_monitor: true
@@ -43,6 +45,7 @@ control_policy:
 
   task3:
     require_ground_station: true
+    require_nav2_ready: true
     require_rtk_fix: false
     require_waypoint_plan: true
     require_collision_monitor: true
@@ -53,6 +56,7 @@ control_policy:
   # policy is used only after the timed GNSS/compass return-home failsafe gate.
   return_home:
     require_ground_station: false
+    require_nav2_ready: true
     require_rtk_fix: false
     require_waypoint_plan: true
     require_collision_monitor: false

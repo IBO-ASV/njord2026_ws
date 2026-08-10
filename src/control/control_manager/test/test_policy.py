@@ -64,7 +64,7 @@ def test_auto_permission_lists_all_failed_interlocks():
         inhibit_codes=INHIBITS,
     )
     assert not decision.auto_permitted
-    assert [code for code, _ in decision.reasons] == [1, 5, 8, 10]
+    assert [code for code, _ in decision.reasons] == [1, 2, 5, 8, 10]
 
 
 def test_no_task_policy_does_not_evaluate_task_specific_requirements():
