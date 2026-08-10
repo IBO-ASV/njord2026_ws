@@ -6,6 +6,7 @@
 #include <vector>
 
 #include "critical_link/joy_codec.hpp"
+#include "critical_link/operator_codec.hpp"
 #include "critical_link/protocol.hpp"
 
 namespace critical_link
@@ -54,6 +55,31 @@ TEST(Protocol, RejectsCorruptedFrame)
   auto bytes = encode_frame(sample_frame(), key);
   bytes[critical_link::kHeaderSize + 1U] ^= 0x80U;
   EXPECT_FALSE(decode_frame(bytes.data(), bytes.size(), key, sample_frame().source_unix_ms).has_value());
+}
+
+TEST(Protocol, EnforcesEspNowPayloadLimit)
+{
+  const auto key = sample_key();
+  auto frame = sample_frame();
+  frame.payload.assign(kMaxPayloadSize, 0x5A);
+  EXPECT_EQ(encode_frame(frame, key).size(), kMaxFrameSize);
+  frame.payload.push_back(0x5A);
+  EXPECT_THROW(encode_frame(frame, key), std::length_error);
+}
+
+TEST(OperatorCodec, RoundTripsResponse)
+{
+  njord_interfaces::msg::OperatorResponse source;
+  source.request_id = 42;
+  source.result_code = source.OK;
+  source.message = "accepted";
+  source.task_id = "task1";
+  source.active_nav2_profile = "task1";
+  const auto decoded = decode_operator_response(encode_operator_response(source));
+  ASSERT_TRUE(decoded.has_value());
+  EXPECT_EQ(decoded->request_id, source.request_id);
+  EXPECT_EQ(decoded->message, source.message);
+  EXPECT_EQ(decoded->task_id, source.task_id);
 }
 
 TEST(Protocol, StreamDecoderResynchronizesAndHandlesFragments)

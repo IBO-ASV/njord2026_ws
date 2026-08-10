@@ -11,11 +11,13 @@
 #include <chrono>
 #include <cerrno>
 #include <cstring>
+#include <deque>
 #include <memory>
 #include <mutex>
 #include <random>
 #include <stdexcept>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
@@ -200,10 +202,26 @@ private:
         const auto frame = decode_frame(buffer.data(), static_cast<size_t>(received), key_, unix_milliseconds());
         if (!frame || frame->stream != StreamId::kOperatorResponse) continue;
         try {
-          if (auto response = decode_operator_response(frame->payload)) response_pub_->publish(*response);
+          if (auto response = decode_operator_response(frame->payload); response && accept_response(*frame, *response)) {
+            response_pub_->publish(*response);
+          }
         } catch (const std::exception &) {}
       }
     }
+  }
+
+  bool accept_response(const Frame & frame, const njord_interfaces::msg::OperatorResponse & response)
+  {
+    std::lock_guard<std::mutex> lock(response_gate_mutex_);
+    if (!response_gate_.accept(frame.session_id, frame.stream, frame.sequence) ||
+      response_ids_.count(response.request_id) != 0U) return false;
+    response_ids_.insert(response.request_id);
+    response_order_.push_back(response.request_id);
+    if (response_order_.size() > 256U) {
+      response_ids_.erase(response_order_.front());
+      response_order_.pop_front();
+    }
+    return true;
   }
 
   void send(StreamId stream, std::vector<uint8_t> payload)
@@ -215,7 +233,13 @@ private:
     frame.sequence = ++sequences_[index];
     frame.source_unix_ms = unix_milliseconds();
     frame.payload = std::move(payload);
-    const auto bytes = encode_frame(frame, key_);
+    std::vector<uint8_t> bytes;
+    try {
+      bytes = encode_frame(frame, key_);
+    } catch (const std::exception & error) {
+      RCLCPP_ERROR(get_logger(), "rejecting critical-link frame: %s", error.what());
+      return;
+    }
 
     for (auto & path : udp_paths_) {
       path->send_frame(bytes);
@@ -300,6 +324,10 @@ private:
   uint64_t serial_failed_{0};
   int serial_last_errno_{0};
   std::chrono::steady_clock::time_point serial_next_open_attempt_{};
+  std::mutex response_gate_mutex_;
+  SequenceGate response_gate_;
+  std::unordered_set<uint64_t> response_ids_;
+  std::deque<uint64_t> response_order_;
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_sub_;
   rclcpp::Subscription<std_msgs::msg::Empty>::SharedPtr heartbeat_sub_;
   rclcpp::Subscription<njord_interfaces::msg::OperatorCommand>::SharedPtr command_sub_;

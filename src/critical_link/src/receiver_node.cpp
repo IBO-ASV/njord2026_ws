@@ -18,6 +18,7 @@
 #include <stdexcept>
 #include <string>
 #include <thread>
+#include <unordered_map>
 #include <vector>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
@@ -137,8 +138,7 @@ private:
     std::atomic<uint64_t> invalid{0};
     std::atomic<uint64_t> last_receive_ms{0};
     std::atomic<int> last_errno{0};
-    sockaddr_in last_peer{};
-    bool has_peer{false};
+    std::mutex socket_mutex;
   };
 
   void udp_loop(ReceivePath & path)
@@ -152,7 +152,10 @@ private:
         std::this_thread::sleep_for(std::chrono::seconds(1));
         continue;
       }
-      path.fd = fd;
+      {
+        std::lock_guard<std::mutex> lock(path.socket_mutex);
+        path.fd = fd;
+      }
       path.open = true;
       while (running_) {
         sockaddr_in peer{};
@@ -160,11 +163,9 @@ private:
         const ssize_t size = recvfrom(fd, buffer.data(), buffer.size(), 0,
           reinterpret_cast<sockaddr *>(&peer), &peer_size);
         if (size > 0) {
-          path.last_peer = peer;
-          path.has_peer = true;
           path.last_receive_ms = steady_milliseconds();
           ++path.received;
-          if (!handle_datagram(buffer.data(), static_cast<size_t>(size))) {
+          if (!handle_datagram(path, buffer.data(), static_cast<size_t>(size), peer)) {
             ++path.invalid;
           }
         } else if (size < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
@@ -173,8 +174,11 @@ private:
         }
       }
       path.open = false;
-      path.fd = -1;
-      close(fd);
+      {
+        std::lock_guard<std::mutex> lock(path.socket_mutex);
+        path.fd = -1;
+        close(fd);
+      }
     }
   }
 
@@ -199,7 +203,7 @@ private:
           const auto frames = decoder.push(buffer.data(), static_cast<size_t>(size), key_, unix_milliseconds(), max_frame_age_ms_, future_tolerance_ms_);
           for (const auto & frame : frames) {
             ++serial_received_;
-            handle_frame(frame);
+            handle_frame(nullptr, frame, nullptr);
           }
         } else if (size < 0 && errno != EAGAIN && errno != EWOULDBLOCK && errno != EINTR) {
           serial_last_errno_ = errno;
@@ -213,17 +217,18 @@ private:
     }
   }
 
-  bool handle_datagram(const uint8_t * data, size_t size)
+  bool handle_datagram(
+    ReceivePath & path, const uint8_t * data, size_t size, const sockaddr_in & peer)
   {
     const auto frame = decode_frame(data, size, key_, unix_milliseconds(), max_frame_age_ms_, future_tolerance_ms_);
     if (!frame) {
       return false;
     }
-    handle_frame(*frame);
+    handle_frame(&path, *frame, &peer);
     return true;
   }
 
-  void handle_frame(const Frame & frame)
+  void handle_frame(ReceivePath * path, const Frame & frame, const sockaddr_in * peer)
   {
     std::optional<sensor_msgs::msg::Joy> joy;
     std::optional<njord_interfaces::msg::OperatorCommand> command;
@@ -249,6 +254,10 @@ private:
       }
     }
 
+    if (frame.stream == StreamId::kOperatorCommand && command && path && peer) {
+      remember_reply_route(command->request_id, *path, *peer, frame.session_id);
+    }
+
     if (frame.stream == StreamId::kJoy) {
       joy->header.stamp = now();
       joy->header.frame_id = "critical_link";
@@ -268,18 +277,56 @@ private:
 
   void send_response(const njord_interfaces::msg::OperatorResponse & response)
   {
-    Frame frame;
-    frame.stream = StreamId::kOperatorResponse;
-    frame.session_id = response.request_id;
-    frame.sequence = ++response_sequence_;
-    frame.source_unix_ms = unix_milliseconds();
-    frame.payload = encode_operator_response(response);
-    const auto bytes = encode_frame(frame, key_);
-    for (const auto & path : udp_paths_) {
-      const sockaddr_in peer{path->last_peer};
-      if (path->has_peer) sendto(path->fd, bytes.data(), bytes.size(), 0,
-        reinterpret_cast<const sockaddr *>(&peer), sizeof(peer));
+    const auto route = take_reply_route(response.request_id);
+    if (!route) {
+      RCLCPP_WARN(get_logger(), "no authenticated return route for operator request %llu",
+        static_cast<unsigned long long>(response.request_id));
+      return;
     }
+    try {
+      Frame frame;
+      frame.stream = StreamId::kOperatorResponse;
+      frame.session_id = route->session_id;
+      frame.sequence = route->sequence;
+      frame.source_unix_ms = unix_milliseconds();
+      frame.payload = encode_operator_response(response);
+      const auto bytes = encode_frame(frame, key_);
+      std::lock_guard<std::mutex> lock(route->path->socket_mutex);
+      if (route->path->fd >= 0) sendto(route->path->fd, bytes.data(), bytes.size(), 0,
+        reinterpret_cast<const sockaddr *>(&route->peer), sizeof(route->peer));
+    } catch (const std::exception & error) {
+      RCLCPP_ERROR(get_logger(), "rejecting operator response: %s", error.what());
+    }
+  }
+
+  struct ReplyRoute
+  {
+    ReceivePath * path;
+    sockaddr_in peer;
+    uint64_t session_id;
+    uint32_t sequence;
+    std::chrono::steady_clock::time_point expires;
+  };
+
+  void remember_reply_route(
+    uint64_t request_id, ReceivePath & path, const sockaddr_in & peer, uint64_t session_id)
+  {
+    std::lock_guard<std::mutex> lock(reply_routes_mutex_);
+    const auto now = std::chrono::steady_clock::now();
+    for (auto it = reply_routes_.begin(); it != reply_routes_.end();) {
+      if (it->second.expires <= now) it = reply_routes_.erase(it); else ++it;
+    }
+    if (reply_routes_.size() >= 256U && reply_routes_.count(request_id) == 0U) return;
+    auto & route = reply_routes_[request_id];
+    route = ReplyRoute{&path, peer, session_id, ++response_sequence_, now + std::chrono::seconds(60)};
+  }
+
+  std::optional<ReplyRoute> take_reply_route(uint64_t request_id)
+  {
+    std::lock_guard<std::mutex> lock(reply_routes_mutex_);
+    const auto it = reply_routes_.find(request_id);
+    if (it == reply_routes_.end() || it->second.expires <= std::chrono::steady_clock::now()) return std::nullopt;
+    return it->second;
   }
 
   diagnostic_msgs::msg::DiagnosticStatus make_path_status(
@@ -360,6 +407,8 @@ private:
   std::atomic<uint64_t> last_heartbeat_ms_{0};
   std::atomic<uint64_t> last_probe_ms_{0};
   uint32_t response_sequence_{0};
+  std::mutex reply_routes_mutex_;
+  std::unordered_map<uint64_t, ReplyRoute> reply_routes_;
   rclcpp::Publisher<sensor_msgs::msg::Joy>::SharedPtr joy_pub_;
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_pub_;
   rclcpp::Publisher<njord_interfaces::msg::OperatorCommand>::SharedPtr command_pub_;

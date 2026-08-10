@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import rclpy
+import time
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from std_srvs.srv import Trigger
@@ -23,6 +24,7 @@ class OperatorDispatcher(Node):
         self._status = MissionStatus()
         self._runtime = Nav2RuntimeStatus()
         self._control = None
+        self._requests = {}
         self._response_pub = self.create_publisher(OperatorResponse, "/critical_link/operator_response", _QOS)
         self.create_subscription(OperatorCommand, "/critical_link/operator_command", self._command, _QOS)
         self.create_subscription(MissionStatus, "/mission/status", self._mission, _STATUS_QOS)
@@ -47,7 +49,36 @@ class OperatorDispatcher(Node):
         response.task_id = self._status.task_id
         response.active_nav2_profile = self._runtime.active_profile
         response.runtime_state = self._runtime.state
+        cached = self._requests.get(command.request_id)
+        if cached and cached["fingerprint"] == self._fingerprint(command):
+            cached["response"] = response
         self._response_pub.publish(response)
+
+    @staticmethod
+    def _fingerprint(command):
+        return (command.command, command.target, command.requested_mode, command.task_id)
+
+    def _admit(self, command):
+        if command.request_id == 0:
+            self._respond(command, OperatorResponse.REJECTED, "request_id must not be zero")
+            return False
+        now = time.monotonic()
+        self._requests = {key: value for key, value in self._requests.items()
+                          if value["expires"] > now}
+        existing = self._requests.get(command.request_id)
+        fingerprint = self._fingerprint(command)
+        if existing:
+            if existing["fingerprint"] != fingerprint:
+                self._respond(command, OperatorResponse.REJECTED, "request_id payload mismatch")
+            elif existing["response"] is not None:
+                self._response_pub.publish(existing["response"])
+            return False
+        if len(self._requests) >= 256:
+            self._respond(command, OperatorResponse.UNAVAILABLE, "operator request cache is full")
+            return False
+        self._requests[command.request_id] = {
+            "fingerprint": fingerprint, "response": None, "expires": now + 60.0}
+        return True
 
     def _safe_manual_idle(self):
         return self._control and self._control.requested_mode == 0 and self._control.effective_source in {0, 1} and self._status.state == MissionStatus.STATE_IDLE
@@ -67,9 +98,14 @@ class OperatorDispatcher(Node):
             self._respond(command, OperatorResponse.FAILED, str(error))
 
     def _command(self, command):
+        if not self._admit(command):
+            return
         if command.target != OperatorCommand.MINIPC:
             self._respond(command, OperatorResponse.UNAVAILABLE, "Jetson relay is unavailable")
         elif command.command == OperatorCommand.SET_MODE:
+            if command.requested_mode not in {0, 1}:
+                self._respond(command, OperatorResponse.REJECTED, "requested mode must be MANUAL or AUTO")
+                return
             request = SetControlMode.Request(requested_mode=command.requested_mode, request_id=str(command.request_id))
             self._call(command, self._mode, request)
         elif command.command in {OperatorCommand.TASK_CHECK, OperatorCommand.TASK_START}:
