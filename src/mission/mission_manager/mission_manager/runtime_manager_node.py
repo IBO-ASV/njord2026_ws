@@ -29,6 +29,7 @@ class RuntimeManager(Node):
         self._profile = ""
         self._lock = threading.Lock()
         self._pub = self.create_publisher(Nav2RuntimeStatus, "/runtime/nav2/status", _QOS)
+        self._monitor_timer = self.create_timer(0.2, self._monitor_process)
         self._action = ActionServer(
             self,
             ConfigureSystem,
@@ -38,6 +39,17 @@ class RuntimeManager(Node):
             cancel_callback=self._cancel,
         )
         self._publish(Nav2RuntimeStatus.STOPPED, "")
+
+    def _monitor_process(self):
+        """Turn an exited launch process into an observable mission failure."""
+        with self._lock:
+            if self._process is None:
+                return
+            exit_code = self._process.poll()
+            if exit_code is None:
+                return
+            self._process = None
+            self._publish(Nav2RuntimeStatus.FAILED, f"Nav2 runtime exited with code {exit_code}")
 
     def _goal(self, goal):
         return GoalResponse.ACCEPT if goal.parameter == "nav2_profile" and goal.value in {"task1", "task2", "task3"} else GoalResponse.REJECT
@@ -80,7 +92,7 @@ class RuntimeManager(Node):
                     self._process = subprocess.Popen(
                         ["ros2", "launch", "robot", "task_runtime.launch.py", f"profile:={profile}"],
                         start_new_session=True)
-                self._publish(Nav2RuntimeStatus.READY, "Nav2 runtime started")
+                self._publish(Nav2RuntimeStatus.READY, "Nav2 runtime launch started")
                 result = ConfigureSystem.Result(success=True, message=f"active Nav2 profile: {profile}")
                 handle.succeed()
                 return result
