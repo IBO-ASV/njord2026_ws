@@ -311,6 +311,53 @@ class PlannerNode(Node):
         self.latest_other_ship_twist = msg
         self.last_other_ship_twist_receipt = time.monotonic()
 
+    def _other_twist_in_planner_frame(self, msg: TwistStamped):
+        """Express an absolute opponent velocity in the planner global frame.
+
+        Task 2 perception publishes the selected and bearing-clipped opponent
+        velocity in ``map``.  The real-vessel planner global frame is ``odom``.
+        A velocity is a free vector, so only the TF rotation is applied here;
+        translation must not affect it.  The trajectory generator can then use
+        the odom-frame ego yaw to rotate the vector into ``base_link``.
+        """
+        if self.get_parameter("other_twist_is_relative").value:
+            return msg
+
+        source_frame = msg.header.frame_id or self.frame_id
+        if source_frame == self.frame_id:
+            return msg
+
+        try:
+            try:
+                transform = self.tf_buffer.lookup_transform(
+                    self.frame_id,
+                    source_frame,
+                    Time.from_msg(msg.header.stamp),
+                ).transform
+            except TransformException:
+                transform = self.tf_buffer.lookup_transform(
+                    self.frame_id, source_frame, Time()
+                ).transform
+        except TransformException as exc:
+            self.get_logger().warning(
+                f"Cannot transform opponent velocity {source_frame} -> "
+                f"{self.frame_id}: {exc}; ignoring opponent this cycle.",
+                throttle_duration_sec=2.0,
+            )
+            return None
+
+        yaw = self._yaw_from_quaternion(transform.rotation)
+        c, s = math.cos(yaw), math.sin(yaw)
+        out = TwistStamped()
+        out.header.stamp = msg.header.stamp
+        out.header.frame_id = self.frame_id
+        out.twist.linear.x = c * msg.twist.linear.x - s * msg.twist.linear.y
+        out.twist.linear.y = s * msg.twist.linear.x + c * msg.twist.linear.y
+        out.twist.linear.z = msg.twist.linear.z
+        # Planar angular velocity is invariant under a yaw-only frame change.
+        out.twist.angular = msg.twist.angular
+        return out
+
     def opponent_detected_callback(self, msg: Bool):
         self.opponent_detected = bool(msg.data)
         self.last_opponent_status_receipt = time.monotonic()
@@ -384,6 +431,8 @@ class PlannerNode(Node):
 
         other_twist = self.latest_other_ship_twist \
             if self._opponent_input_is_fresh() else None
+        if other_twist is not None:
+            other_twist = self._other_twist_in_planner_frame(other_twist)
         if other_twist is None:
             if self.require_other_ship:
                 self.get_logger().debug("Waiting for other_ship_twist...")
