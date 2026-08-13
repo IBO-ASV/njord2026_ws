@@ -11,6 +11,7 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/compressed_image.hpp>
 #include <sensor_msgs/msg/image.hpp>
 
@@ -23,6 +24,7 @@ public:
     output_prefix_ = declare_parameter<std::string>(
       "output_prefix", "/zed2i/left/preview");
     output_raw_topic_ = declare_parameter<std::string>("output_raw_topic", "");
+    camera_info_topic_ = declare_parameter<std::string>("camera_info_topic", "");
     split_stereo_ = declare_parameter<bool>("split_stereo", true);
     width_ = declare_parameter<int>("width", 640);
     height_ = declare_parameter<int>("height", 360);
@@ -42,7 +44,9 @@ public:
       const auto topic = output_prefix_ + "/q" + std::to_string(quality) + "/compressed";
       outputs_.push_back(Output{
         static_cast<int>(quality),
-        create_publisher<sensor_msgs::msg::CompressedImage>(topic, output_qos)});
+        create_publisher<sensor_msgs::msg::CompressedImage>(topic, output_qos),
+        camera_info_topic_.empty() ? nullptr : create_publisher<sensor_msgs::msg::CameraInfo>(
+          output_prefix_ + "/q" + std::to_string(quality) + "/camera_info", output_qos)});
       RCLCPP_INFO(get_logger(), "JPEG quality %ld -> %s", quality, topic.c_str());
     }
     if (!output_raw_topic_.empty()) {
@@ -54,6 +58,11 @@ public:
     subscription_ = create_subscription<sensor_msgs::msg::Image>(
       input_topic_, rclcpp::SensorDataQoS().keep_last(1),
       std::bind(&PreviewNode::on_image, this, std::placeholders::_1));
+    if (!camera_info_topic_.empty()) {
+      camera_info_subscription_ = create_subscription<sensor_msgs::msg::CameraInfo>(
+        camera_info_topic_, rclcpp::SensorDataQoS().keep_last(1),
+        [this](sensor_msgs::msg::CameraInfo::ConstSharedPtr info) { camera_info_ = std::move(info); });
+    }
 
     RCLCPP_INFO(
       get_logger(), "Previewing left eye from %s at %dx%d, max %.1f fps",
@@ -65,6 +74,7 @@ private:
   {
     int quality;
     rclcpp::Publisher<sensor_msgs::msg::CompressedImage>::SharedPtr publisher;
+    rclcpp::Publisher<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_publisher;
   };
 
   void on_image(const sensor_msgs::msg::Image::ConstSharedPtr msg)
@@ -128,12 +138,31 @@ private:
       if (cv::imencode(".jpg", bgr, compressed.data, options)) {
         output.publisher->publish(std::move(compressed));
       }
+      if (output.camera_info_publisher && camera_info_) {
+        auto info = *camera_info_;
+        const double scale_x = static_cast<double>(width_) / source.cols;
+        const double scale_y = static_cast<double>(height_) / source.rows;
+        info.header = msg->header;
+        info.header.frame_id = "zed2i_left_camera_frame";
+        info.width = width_;
+        info.height = height_;
+        info.k[0] *= scale_x;
+        info.k[2] *= scale_x;
+        info.k[4] *= scale_y;
+        info.k[5] *= scale_y;
+        info.p[0] *= scale_x;
+        info.p[2] *= scale_x;
+        info.p[5] *= scale_y;
+        info.p[6] *= scale_y;
+        output.camera_info_publisher->publish(std::move(info));
+      }
     }
   }
 
   std::string input_topic_;
   std::string output_prefix_;
   std::string output_raw_topic_;
+  std::string camera_info_topic_;
   bool split_stereo_;
   int width_;
   int height_;
@@ -144,6 +173,8 @@ private:
   std::chrono::duration<double> minimum_period_{0.1};
   std::chrono::steady_clock::time_point last_publish_{};
   rclcpp::Subscription<sensor_msgs::msg::Image>::SharedPtr subscription_;
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_subscription_;
+  sensor_msgs::msg::CameraInfo::ConstSharedPtr camera_info_;
 };
 
 int main(int argc, char ** argv)
