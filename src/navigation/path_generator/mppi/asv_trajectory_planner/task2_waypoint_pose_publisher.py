@@ -13,14 +13,11 @@ Why this node exists (waypoint-source decision):
     which does not exist on the real vessel. Hence this minimal node.
 
 Conversion approach:
-    waypoint_publisher performs no runtime GPS->map conversion: its
-    _build_poses_from_config() reads map-frame x/y directly from
-    share/waypoint_publisher/config/task2_waypoints.yaml (the lat/lon
-    entries are reference metadata; the conversion to the map frame is
-    precomputed offline into the x/y fields). This node loads the SAME
-    shared YAML at runtime and reuses the same read-x/y approach, selecting
-    the 'start'-type waypoint as waypoint1 and the 'goal'-type waypoint as
-    waypoint2 (fallback: first / last entries).
+    /fromLL resolves the configured latitude/longitude into ``map``.  The
+    Task 2 navigation and MPPI frame is ``odom``, so each resolved point is
+    transformed through the current map->odom TF immediately before it is
+    published.  The Task 2 perception relay performs the inverse transform
+    for its map-frame corridor geometry.
 """
 
 import math
@@ -36,6 +33,13 @@ from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PoseStamped
 from geographic_msgs.msg import GeoPoint
 from robot_localization.srv import FromLL
+from tf2_ros import Buffer, TransformListener
+
+try:
+    from tf2_ros import TransformException
+except ImportError:
+    from tf2_ros import LookupException, ConnectivityException, ExtrapolationException
+    TransformException = (LookupException, ConnectivityException, ExtrapolationException)
 
 
 class Task2WaypointPosePublisher(Node):
@@ -76,6 +80,8 @@ class Task2WaypointPosePublisher(Node):
         self.wp1_pub = self.create_publisher(PoseStamped, self.waypoint1_topic, 10)
         self.wp2_pub = self.create_publisher(PoseStamped, self.waypoint2_topic, 10)
         self.from_ll_client = self.create_client(FromLL, "/fromLL")
+        self.tf_buffer = Buffer()
+        self.tf_listener = TransformListener(self.tf_buffer, self)
         self.waypoint1_xy = None
         self.waypoint2_xy = None
         self.projection_futures = None
@@ -96,10 +102,7 @@ class Task2WaypointPosePublisher(Node):
 
     def _load_waypoints(self, config_package, config_file, config_key):
         """
-        waypoint_publisherと同じ共有YAMLを読み、start/goalの(x, y)を返す。
-
-        waypoint_publisher._build_poses_from_config()と同様に、
-        map基準のx/yフィールドをそのまま使用する(GPS lat/lonはメタデータ)。
+        waypoint_publisherと同じ共有YAMLを読み、start/goalを返す。
         """
         config_path = (
             Path(get_package_share_directory(config_package))
@@ -169,8 +172,10 @@ class Task2WaypointPosePublisher(Node):
     def timer_callback(self):
         if self.waypoint1_xy is None or self.waypoint2_xy is None:
             return
-        x1, y1 = self.waypoint1_xy
-        x2, y2 = self.waypoint2_xy
+        coordinates = self._waypoints_in_output_frame()
+        if coordinates is None:
+            return
+        (x1, y1), (x2, y2) = coordinates
 
         now = self.get_clock().now().to_msg()
 
@@ -189,6 +194,34 @@ class Task2WaypointPosePublisher(Node):
             f"wp2=({x2:.2f}, {y2:.2f})",
             throttle_duration_sec=10.0,
         )
+
+    def _waypoints_in_output_frame(self):
+        """Transform /fromLL's map-frame points into this publisher's frame."""
+        if self.frame_id == "map":
+            return self.waypoint1_xy, self.waypoint2_xy
+        try:
+            transform = self.tf_buffer.lookup_transform(
+                self.frame_id, "map", rclpy.time.Time()).transform
+        except TransformException as error:
+            self.get_logger().warning(
+                f"Waiting for map -> {self.frame_id} TF to publish Task2 waypoints: {error}",
+                throttle_duration_sec=2.0)
+            return None
+        return (
+            self._transform_xy(transform, *self.waypoint1_xy),
+            self._transform_xy(transform, *self.waypoint2_xy),
+        )
+
+    @staticmethod
+    def _transform_xy(transform, x, y):
+        q = transform.rotation
+        yaw = math.atan2(
+            2.0 * (q.w * q.z + q.x * q.y),
+            1.0 - 2.0 * (q.y * q.y + q.z * q.z))
+        c, s = math.cos(yaw), math.sin(yaw)
+        return (
+            transform.translation.x + c * x - s * y,
+            transform.translation.y + s * x + c * y)
 
     def _make_pose_stamped(self, x, y, next_x, next_y, stamp):
         # task2_gps_waypoint_publisher.make_pose_stamped と同じ向き付け:
