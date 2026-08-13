@@ -24,7 +24,7 @@ def generate_launch_description():
         # Task 2 uses LiDAR only for other-vessel tracking.  Do not start the
         # optional buoy selector or buoy-based EKF correction pipeline.
         "enable_buoy_selector": "false",
-        "publish_self_marker": "false", "ego_odom_topic": odom,
+        "publish_self_marker": "true", "ego_odom_topic": odom,
         "motion_filter_mode": "straight_line",
     })
     preprocessing = _include("pcl_preprocessing", "preprocessing.launch.py", {
