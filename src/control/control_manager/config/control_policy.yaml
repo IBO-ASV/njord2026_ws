@@ -16,7 +16,7 @@ control_policy:
     require_nav2_ready: false              # Nav2 のアクションサーバが利用可能であること
     require_task_ready: false              # Mission Manager がタスク準備完了を報告していること
     # Nav 指令の鮮度は Command Arbiter の出力ゲートで判定する。
-    nav_command_timeout_sec: 0.5          # 出力の鮮度判定閾値（秒、正数のみ）
+    nav_command_timeout_sec: 2.0          # 出力の鮮度判定閾値（秒、正数のみ）
     require_ground_station: false         # ground_station_heartbeat が OK であること
     require_driver_heartbeat: false       # driver_heartbeat が OK であること
     require_localization_heartbeat: false # local_odometry が OK であること

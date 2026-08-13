@@ -6,10 +6,6 @@
 / water removal (z band + guarded RANSAC) / optional voxel
 -> /task2/points_filtered (frame = base_link, xyz + intensity).
 
-For Foxglove-only inspection, the node also publishes an optional copy with
-only z mirrored (/task2/points_filtered_visual).  That topic is deliberately
-not a physical TF frame and must never be connected to perception or planning.
-
 The upside-down LiDAR correction lives ONLY in the URDF (lidar_joint,
 roll = pi). This node just looks the transform up via TF. The
 lidar_inverted / lidar_*_deg parameters are an emergency manual pre-rotation
@@ -104,8 +100,8 @@ class CloudFilterNode(Node):
         self.declare_parameters("", [
             ("input_topic", "/livox/lidar"),
             ("output_topic", "/task2/points_filtered"),
-            ("visual_output_topic", "/task2/points_filtered_visual"),
-            ("publish_visual_z_mirror", True),
+            ("visual_output_topic", ""),
+            ("publish_visual_z_mirror", False),
             ("output_frame", "base_link"),
             ("min_range_m", 0.5),
             ("max_range_m", 60.0),
@@ -149,7 +145,6 @@ class CloudFilterNode(Node):
         gp = lambda name: self.get_parameter(name).value  # noqa: E731
 
         self.output_frame = str(gp("output_frame"))
-        self.visual_output_frame = self.output_frame
         self.publish_visual_z_mirror = bool(gp("publish_visual_z_mirror"))
         self.publish_self_marker_enabled = bool(gp("publish_self_marker"))
         self.self_marker_yaw_rad = np.deg2rad(float(gp("self_marker_yaw_deg")))
@@ -205,8 +200,11 @@ class CloudFilterNode(Node):
         self.rng = np.random.default_rng(0)
 
         self.pub = self.create_publisher(PointCloud2, str(gp("output_topic")), 10)
-        self.visual_pub = self.create_publisher(
-            PointCloud2, str(gp("visual_output_topic")), 10)
+        visual_output_topic = str(gp("visual_output_topic"))
+        self.visual_pub = None
+        if visual_output_topic and self.publish_visual_z_mirror:
+            self.visual_pub = self.create_publisher(
+                PointCloud2, visual_output_topic, 10)
         # A boat-shaped outline makes the base_link origin and +X heading
         # visible in Foxglove/RViz. It is visualization only and does not
         # affect the filtered cloud.
@@ -246,8 +244,7 @@ class CloudFilterNode(Node):
             f"task2_cloud_filter: {gp('input_topic')} -> {gp('output_topic')} "
             f"(frame={self.output_frame}, waterline_z={self.waterline_z} m, "
             f"process_rate={'unlimited' if self.process_period_ns == 0 else process_rate_hz} Hz, "
-            f"self marker={'on' if self.publish_self_marker_enabled else 'off'}, "
-            f"visual_z_mirror={self.publish_visual_z_mirror})")
+            f"self marker={'on' if self.publish_self_marker_enabled else 'off'})")
 
     # ------------------------------------------------------------------
     def publish_self_marker(self):
@@ -391,14 +388,14 @@ class CloudFilterNode(Node):
             points = np.vstack(list(self.accumulator))
 
         self.pub.publish(array_to_cloud(header, points))
-        if self.publish_visual_z_mirror:
+        if self.visual_pub is not None:
             # Visualization only: x/y (and therefore azimuth) are unchanged;
             # only height is mirrored for an intuitive upside-down-LiDAR view.
             visual_points = points.copy()
             visual_points[:, 2] *= -1.0
             visual_header = Header()
             visual_header.stamp = header.stamp
-            visual_header.frame_id = self.visual_output_frame
+            visual_header.frame_id = self.output_frame
             self.visual_pub.publish(array_to_cloud(visual_header, visual_points))
 
 

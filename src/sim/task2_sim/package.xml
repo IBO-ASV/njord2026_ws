@@ -3,7 +3,7 @@
 <package format="3">
   <name>task2_sim</name>
   <version>0.1.0</version>
-  <description>Task2 simulation orchestrator with moving red/green buoy TF and goal monitoring.</description>
+  <description>Task2 simulation orchestrator with goal monitoring.</description>
   <maintainer email="oswystk15662@keio.jp">osw</maintainer>
   <license>Apache-2.0</license>
 

@@ -1,16 +1,9 @@
 task2_orchestrator:
   ros__parameters:
     frame_id: "map"
-    red_center: [10.0, 2.5]
-    green_center: [10.0, -2.5]
-    buoy_x_positions: [10.0, 15.0, 20.0, 40.0, 45.0, 50.0]
-    red_y: 2.5
-    green_y: -2.5
-    buoy_radius: 0.2
-    buoy_motion_amp: 0.0
     motion_amp: 0.7
     motion_freq_hz: 0.15
-    goal_xy: [60.0, 0.0]
+    goal_xy: [25.0, 0.0]
     goal_radius: 5.0
     publish_rate_hz: 10.0
     projection_xywh: [15.0, 0.0, 8.0, 5.0]

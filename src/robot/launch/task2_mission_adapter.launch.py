@@ -33,16 +33,7 @@ def generate_launch_description():
             "enable_replanning": True,
             "enabled_topic": "/mission/task2/enabled",
             "mission_gate_required": True,
-            # The perception pipeline keeps observing while FollowPath has no
-            # goal, so this gives Task 2 a stationary buoy-capture window.
-            "startup_hold_sec": 5.0,
             "goal_reached_topic": "/mission/task2/goal_reached",
         }],
     )
-    readiness = Node(
-        package="mission_manager",
-        executable="task2_readiness_adapter_node",
-        name="task2_readiness_adapter",
-        output="screen",
-    )
-    return LaunchDescription([waypoint_pose, follow_path, readiness])
+    return LaunchDescription([waypoint_pose, follow_path])

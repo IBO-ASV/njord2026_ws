@@ -26,17 +26,10 @@ def test_task2_final_completion_requires_a_path_ending_at_gps6():
     assert "waiting for a path terminating at Task2 GPS6" in source
 
 
-def test_task2_mission_start_has_a_stationary_buoy_observation_hold():
-    source = (Path(__file__).parents[1] / "asv_trajectory_planner" /
-              "follow_path_client_node.py").read_text(encoding="utf-8")
+def test_task2_mission_start_sends_follow_path_without_buoy_hold():
     adapter = (Path(__file__).parents[4] / "robot" / "launch" /
                "task2_mission_adapter.launch.py").read_text(encoding="utf-8")
-    assert 'self.declare_parameter("startup_hold_sec", 0.0)' in source
-    assert "time.monotonic() + self.startup_hold_sec" in source
-    assert source.index("if self.startup_hold_until is not None:") < source.index(
-        "if not self.action_client.wait_for_server"
-    )
-    assert '"startup_hold_sec": 5.0' in adapter
+    assert '"startup_hold_sec"' not in adapter
 
 
 def test_task2_mission_gate_receives_the_retained_enable_state():

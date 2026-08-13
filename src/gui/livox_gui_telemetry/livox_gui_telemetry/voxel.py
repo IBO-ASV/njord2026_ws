@@ -19,7 +19,7 @@ def voxelize(points, size, limit):
 def cloud_points(message):
     """Read x/y/z and optional intensity from common float32 PointCloud2 layouts."""
     fields = {field.name: field.offset for field in message.fields}
-    if not {"x", "y", "z"} <= fields or message.point_step < 12:
+    if not {"x", "y", "z"}.issubset(fields) or message.point_step < 12:
         return []
     endian = ">" if message.is_bigendian else "<"
     intensity = fields.get("intensity")

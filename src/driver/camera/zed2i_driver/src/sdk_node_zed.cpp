@@ -540,6 +540,7 @@ private:
       roi.x, roi.y, roi.width, roi.height);
   }
 
+#ifdef ZED2I_DRIVER_HAS_GPU_PERCEPTION
   std::optional<geometry_msgs::msg::PointStamped> lidar_fallback_position(
     const Detection2D & detection, const rclcpp::Time & stamp)
   {
@@ -659,6 +660,7 @@ private:
       return std::nullopt;
     }
   }
+#endif
 
   template<typename MessageT>
   static bool has_subscribers(const std::shared_ptr<rclcpp::Publisher<MessageT>> & publisher)

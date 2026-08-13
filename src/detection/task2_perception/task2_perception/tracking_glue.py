@@ -223,6 +223,33 @@ def is_left_of_oriented_line(
     return lateral > float(margin_m)
 
 
+def clip_velocity_bearing(
+    velocity_map: np.ndarray,
+    reference_yaw_rad: float,
+    min_bearing_rad: float,
+    max_bearing_rad: float,
+) -> np.ndarray:
+    """Keep speed while limiting a map-frame velocity bearing to a route yaw.
+
+    Bearings use the normal counter-clockwise-positive convention, so the
+    right side of the GPS5->GPS6 route is negative.  ``atan2(sin, cos)``
+    normalizes across the +/-pi seam before clipping, including near 0 deg.
+    A zero-speed vector has no direction and is returned unchanged.
+    """
+    if min_bearing_rad > max_bearing_rad:
+        raise ValueError("min_bearing_rad must be <= max_bearing_rad")
+    velocity = np.asarray(velocity_map, dtype=float).copy()
+    speed = float(np.hypot(velocity[0], velocity[1]))
+    if speed <= 1e-6:
+        return velocity
+    bearing = np.arctan2(
+        np.sin(np.arctan2(velocity[1], velocity[0]) - reference_yaw_rad),
+        np.cos(np.arctan2(velocity[1], velocity[0]) - reference_yaw_rad))
+    yaw = reference_yaw_rad + np.clip(bearing, min_bearing_rad, max_bearing_rad)
+    velocity[:2] = speed * np.array([np.cos(yaw), np.sin(yaw)])
+    return velocity
+
+
 def select_opponent(
     tracks: list[Track],
     now_sec: float,

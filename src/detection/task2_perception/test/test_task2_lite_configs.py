@@ -19,6 +19,7 @@ def test_cloud_filter_profile_reduces_work_without_debug_changes():
     assert cloud["process_rate_hz"] == 5.0
     assert cloud["use_water_plane_ransac"] is False
     assert cloud["publish_debug"] is False
+    assert "visual_output_topic" not in cloud
 
 
 def test_task2_lite_pipeline_uses_latest_compact_clouds():
@@ -33,18 +34,39 @@ def test_task2_lite_pipeline_uses_latest_compact_clouds():
     assert ground["input_queue_depth"] == 1
     assert ground["ransac_max_iterations"] == 80
     assert cluster["input_queue_depth"] == 1
-    assert cluster["min_cluster_size"] == 30
+    assert cluster["min_cluster_size"] == 20
+    assert cluster["min_cluster_size_far"] == 3
+    assert cluster["far_cluster_distance_m"] == 40.0
+    assert tracker["publish_tentative"] is True
+    assert tracker["ego_pose_compensation"] is True
+    assert tracker["ego_odom_max_age_sec"] == 0.15
+    assert tracker["min_marker_speed_knots"] == 0.0
+    assert tracker["max_misses_tentative"] == 4
     assert tracker["straight_hits_to_confirm"] == 10
+    assert tracker["max_misses_confirmed"] == 20
     selector = params["opponent_selector"]["ros__parameters"]
     assert selector["tracked_objects_in_map_frame"] is False
-    assert selector["straight_min_hit_count"] == 10
-    assert selector["straight_coast_timeout_sec"] == 2.0
+    assert selector["selected_marker_topic"] == "/task2/selected_opponent_marker"
+    assert selector["velocity_marker_topic"] == "/task2/selected_opponent_velocity_marker"
+    assert selector["straight_min_hit_count"] == 5
+    assert selector["straight_max_velocity_stddev_mps"] == 0.60
+    assert selector["straight_coast_timeout_sec"] == 3.0
+    assert selector["stale_timeout_sec"] == 4.0
+    assert selector["min_length_m"] == 0.5
+    assert selector["max_length_m"] == 3.5
+    assert selector["min_width_m"] == 0.3
+    assert selector["max_width_m"] == 2.2
+    assert selector["min_absolute_speed_knots"] == 1.5
+    assert selector["max_absolute_speed_knots"] == 3.5
     assert selector["corridor_enabled"] is True
     assert selector["corridor_start_offset_m"] == 5.0
     assert selector["corridor_end_margin_m"] == 5.0
     assert selector["corridor_half_width_m"] == 20.0
     assert selector["corridor_ignore_left_side"] is True
     assert selector["corridor_left_side_margin_m"] == 5.0
+    assert selector["clip_opponent_bearing_to_corridor"] is True
+    assert selector["opponent_bearing_min_deg"] == 90.0
+    assert selector["opponent_bearing_max_deg"] == 180.0
     relay = params["task2_waypoint_map_frame_relay"]["ros__parameters"]
     assert relay["waypoint1_input_topic"] == "/waypoint1_pose"
     assert relay["waypoint1_output_topic"] == "/task2/waypoint1_pose_map"

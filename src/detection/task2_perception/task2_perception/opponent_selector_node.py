@@ -29,10 +29,11 @@ import rclpy.logging
 from rclpy.node import Node
 from rclpy.time import Time
 
-from geometry_msgs.msg import PoseStamped, TransformStamped, TwistStamped
+from geometry_msgs.msg import Point, PoseStamped, TransformStamped, TwistStamped
 from nav_msgs.msg import Odometry
 from std_msgs.msg import Bool
 from tf2_ros import Buffer, TransformBroadcaster, TransformListener
+from visualization_msgs.msg import Marker
 
 try:
     from tf2_ros import TransformException
@@ -68,6 +69,8 @@ class OpponentSelectorNode(Node):
             ("ego_odom_topic", "/odometry/filtered/local"),
             ("twist_topic", "/other_ship/twist"),
             ("detection_status_topic", "/task2/opponent_detected"),
+            ("selected_marker_topic", "/task2/selected_opponent_marker"),
+            ("velocity_marker_topic", "/task2/selected_opponent_velocity_marker"),
             ("map_frame", "map"),
             ("base_frame", "base_link"),
             ("opponent_frame", "opponent_vessel"),
@@ -102,6 +105,11 @@ class OpponentSelectorNode(Node):
             ("corridor_half_width_m", 20.0),
             ("corridor_ignore_left_side", True),
             ("corridor_left_side_margin_m", 0.0),
+            # Restrict the published opponent velocity to the right-to-left
+            # crossing through head-on sector of the GPS5->GPS6 route.
+            ("clip_opponent_bearing_to_corridor", True),
+            ("opponent_bearing_min_deg", -90.0),
+            ("opponent_bearing_max_deg", 0.0),
         ])
         gp = lambda name: self.get_parameter(name).value  # noqa: E731
 
@@ -129,12 +137,21 @@ class OpponentSelectorNode(Node):
         self.corridor_half_width_m = float(gp("corridor_half_width_m"))
         self.corridor_ignore_left_side = bool(gp("corridor_ignore_left_side"))
         self.corridor_left_side_margin_m = float(gp("corridor_left_side_margin_m"))
+        self.clip_opponent_bearing_to_corridor = bool(
+            gp("clip_opponent_bearing_to_corridor"))
+        self.opponent_bearing_min_rad = math.radians(
+            float(gp("opponent_bearing_min_deg")))
+        self.opponent_bearing_max_rad = math.radians(
+            float(gp("opponent_bearing_max_deg")))
         if self.corridor_start_offset_m < 0.0 or \
                 self.corridor_end_margin_m < 0.0 or \
                 self.corridor_half_width_m <= 0.0:
             raise ValueError("Task 2 corridor dimensions must be positive")
         if self.corridor_left_side_margin_m < 0.0:
             raise ValueError("corridor_left_side_margin_m must be >= 0")
+        if not -math.pi <= self.opponent_bearing_min_rad <= \
+                self.opponent_bearing_max_rad <= math.pi:
+            raise ValueError("opponent bearing limits must be within [-180, 180] deg")
         self.corridor_start_map = None
         self.corridor_end_map = None
         self.selection_params = SelectionParams(
@@ -171,6 +188,10 @@ class OpponentSelectorNode(Node):
         self.pub = self.create_publisher(TwistStamped, str(gp("twist_topic")), 10)
         self.detection_status_pub = self.create_publisher(
             Bool, str(gp("detection_status_topic")), 10)
+        self.selected_marker_pub = self.create_publisher(
+            Marker, str(gp("selected_marker_topic")), 10)
+        self.velocity_marker_pub = self.create_publisher(
+            Marker, str(gp("velocity_marker_topic")), 10)
         self.create_subscription(
             TrackedObjectArray, str(gp("tracked_objects_topic")),
             self.tracks_callback, 10)
@@ -204,7 +225,8 @@ class OpponentSelectorNode(Node):
             f"-{self.max_absolute_speed_knots:.2f} kn, "
             f"straight_coast={self.straight_coast_timeout_sec:.1f}s, "
             f"GPS5->6 corridor={'enabled' if self.corridor_enabled else 'disabled'}, "
-            f"left_side_ignored={self.corridor_ignore_left_side}")
+            f"left_side_ignored={self.corridor_ignore_left_side}, "
+            f"bearing_clip={'enabled' if self.clip_opponent_bearing_to_corridor else 'disabled'}")
 
     # ------------------------------------------------------------------
     def tracks_callback(self, msg):
@@ -277,6 +299,17 @@ class OpponentSelectorNode(Node):
                         self.corridor_end_map,
                         self.corridor_left_side_margin_m))
 
+    def _clip_opponent_velocity_bearing(
+            self, velocity_map: np.ndarray) -> np.ndarray:
+        if not self.clip_opponent_bearing_to_corridor or \
+                self.corridor_start_map is None or self.corridor_end_map is None:
+            return velocity_map
+        route = self.corridor_end_map - self.corridor_start_map
+        route_yaw = math.atan2(route[1], route[0])
+        return tracking_glue.clip_velocity_bearing(
+            velocity_map, route_yaw,
+            self.opponent_bearing_min_rad, self.opponent_bearing_max_rad)
+
     def _publish_output(self, now, pos_map, vel_map, opponent_yaw, yaw_rate):
         """Publish one absolute target estimate and its map-frame TF."""
         smoothed = self.smoother.update(vel_map[0], vel_map[1], yaw_rate)
@@ -285,7 +318,8 @@ class OpponentSelectorNode(Node):
                 "Opponent velocity spike rejected; skipping this cycle.",
                 throttle_duration_sec=2.0)
             self._publish_detection_status(False)
-            return
+            self._clear_velocity_marker(now)
+            return False
         vx, vy, wz = smoothed
 
         msg = TwistStamped()
@@ -307,9 +341,73 @@ class OpponentSelectorNode(Node):
         tf_out.transform.rotation.w = math.cos(opponent_yaw / 2.0)
         self.tf_broadcaster.sendTransform(tf_out)
         self._publish_detection_status(True)
+        return True
 
     def _publish_detection_status(self, detected: bool):
         self.detection_status_pub.publish(Bool(data=detected))
+
+    def _publish_selected_marker(self, now, position, yaw, dimensions):
+        marker = Marker()
+        marker.header.stamp = now.to_msg()
+        marker.header.frame_id = self.map_frame
+        marker.ns = "selected_opponent"
+        marker.id = 0
+        marker.type = Marker.CUBE
+        marker.action = Marker.ADD
+        marker.pose.position.x, marker.pose.position.y, marker.pose.position.z = position
+        marker.pose.orientation.z = math.sin(yaw / 2.0)
+        marker.pose.orientation.w = math.cos(yaw / 2.0)
+        marker.scale.x, marker.scale.y, marker.scale.z = dimensions
+        marker.color.g = 1.0
+        marker.color.a = 0.85
+        self.selected_marker_pub.publish(marker)
+
+    def _publish_velocity_marker(self, now, position, velocity):
+        """Publish the map-frame velocity vector of the selected opponent."""
+        speed = float(np.hypot(velocity[0], velocity[1]))
+        if speed <= 1e-6:
+            self._clear_velocity_marker(now)
+            return
+        marker = Marker()
+        marker.header.stamp = now.to_msg()
+        marker.header.frame_id = self.map_frame
+        marker.ns = "selected_opponent_velocity"
+        marker.id = 0
+        marker.type = Marker.ARROW
+        marker.action = Marker.ADD
+        marker.scale.x = 0.12
+        marker.scale.y = 0.24
+        marker.scale.z = 0.30
+        marker.color.r = 0.1
+        marker.color.g = 0.8
+        marker.color.b = 1.0
+        marker.color.a = 0.95
+        start = Point(x=float(position[0]), y=float(position[1]),
+                      z=float(position[2]) + 1.0)
+        # Two metres of display arrow per metre/second preserves the vector
+        # direction while keeping the expected Task 2 speed legible in 3D.
+        end = Point(x=start.x + 2.0 * float(velocity[0]),
+                    y=start.y + 2.0 * float(velocity[1]), z=start.z)
+        marker.points = [start, end]
+        self.velocity_marker_pub.publish(marker)
+
+    def _clear_selected_marker(self, now):
+        marker = Marker()
+        marker.header.stamp = now.to_msg()
+        marker.header.frame_id = self.map_frame
+        marker.ns = "selected_opponent"
+        marker.id = 0
+        marker.action = Marker.DELETE
+        self.selected_marker_pub.publish(marker)
+
+    def _clear_velocity_marker(self, now):
+        marker = Marker()
+        marker.header.stamp = now.to_msg()
+        marker.header.frame_id = self.map_frame
+        marker.ns = "selected_opponent_velocity"
+        marker.id = 0
+        marker.action = Marker.DELETE
+        self.velocity_marker_pub.publish(marker)
 
     def _coast_or_silence(self, now, now_sec: float):
         """Bridge brief occlusions with constant-velocity prediction only."""
@@ -323,11 +421,15 @@ class OpponentSelectorNode(Node):
                     self.last_observation = None
                     self.selected_id = None
                     self.smoother.reset()
+                    self._clear_selected_marker(now)
+                    self._clear_velocity_marker(now)
                     self._publish_detection_status(False)
                     return
-                self._publish_output(
-                    now, pos_map, coast["velocity_map"], coast["yaw_map"],
-                    coast["yaw_rate"])
+                if self._publish_output(
+                        now, pos_map, coast["velocity_map"], coast["yaw_map"],
+                        coast["yaw_rate"]):
+                    self._publish_velocity_marker(
+                        now, pos_map, coast["velocity_map"])
                 self.get_logger().info(
                     f"Coasting confirmed opponent id={coast['object_id']} "
                     f"for {elapsed:.1f}s without a LiDAR observation.",
@@ -342,6 +444,8 @@ class OpponentSelectorNode(Node):
         self.selected_id = None
         self.last_observation = None
         self.smoother.reset()
+        self._clear_selected_marker(now)
+        self._clear_velocity_marker(now)
         self._publish_detection_status(False)
 
     # ------------------------------------------------------------------
@@ -393,6 +497,8 @@ class OpponentSelectorNode(Node):
                 candidate.position, vel_abs_base, t_map_base)
             if not self._in_task2_corridor(candidate_pos_map):
                 continue
+            candidate_vel_map = self._clip_opponent_velocity_bearing(
+                candidate_vel_map)
             speed_knots = mps_to_knots(
                 np.hypot(candidate_vel_map[0], candidate_vel_map[1]))
             if not self.min_absolute_speed_knots <= speed_knots <= \
@@ -427,8 +533,11 @@ class OpponentSelectorNode(Node):
             "yaw_map": opponent_yaw,
             "yaw_rate": selected.yaw_rate,
         }
-        self._publish_output(
-            now, pos_map, vel_map, opponent_yaw, selected.yaw_rate)
+        if self._publish_output(
+                now, pos_map, vel_map, opponent_yaw, selected.yaw_rate):
+            self._publish_selected_marker(
+                now, pos_map, opponent_yaw, selected.dimensions)
+            self._publish_velocity_marker(now, pos_map, vel_map)
 
 
 def main(args=None):

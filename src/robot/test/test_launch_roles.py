@@ -166,17 +166,21 @@ def test_minipc_bringup_uses_canonical_control_manager_by_default():
     assert 'package="twist_mux"' not in source
 
 
-def test_task2_uses_fixed_odom_without_global_ekf():
+def test_task2_uses_fixed_odom_with_global_map_transform_available():
     minipc = _read_launch_source("minipc_bringup.launch.py")
     localization = _read_launch_source("localization.launch.py")
     jetson = _read_launch_source("jetson_bringup.launch.py")
+    jetson_task2 = _read_launch_source("task2_jetson_autonomy.launch.py")
     task2 = _read_launch_source("task2_mission_adapter.launch.py")
 
-    assert '"use_ekf_global",\n                default_value="false"' in minipc
+    assert '"use_ekf_global",\n                default_value="true"' in minipc
     assert '"world_frame": "odom"' in localization
     assert '("odometry/filtered", "odometry/filtered/local")' in localization
     assert '"frame_id": "odom"' in task2
-    assert '"own_odom_topic": "/odometry/filtered/local"' in jetson
+    assert '"task2_jetson_autonomy.launch.py"' in jetson
+    assert '"own_odom_topic": odom' in jetson_task2
+    assert '"/task2/safety_points"' not in jetson_task2
+    assert 'name="task2_safety_points"' not in jetson_task2
 
 
 def test_minipc_bringup_adds_sbus_without_replacing_the_ground_link_joy_path():
@@ -242,6 +246,9 @@ def test_task3_uses_its_relaxed_waypoint_behavior_tree():
 def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     minipc_source = _read_launch_source("minipc_bringup.launch.py")
     runtime_source = _read_launch_source("task_runtime.launch.py")
+    runtime_manager_source = (Path(_LAUNCH_DIR).parents[1] / "mission" /
+                              "mission_manager" / "mission_manager" /
+                              "runtime_manager_node.py").read_text()
     task2_nav_source = _read_launch_source("navigation_launch_task2.py")
     adapter_source = _read_launch_source("task2_mission_adapter.launch.py")
     supervisor_source = (Path(_LAUNCH_DIR).parents[1] / "diagnostics" /
@@ -252,6 +259,9 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     assert '"navigation_launch_task2.py"' in minipc_source
     assert '"task2_mission_adapter.launch.py"' not in minipc_source
     assert '"task2_mission_adapter.launch.py"' in runtime_source
+    assert 'elif profile == "task2"' in runtime_manager_source
+    assert '("controller_server", "velocity_smoother")' in runtime_manager_source
+    assert '"Task 2 controller stack"' in runtime_manager_source
     assert "' == 'task2'" in minipc_source
     assert "' != 'task2'" in minipc_source
     assert 'executable="autonomy_supervisor_node"' in minipc_source
@@ -261,16 +271,24 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     assert 'active_profile_ == "task2"' in supervisor_source
     assert 'active_profile_ != "task2" && !action_server_ready_' in supervisor_source
     assert '"/planned_path_pruned"' in supervisor_source
-    assert '"task2_readiness_adapter_node"' in adapter_source
+    assert '"task2_readiness_adapter_node"' not in adapter_source
     assert '"follow_path_client_node"' in adapter_source
     assert '"mission_gate_required": True' in adapter_source
     assert '"preprocessing.launch.py"' not in adapter_source
     assert '"planner_real.launch.py"' not in adapter_source
+    planner_real_source = (Path(_LAUNCH_DIR).parents[1] / "navigation" /
+                           "path_generator" / "mppi" / "launch" /
+                           "planner_real.launch.py").read_text()
+    assert 'executable="crm_costmap_node"' not in planner_real_source
+    assert '"/mppi/crm_costmap"' in (Path(_LAUNCH_DIR).parents[2] /
+                                       "config" / "zenoh" /
+                                       "bridge_jetson.json5").read_text()
     assert "nav2_controller" in task2_nav_source
     assert "nav2_velocity_smoother" in task2_nav_source
     assert "nav2_lifecycle_manager" in task2_nav_source
-    assert '"controller_server", "velocity_smoother", "collision_monitor"' in task2_nav_source
-    assert "/cmd_vel_nav" in task2_nav_source
+    assert '"controller_server", "velocity_smoother"' in task2_nav_source
+    assert '("cmd_vel", "/cmd_vel_controller")' in task2_nav_source
+    assert '("cmd_vel_smoothed", "/cmd_vel_nav")' in task2_nav_source
     assert "root_key=None" in task2_nav_source
     for forbidden in (
         "nav2_planner",
@@ -283,8 +301,9 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
         assert forbidden not in task2_nav_source
         assert forbidden not in task2_params
     assert "use_collision_detection: false" in task2_params
-    assert "nav2_collision_monitor" in task2_nav_source
-    assert '"/task2/safety_points"' in task2_params
+    assert "nav2_collision_monitor" not in task2_nav_source
+    assert "collision_monitor:" not in task2_params
+    assert "/task2/safety_points" not in task2_params
 
 
 def test_legacy_task2_launch_uses_the_follow_path_only_graph():

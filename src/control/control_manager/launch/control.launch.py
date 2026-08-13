@@ -25,6 +25,6 @@ def generate_launch_description():
             executable="command_arbiter",
             name="command_arbiter",
             output="screen",
-            parameters=[{"command_timeout_sec": 0.5}],
+            parameters=[{"command_timeout_sec": 2.0}],
         ),
     ])

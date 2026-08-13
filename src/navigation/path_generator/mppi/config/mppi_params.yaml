@@ -26,11 +26,9 @@ planner_node:
     # Planning loop rate [Hz] (pre-existing parameter, kept as-is).
     planning_frequency: 2.0  # current default - human tuning expected; record any change
 
-    # Measured buoy positions from the YOLO + LiDAR fusion pipeline.  These
-    # are the normal source for buoy_outside_cost; GPS-derived virtual buoys
-    # remain available only for fallback experiments.
-    buoy_detections_topic: "/buoy_detections"
-    use_detected_buoys: true
+    # Task 2 does not use buoy recognition for planning.  Its perception
+    # stack is limited to other-vessel tracking and the safety-point cloud.
+    use_detected_buoys: false
     use_virtual_buoys: false
     buoy_detection_timeout_sec: 1.0
     buoy_merge_distance_m: 1.0
@@ -72,8 +70,10 @@ planner_node:
       # Input-deviation ("norm") cost (code: norm_cost).
       control_cost_weight: 0.2  # current default - human tuning expected; record any change
 
-      # Own/other ship length overall [m] used by CRM bumper scaling.
-      loa: 2.0                # current default - human tuning expected; record any change
+      # Vessel length overall [m] used independently by the CRM bumpers.
+      # Keep these identical in sim and on the real vessel.
+      own_loa_m: 1.2
+      other_loa_m: 2.0
 
       # CRM bumper safe distances, in multiples of LOA
       # (code: crm_torch RIGHT/LEFT/FORE/AFT_AX_GAIN).

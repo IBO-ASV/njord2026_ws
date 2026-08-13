@@ -11,7 +11,6 @@ _NODES = (
     "src/control/control_manager/control_manager/safety_supervisor_node.py",
     "src/mission/mission_manager/mission_manager/mission_manager_node.py",
     "src/mission/mission_manager/mission_manager/ground_link_return_node.py",
-    "src/mission/mission_manager/mission_manager/task2_readiness_adapter_node.py",
     "src/mission/mission_manager/mission_manager/operator_dispatcher_node.py",
     "src/mission/mission_manager/mission_manager/runtime_manager_node.py",
     "src/navigation/buoy_obstacle_publisher/buoy_obstacle_publisher/"

@@ -61,7 +61,7 @@ MPPI planner (asv_trajectory_planner/planner_node.py,
 
 | Node (executable) | In | Out |
 |---|---|---|
-| `task2_cloud_filter` (`task2_cloud_filter_node`) | `/livox/lidar`, TF | `/task2/points_filtered`, `/task2/points_filtered_visual` (display only), `/task2/self_vessel_marker`, `/task2/debug/*` (opt.) |
+| `task2_cloud_filter` (`task2_cloud_filter_node`) | `/livox/lidar`, TF | `/task2/points_filtered`, `/task2/self_vessel_marker`, `/task2/debug/*` (opt.) |
 | `opponent_selector` (`opponent_selector_node`) | `/tracked_objects`, `/odometry/filtered/local`, TF map->base_link | `/other_ship/twist`, TF map->opponent_vessel |
 
 認識単体のデバッグでは、以下の2つを起動します。
@@ -76,7 +76,8 @@ ros2 launch ship_perception_bringup classical_pipeline.launch.py \
 実機の自動運転では両方とも `robot/task2_autonomy.launch.py` に含まれるため、別途起動しません。
 
 rosbagでこの一連の認識を確認する場合は、`robot/task2_bag_perception.launch.py` を使います。
-これはbag再生と必要なTFを補い、認識・追跡だけを起動するオフライン検証用です。
+これはbag再生と必要なLiDAR固定TFを補い、認識・追跡だけを起動するオフライン検証用です。
+実機用ではなく、`/tf_static` をbagから再生しないため固定TFが二重になりません。
 
 ## Design notes
 
@@ -119,8 +120,3 @@ configured `self_crop_*` footprint. Its pointed bow faces `+X` (forward).
 Add it as a Marker in Foxglove with `base_link` (or its parent frame) as the
 fixed frame to see the own-vessel reference against the point cloud. It is
 disabled by the real-vessel autonomy overlay.
-
-`/task2/points_filtered_visual` is another visualization-only topic: it keeps
-x/y (the horizontal azimuth) unchanged and mirrors only z. Use it in a
-Foxglove panel instead of `/task2/points_filtered` when inspecting the
-upside-down LiDAR; do not connect it to perception or planning.

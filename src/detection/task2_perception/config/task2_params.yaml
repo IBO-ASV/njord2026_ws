@@ -15,8 +15,6 @@ task2_cloud_filter:
   ros__parameters:
     input_topic: "/livox/lidar"             # Raw Livox PointCloud2 input
     output_topic: "/task2/points_filtered"  # Input for Task 2 PCL pipeline
-    visual_output_topic: "/task2/points_filtered_visual"  # Display only
-    publish_visual_z_mirror: true            # Does not affect recognition
     output_frame: "base_link"
     min_range_m: 1.5                         # [m] remove own-hull near field
     max_range_m: 40.0                        # [m] required encounter range
@@ -74,6 +72,8 @@ opponent_selector:
     tracked_objects_in_map_frame: false
     ego_odom_topic: "/odometry/filtered/local"
     twist_topic: "/other_ship/twist"         # map-frame, absolute [m/s]
+    selected_marker_topic: "/task2/selected_opponent_marker" # Foxglove: green selected ship
+    velocity_marker_topic: "/task2/selected_opponent_velocity_marker" # Foxglove: cyan velocity arrow
     map_frame: "map"
     base_frame: "base_link"
     opponent_frame: "opponent_vessel"
@@ -82,24 +82,27 @@ opponent_selector:
     selection_policy: "nearest"               # nearest|min_tcpa|track_id
     target_track_id: -1
     # Catamaran horizontal dimensions. Height is intentionally not gated.
-    min_length_m: 1.2                          # [m], expected about 1.8 m
-    max_length_m: 2.5                          # [m], includes measurement error
-    min_width_m: 0.5                           # [m], expected about 0.9 m
-    max_width_m: 1.5                           # [m], includes measurement error
+    # At the end of the recorded run, the same vessel spans about 1.17--2.57 m
+    # between scans.  Keep the gate vessel-sized while allowing that LiDAR
+    # measurement variation.
+    min_length_m: 0.5                          # [m]
+    max_length_m: 3.5                          # [m]
+    min_width_m: 0.3                           # [m]
+    max_width_m: 2.2                           # [m], includes measurement error
     min_point_count: 0                         # 0 disables this optional gate
-    stale_timeout_sec: 2.0                     # [s]
+    stale_timeout_sec: 4.0                     # [s], retain a confirmed target through short LiDAR gaps
     publish_rate_hz: 10.0                      # [Hz] output update rate
     twist_lowpass_alpha: 0.3
     # Task 2 launch selects straight_line; standard remains available.
     motion_filter_mode: "standard"            # standard|straight_line
-    straight_min_hit_count: 10                 # 5 Hz -> roughly 2 s history
-    straight_max_velocity_stddev_mps: 0.30     # [m/s] largest horizontal std-dev
+    straight_min_hit_count: 5                  # 5 Hz -> roughly 1 s history
+    straight_max_velocity_stddev_mps: 0.60     # [m/s] largest horizontal std-dev
     # When LiDAR briefly loses a confirmed vessel, keep publishing this
     # constant-velocity prediction.  0 disables coasting; expiry is silent.
-    straight_coast_timeout_sec: 2.0            # [s]
+    straight_coast_timeout_sec: 3.0            # [s]
     # Operator-facing speed gate. Twist output remains SI m/s.
-    min_absolute_speed_knots: 2.0              # [kn]
-    max_absolute_speed_knots: 3.0              # [kn]
+    min_absolute_speed_knots: 1.5              # [kn]
+    max_absolute_speed_knots: 3.5              # [kn]
     # Recognition rectangle fixed in the map frame to GPS point 5 -> 6.
     # It begins 5 m after GPS5, ends 5 m past GPS6, and is 40 m wide.
     # task2_waypoint_pose_publisher resolves the GPS points through /fromLL.
@@ -114,6 +117,12 @@ opponent_selector:
     # remains fixed even if the vessel changes heading.
     corridor_ignore_left_side: true
     corridor_left_side_margin_m: 5.0
+    # Relative to GPS5->6, 0 deg is forward. A target may only approach from
+    # ahead (180 deg) or cross from right to left (+90 deg); keep its observed
+    # position and speed, and clamp only its velocity direction to this sector.
+    clip_opponent_bearing_to_corridor: true
+    opponent_bearing_min_deg: 90.0
+    opponent_bearing_max_deg: 180.0
 
 # ---------------------------------------------------------------------------
 # Route-side buoy selector: shared tracker -> coloured stationary buoys
@@ -218,7 +227,9 @@ ground_remover_node:
 cluster_node:
   ros__parameters:
     cluster_tolerance: 1.0                     # [m] neighbouring-point link
-    min_cluster_size: 30                       # [points] reject tiny clutter
+    min_cluster_size: 20                       # [points] near-range clutter gate
+    min_cluster_size_far: 3                    # [points] sparse returns at 40 m
+    far_cluster_distance_m: 40.0               # [m] linear transition endpoint
     max_cluster_size: 10000                    # [points] reject large structures
     min_cluster_height: 0.2                    # [m]
     max_cluster_height: 4.0                    # [m]
@@ -231,4 +242,15 @@ cluster_node:
 # ---------------------------------------------------------------------------
 ship_tracker_node:
   ros__parameters:
+    # Track cluster centroids in odom at the LiDAR measurement time, then
+    # publish the result back in base_link so self motion is not target motion.
+    ego_pose_compensation: true
+    ego_odom_max_age_sec: 0.15
+    publish_tentative: true                    # Foxglove: show early candidates in yellow
+    min_marker_speed_knots: 0.0                # candidate display only; does not affect selection
+    max_marker_speed_knots: 10000.0
+    # Standard mode still needs 3 hits to confirm, but tolerates brief gaps
+    # while the track is tentative (each missed scan decrements hits by one).
+    max_misses_tentative: 4                    # 5 Hz -> retain a tentative candidate for about 0.8 s
     straight_hits_to_confirm: 10               # 5 Hz -> roughly 2 s to confirm
+    max_misses_confirmed: 20                    # 5 Hz -> retain confirmed tracks for about 4 s

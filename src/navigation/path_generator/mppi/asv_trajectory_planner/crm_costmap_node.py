@@ -34,14 +34,18 @@ class CrmCostmapNode(Node):
             ("width_m", 30.0), ("height_m", 30.0), ("resolution_m", 0.1),
             ("rolling_window", True), ("origin_x_m", -20.0), ("origin_y_m", -30.0),
             ("publish_rate_hz", 2.0), ("prediction_horizon_sec", 22.5),
-            ("prediction_step_sec", 0.5), ("loa_m", 2.0),
+            ("prediction_step_sec", 0.5),
+            # Legacy standalone visualizer: mirror planner_node's split CRM
+            # vessel dimensions if this executable is launched manually.
+            ("own_loa_m", 1.2), ("other_loa_m", 2.0),
         ])
         p = lambda n: self.get_parameter(n).value
         self.frame, self.base, self.opponent = map(str, (p("costmap_frame"), p("base_frame"), p("opponent_frame")))
         self.width, self.height, self.resolution = float(p("width_m")), float(p("height_m")), float(p("resolution_m"))
         self.rolling_window = bool(p("rolling_window")); self.origin_x, self.origin_y = float(p("origin_x_m")), float(p("origin_y_m"))
         self.cols, self.rows = round(self.width / self.resolution), round(self.height / self.resolution)
-        self.horizon, self.step, self.loa = float(p("prediction_horizon_sec")), float(p("prediction_step_sec")), float(p("loa_m"))
+        self.horizon, self.step = float(p("prediction_horizon_sec")), float(p("prediction_step_sec"))
+        self.own_loa_m, self.other_loa_m = float(p("own_loa_m")), float(p("other_loa_m"))
         self.odom = self.twist = None
         self.tf_buffer = Buffer(); self.tf_listener = TransformListener(self.tf_buffer, self)
         self.create_subscription(Odometry, str(p("own_odom_topic")), self._odom, 10)
@@ -75,8 +79,8 @@ class CrmCostmapNode(Node):
         xs = origin_x + (np.arange(self.cols) + 0.5) * self.resolution
         ys = origin_y + (np.arange(self.rows) + 0.5) * self.resolution
         grid_x, grid_y = np.meshgrid(xs, ys)
-        own = [-oy, ox, own_speed, own_heading, self.loa]
-        other = [[-ty, tx, math.hypot(vx, vy), target_heading, self.loa]]
+        own = [-oy, ox, own_speed, own_heading, self.own_loa_m]
+        other = [[-ty, tx, math.hypot(vx, vy), target_heading, self.other_loa_m]]
         risk = np.zeros_like(grid_x)
         for t in np.arange(0.0, self.horizon + 1e-9, self.step):
             risk = np.maximum(risk, crm_torch.timedomaincrm_numpy(-grid_y, grid_x, t, own, other))

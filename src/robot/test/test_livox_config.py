@@ -97,6 +97,22 @@ def test_glim_uses_raw_livox_imu_without_the_scaler_hop():
         assert '"acc_scale": 9.80665' in source
 
 
+def test_jetson_glim_configs_are_odom_only():
+    share_dir = get_package_share_directory("robot")
+    paths = [
+        os.path.join(share_dir, "config", "glim_config", "config_ros.json"),
+        os.path.join(share_dir, "config", "glim_config", "config_ros_cpu.json"),
+        os.path.join(share_dir, "config", "glim_config_headless", "config_ros.json"),
+    ]
+
+    for path in paths:
+        with open(path, "r") as stream:
+            source = stream.read()
+        assert '"enable_local_mapping": false' in source
+        assert '"enable_global_mapping": false' in source
+        assert '"map_frame_id": "odom"' in source
+
+
 def test_glim_interprets_livox_point_timestamps_as_absolute_nanoseconds():
     share_dir = get_package_share_directory("robot")
     path = os.path.join(share_dir, "config", "glim_config", "config_sensors.json")

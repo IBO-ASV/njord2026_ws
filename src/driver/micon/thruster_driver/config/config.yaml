@@ -5,7 +5,9 @@ thruster_driver_node:
     duty_resolution: 1000
 
     input_scaling:
-      max_linear_x: 1.0
+      # Task 2 MPPI targets 2.0 kn (1.0289 m/s).  Keep a small margin so
+      # the final velocity-input clamp does not reduce that command.
+      max_linear_x: 1.1
       max_linear_y: 1.0
       max_angular_z: 1.0
 

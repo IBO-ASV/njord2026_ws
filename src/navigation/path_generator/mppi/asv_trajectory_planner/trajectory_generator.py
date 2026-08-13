@@ -519,8 +519,12 @@ class TrajectoryGenerator:
         self,
         own_odom: Odometry,
     ) -> VesselState:
-        u = own_odom.twist.twist.linear.x
-        v = own_odom.twist.twist.linear.y
+        # Task 2 evaluates every MPPI candidate at the configured cruise
+        # speed, not at the instantaneous measured surge speed.  This keeps
+        # collision prediction conservative while the real vessel is still
+        # accelerating and matches the path passed to FollowPath.
+        u = self.planner.target_speed
+        v = 0.0
         r = math.degrees(own_odom.twist.twist.angular.z)  # ROS rad/s -> MPPI deg/s
 
         return VesselState(

@@ -534,7 +534,7 @@ class MPPItorch():
 
         return new_path
 
-    def get_opt(self, x, y, psi, U, r, rudders, accs, loa, others, path, col_cost_min, col_cost_max, div_cost, speed_cost, norm_cost, buoys=None, gate_center=None, buoy_cost_weight=120.0, gate_cost_weight=3.0, seed=None, straight_time=0, debug=False,
+    def get_opt(self, x, y, psi, U, r, rudders, accs, own_loa, other_loa, others, path, col_cost_min, col_cost_max, div_cost, speed_cost, norm_cost, buoys=None, gate_center=None, buoy_cost_weight=120.0, gate_cost_weight=3.0, seed=None, straight_time=0, debug=False,
                 buoy_margin_m=1.0, buoy_longitudinal_sigma_m=8.0, ax_gains=None):
         # All new keyword defaults reproduce the previously hardcoded behavior:
         #   buoy_margin_m=1.0 / buoy_longitudinal_sigma_m=8.0 were literals in the
@@ -568,7 +568,7 @@ class MPPItorch():
                 x,
                 U,
                 (-psi) % 360.0,
-                loa,
+                own_loa,
             ]
 
             others_crm = [
@@ -577,7 +577,7 @@ class MPPItorch():
                     oth.x,
                     oth.u,
                     (-oth.yaw) % 360.0,
-                    loa,
+                    other_loa,
                 ]
                 for oth in others
             ]
@@ -595,7 +595,7 @@ class MPPItorch():
                 turn=turn_crm,
                 ax_gains=ax_gains,
             )
-            print('own:', [y, x, U, psi, loa],)
+            print('own:', [y, x, U, psi, own_loa],)
             print('other:', others)
 
         # cost_collision_gain = torch.exp( -predtimes**2/(600)**2/2 )
@@ -813,7 +813,8 @@ class MPPIPlanner():
         buoy_cost_weight: float = 120.0,       # was: literal in get_opt call
         gate_cost_weight: float = 3.0,         # was: literal in get_opt call
         # --- safe distances / geometry ---
-        loa: float = 2.0,
+        own_loa_m: float = 1.2,
+        other_loa_m: float = 2.0,
         gate_half_width_m: float = 4.0,        # was: literal in make_virtual_gate_from_path call
         buoy_margin_m: float = 1.0,            # was: margin_m literal in buoy_outside_cost call
         buoy_longitudinal_sigma_m: float = 8.0,  # was: longitudinal_sigma_m literal
@@ -828,7 +829,10 @@ class MPPIPlanner():
         self.avoid_radius = avoid_radius
         self.avoid_offset = avoid_offset
 
-        self.loa = loa
+        # CRM uses a length-overall entry for each vessel.  Keep them separate:
+        # the own vessel is 1.2 m and the Task 2 opponent is modelled as 2.0 m.
+        self.own_loa_m = own_loa_m
+        self.other_loa_m = other_loa_m
         self.target_speed = target_speed
 
         self.speed_cost = speed_cost_weight
@@ -864,7 +868,7 @@ class MPPIPlanner():
             _lambda = lambda_,
             umin = [-20,-0.1],
             umax = [ 20, 0.1],
-            loa = self.loa,
+            loa = self.own_loa_m,
             targU = target_speed,
         )
 
@@ -913,7 +917,7 @@ class MPPIPlanner():
 
         ) = self.mppi_controller.get_opt(
             own.x, own.y, own.yaw, own.u, own.r, self.opt_rudder, self.opt_acc,
-            self.loa, others, path,
+            self.own_loa_m, self.other_loa_m, others, path,
             col_cost_min=self.col_cost_min,
             col_cost_max=self.col_cost_max,
             div_cost=self.div_cost,
@@ -930,7 +934,7 @@ class MPPIPlanner():
         )
 
         opttraj = get_traj(
-            own.x, own.y, own.yaw, own.u, own.r, self.opt_rudder, self.opt_acc, self.loa, self.mppi_controller.pred_dt,
+            own.x, own.y, own.yaw, own.u, own.r, self.opt_rudder, self.opt_acc, self.own_loa_m, self.mppi_controller.pred_dt,
             target_speed_mps=self.target_speed,
         )
 

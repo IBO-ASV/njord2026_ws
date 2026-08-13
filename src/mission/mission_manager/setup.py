@@ -26,7 +26,6 @@ setup(
         "console_scripts": [
             "mission_manager_node = mission_manager.mission_manager_node:main",
             "dock_wall_correction_node = mission_manager.dock_wall_correction_node:main",
-            "task2_readiness_adapter_node = mission_manager.task2_readiness_adapter_node:main",
             "ground_link_return_monitor_node = mission_manager.ground_link_return_node:main",
             "runtime_manager_node = mission_manager.runtime_manager_node:main",
             "operator_dispatcher_node = mission_manager.operator_dispatcher_node:main",

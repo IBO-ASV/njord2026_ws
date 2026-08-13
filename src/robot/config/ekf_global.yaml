@@ -42,18 +42,6 @@ ekf_filter_node_global:
     pose0_differential: false
     pose0_relative: false
 
-    # Task 2: a stable red/green buoy pair constrains the route centreline
-    # cross-track position and yaw.  Its covariance keeps along-track
-    # position intentionally weak; the node suppresses uncertain pairs.
-    pose1: /task2/buoy_pose_correction
-    pose1_config: [true, true, false,
-                   false, false, true,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false]
-    pose1_differential: false
-    pose1_relative: false
-
     # GNSS-independent continuous observations. The Livox driver deliberately
     # marks orientation unavailable, so fuse only planar acceleration and yaw
     # rate. This keeps propagation observed between GNSS updates.
