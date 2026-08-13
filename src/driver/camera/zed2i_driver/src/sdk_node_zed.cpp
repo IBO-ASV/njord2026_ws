@@ -261,9 +261,10 @@ public:
     depth_min_m_ = declare_parameter<double>("depth_min_m", 0.3);
     depth_max_m_ = declare_parameter<double>("depth_max_m", 20.0);
     const bool disable_self_calibration = declare_parameter<bool>("disable_self_calibration", true);
-    const int open_retry_count = std::max(1, declare_parameter<int>("open_retry_count", 6));
+    const int open_retry_count = std::max(
+      1, static_cast<int>(declare_parameter<int>("open_retry_count", 6)));
     const int open_retry_interval_ms = std::max(
-      0, declare_parameter<int>("open_retry_interval_ms", 2000));
+      0, static_cast<int>(declare_parameter<int>("open_retry_interval_ms", 2000)));
     aec_agc_enable_ = declare_parameter<bool>("aec_agc_enable", true);
     aec_agc_roi_enable_ = declare_parameter<bool>("aec_agc_roi_enable", true);
     aec_agc_roi_x_ratio_ = declare_parameter<double>("aec_agc_roi_x_ratio", 0.0);
