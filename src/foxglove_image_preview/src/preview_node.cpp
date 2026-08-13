@@ -75,20 +75,21 @@ private:
     }
     last_publish_ = now;
 
-    if (msg->encoding != "rgb8" && msg->encoding != "bgr8") {
+    if (msg->encoding != "rgb8" && msg->encoding != "bgr8" && msg->encoding != "bgra8") {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *get_clock(), 5000, "Unsupported encoding: %s", msg->encoding.c_str());
       return;
     }
     if (msg->width < (split_stereo_ ? 2U : 1U) || msg->height == 0 ||
-      msg->step < msg->width * 3U)
+      msg->step < msg->width * (msg->encoding == "bgra8" ? 4U : 3U))
     {
       RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "Invalid input image geometry");
       return;
     }
 
     cv::Mat input(
-      static_cast<int>(msg->height), static_cast<int>(msg->width), CV_8UC3,
+      static_cast<int>(msg->height), static_cast<int>(msg->width),
+      msg->encoding == "bgra8" ? CV_8UC4 : CV_8UC3,
       const_cast<unsigned char *>(msg->data.data()), static_cast<size_t>(msg->step));
     cv::Mat source = input;
     if (split_stereo_) {
@@ -101,6 +102,8 @@ private:
     cv::Mat bgr;
     if (msg->encoding == "rgb8") {
       cv::cvtColor(resized, bgr, cv::COLOR_RGB2BGR);
+    } else if (msg->encoding == "bgra8") {
+      cv::cvtColor(resized, bgr, cv::COLOR_BGRA2BGR);
     } else {
       bgr = resized;
     }
