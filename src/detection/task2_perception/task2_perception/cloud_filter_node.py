@@ -253,7 +253,10 @@ class CloudFilterNode(Node):
             return
         marker = Marker()
         marker.header.stamp = self.get_clock().now().to_msg()
-        marker.header.frame_id = self.output_frame
+        # The own-vessel outline describes the physical hull, so keep it in
+        # base_link even if the filtered cloud is configured in another frame.
+        # This makes its X coordinate coincide with base_link's forward axis.
+        marker.header.frame_id = "base_link"
         marker.ns = "self_vessel"
         marker.id = 0
         marker.type = Marker.LINE_STRIP

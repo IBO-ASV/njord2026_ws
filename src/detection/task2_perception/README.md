@@ -116,7 +116,8 @@ box, and the URDF LiDAR mount
 angles/position.
 
 `/task2/self_vessel_marker` is a visualization-only pentagonal outline of the
-configured `self_crop_*` footprint. Its pointed bow faces `+X` (forward).
-Add it as a Marker in Foxglove with `base_link` (or its parent frame) as the
-fixed frame to see the own-vessel reference against the point cloud. It is
-disabled by the real-vessel autonomy overlay.
+configured `self_crop_*` footprint. It is always published in `base_link`, and
+its pointed bow faces that frame's `+X` (forward). Add it as a Marker in
+Foxglove with `base_link` (or its parent frame) as the fixed frame to see the
+own-vessel reference against the point cloud. It is disabled by the real-vessel
+autonomy overlay.
