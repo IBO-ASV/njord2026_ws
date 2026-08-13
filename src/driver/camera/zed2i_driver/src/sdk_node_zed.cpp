@@ -31,6 +31,7 @@
 #include <limits>
 #include <string>
 #include <stdexcept>
+#include <thread>
 #include <vector>
 #include <mutex>
 #include <optional>
@@ -260,6 +261,9 @@ public:
     depth_min_m_ = declare_parameter<double>("depth_min_m", 0.3);
     depth_max_m_ = declare_parameter<double>("depth_max_m", 20.0);
     const bool disable_self_calibration = declare_parameter<bool>("disable_self_calibration", true);
+    const int open_retry_count = std::max(1, declare_parameter<int>("open_retry_count", 6));
+    const int open_retry_interval_ms = std::max(
+      0, declare_parameter<int>("open_retry_interval_ms", 2000));
     aec_agc_enable_ = declare_parameter<bool>("aec_agc_enable", true);
     aec_agc_roi_enable_ = declare_parameter<bool>("aec_agc_roi_enable", true);
     aec_agc_roi_x_ratio_ = declare_parameter<double>("aec_agc_roi_x_ratio", 0.0);
@@ -405,9 +409,24 @@ public:
     init_params.depth_mode = sl::DEPTH_MODE::QUALITY;
     init_params.coordinate_units = sl::UNIT::METER;
 
-    const auto error = camera_.open(init_params);
+    sl::ERROR_CODE error = sl::ERROR_CODE::FAILURE;
+    for (int attempt = 1; attempt <= open_retry_count; ++attempt) {
+      error = camera_.open(init_params);
+      if (error == sl::ERROR_CODE::SUCCESS) {
+        break;
+      }
+      if (attempt < open_retry_count) {
+        RCLCPP_WARN(
+          get_logger(), "ZED open attempt %d/%d failed: %s; retrying in %d ms",
+          attempt, open_retry_count, sl::toString(error).c_str(), open_retry_interval_ms);
+        camera_.close();
+        std::this_thread::sleep_for(std::chrono::milliseconds(open_retry_interval_ms));
+      }
+    }
     if (error != sl::ERROR_CODE::SUCCESS) {
-      RCLCPP_FATAL(get_logger(), "Failed to open ZED camera: %s", sl::toString(error).c_str());
+      RCLCPP_FATAL(
+        get_logger(), "Failed to open ZED camera after %d attempts: %s",
+        open_retry_count, sl::toString(error).c_str());
       rclcpp::shutdown();
       return;
     }
