@@ -1,0 +1,10 @@
+# Edited on the ground PC. Saving this file applies the listed values without
+# restarting the three role bringups. Only parameters supported at runtime by
+# their target node take effect.
+groundpc: {}
+minipc:
+  /joy_converter:
+    scale.linear_x: 0.2
+    scale.linear_y: 0.2
+    scale.angular_z: 0.2
+jetson: {}

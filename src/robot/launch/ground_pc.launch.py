@@ -33,6 +33,19 @@ def generate_launch_description():
         condition=IfCondition(enable_livox_gui_telemetry),
     )
     ntrip_caster_config = LaunchConfiguration("ntrip_caster_config")
+    runtime_parameters_file = LaunchConfiguration("runtime_parameters_file")
+
+    runtime_parameter_sync = Node(
+        package="robot",
+        executable="runtime_parameter_sync.py",
+        name="runtime_parameter_sync",
+        output="screen",
+        parameters=[{
+            "role": "groundpc",
+            "config_file": runtime_parameters_file,
+            "publish_updates": True,
+        }],
+    )
 
     ground_video_receiver_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
@@ -178,6 +191,13 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument("enable_ntrip_caster", default_value="true"),
             DeclareLaunchArgument(
+                "runtime_parameters_file",
+                default_value=PathJoinSubstitution(
+                    [FindPackageShare("robot"), "runtime_params", "runtime_parameters.yaml"]
+                ),
+                description="Editable runtime parameters distributed from the ground PC.",
+            ),
+            DeclareLaunchArgument(
                 "enable_foxglove_bridge",
                 default_value="false",
                 description="Expose vessel telemetry and waypoint markers to the Ground PC Foxglove GUI.",
@@ -206,6 +226,7 @@ def generate_launch_description():
             actual_route,
             planned_route,
             ground_waypoints,
+            runtime_parameter_sync,
             ground_video_receiver_launch,
             back_cam_h26x_receiver_launch,
             back_cam_jpeg_receiver_launch,

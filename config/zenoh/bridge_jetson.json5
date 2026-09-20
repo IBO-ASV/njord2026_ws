@@ -55,6 +55,7 @@
           "/gui/livox/points",
         ],
         subscribers: [
+          "/runtime_parameter_updates",
           "/odom", "/odometry/filtered/global", "/odometry/filtered/local", "/tf", "/tf_static", "/livox/imu",
           "/task1/safety_points",
           "/task2/safety_points", "/task2/points_filtered_visual",

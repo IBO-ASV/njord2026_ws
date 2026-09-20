@@ -28,6 +28,11 @@ install(TARGETS localization_input_guard
   DESTINATION lib/${PROJECT_NAME}
 )
 
+install(PROGRAMS
+  scripts/runtime_parameter_sync.py
+  DESTINATION lib/${PROJECT_NAME}
+)
+
 add_library(pass_through_goal_checker SHARED
   src/pass_through_goal_checker.cpp
 )
@@ -46,7 +51,7 @@ install(TARGETS pass_through_goal_checker
 install(FILES goal_checker_plugin.xml DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY
-  launch config urdf
+  launch config runtime_params urdf
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -84,6 +89,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_livox_config test/test_livox_config.py)
   ament_add_pytest_test(test_launch_roles test/test_launch_roles.py)
   ament_add_pytest_test(test_platform_manifest test/test_platform_manifest.py)
+  ament_add_pytest_test(test_runtime_parameter_sync test/test_runtime_parameter_sync.py)
 endif()
 
 ament_package()

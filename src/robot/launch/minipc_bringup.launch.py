@@ -120,6 +120,14 @@ def generate_launch_description():
     thruster_robot_description_file = LaunchConfiguration("thruster_robot_description_file")
     thruster_use_velocity_feedback = LaunchConfiguration("thruster_use_velocity_feedback")
 
+    runtime_parameter_sync = Node(
+        package="robot",
+        executable="runtime_parameter_sync.py",
+        name="runtime_parameter_sync",
+        output="screen",
+        parameters=[{"role": "minipc", "publish_updates": False}],
+    )
+
     # robot_state_publisher and base_link->um982_link static TF are started by
     # localization.launch.py. Do not start them again here.
     localization_launch = include_launch(
@@ -619,6 +627,7 @@ def generate_launch_description():
                 description="Require RTK Fix for alert-lamp AUTO readiness.",
             ),
             DeclareLaunchArgument("enable_bms", default_value="true"),
+            runtime_parameter_sync,
             DeclareLaunchArgument("enable_buoy_costmap", default_value="true"),
             DeclareLaunchArgument(
                 "enable_back_cam",

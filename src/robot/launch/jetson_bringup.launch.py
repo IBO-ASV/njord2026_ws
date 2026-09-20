@@ -73,6 +73,13 @@ def generate_launch_description():
     enable_task1_safety_points = LaunchConfiguration("enable_task1_safety_points")
     enable_task1_default_buoy_roi = LaunchConfiguration("enable_task1_default_buoy_roi")
     enable_task2_autonomy = LaunchConfiguration("enable_task2_autonomy")
+    runtime_parameter_sync = Node(
+        package="robot",
+        executable="runtime_parameter_sync.py",
+        name="runtime_parameter_sync",
+        output="screen",
+        parameters=[{"role": "jetson", "publish_updates": False}],
+    )
     dock_wall_correction = Node(
         package="mission_manager",
         executable="dock_wall_correction_node",
@@ -368,6 +375,7 @@ def generate_launch_description():
                 description="Run Task 2 LiDAR perception, tracking and MPPI on Jetson.",
             ),
             DeclareLaunchArgument("enable_livox_gui_telemetry", default_value="true", description="Publish bounded Livox GUI telemetry only."),
+            runtime_parameter_sync,
             livox_gui_downsampler,
             DeclareLaunchArgument(
                 "enable_zenoh_bridge",

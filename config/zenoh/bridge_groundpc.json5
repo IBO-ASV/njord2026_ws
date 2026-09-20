@@ -23,6 +23,7 @@
 
       allow: {
         publishers: [
+          "/runtime_parameter_updates",
         ],
         subscribers: [
           "/odom", "/tf", "/tf_static", "/mission/status", "/task/plan",
@@ -46,6 +47,7 @@
           "/gui/ground_speed_mps",
           "/gui/battery_percent",
           "/gui/livox/points",
+          "/runtime_parameter_updates",
         ],
         // The ground operator is a client of the miniPC-owned Mission Manager.
         // Task selection is carried in StartTask/RunTask requests, so no

@@ -45,6 +45,7 @@
   <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">pcl_det</exec_depend>
   <exec_depend>rclcpp_components</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>robot_localization</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>simple_manual</exec_depend>
