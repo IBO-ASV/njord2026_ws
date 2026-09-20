@@ -41,7 +41,7 @@ class RuntimeParameterSync(Node):
         self.config_file = Path(self.declare_parameter("config_file", "").value)
         self.publish_updates = self.declare_parameter("publish_updates", False).value
         self.last_mtime_ns = None
-        self.clients = []
+        self.parameter_clients = []
         qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
                          durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.publisher = self.create_publisher(String, "/runtime_parameter_updates", qos)
@@ -81,7 +81,7 @@ class RuntimeParameterSync(Node):
             ]
             future = client.call_async(request)
             future.add_done_callback(lambda done, node=node_name: self.report(node, done))
-            self.clients.append(client)
+            self.parameter_clients.append(client)
 
     def report(self, node_name, future):
         try:
