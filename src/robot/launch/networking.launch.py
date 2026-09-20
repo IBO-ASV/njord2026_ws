@@ -16,6 +16,7 @@ def _role_condition(role):
 
 def generate_launch_description():
     role = LaunchConfiguration("role")
+    zenoh_transport = LaunchConfiguration("zenoh_transport")
     enable_zenoh_bridge = LaunchConfiguration("enable_zenoh_bridge")
     enable_critical_link = LaunchConfiguration("enable_critical_link")
 
@@ -24,7 +25,10 @@ def generate_launch_description():
             FindPackageShare("robot"),
             "config",
             "zenoh",
-            PythonExpression(["'bridge_", role, ".json5'"]),
+            PythonExpression([
+                "'bridge_", role, "_tailscale.json5' if '", zenoh_transport,
+                "' == 'tailscale' else 'bridge_", role, ".json5'",
+            ]),
         ]
     )
 
@@ -66,6 +70,10 @@ def generate_launch_description():
                 description="Machine role used to select the Zenoh bridge and critical-link node.",
             ),
             DeclareLaunchArgument("enable_zenoh_bridge", default_value="true"),
+            DeclareLaunchArgument(
+                "zenoh_transport", default_value="direct", choices=["direct", "tailscale"],
+                description="Use the direct 10.42.0.0/24 link or the Tailscale ground-PC profile.",
+            ),
             DeclareLaunchArgument(
                 "enable_critical_link",
                 default_value="true",

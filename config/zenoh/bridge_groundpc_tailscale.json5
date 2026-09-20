@@ -1,0 +1,59 @@
+{
+  // Ground PC profile for remote operation over Tailscale. The direct-link
+  // profile remains bridge_groundpc.json5 and is selected with
+  // zenoh_transport:=direct.
+  mode: "peer",
+
+  connect: {
+    endpoints: ["tcp/gembu-elitemini-series.tail9cbcbe.ts.net:7447"],
+  },
+
+  scouting: {
+    multicast: { enabled: false },
+  },
+
+  plugins: {
+    ros2dds: {
+      domain: 6,
+
+      allow: {
+        publishers: [
+          "/runtime_parameter_updates",
+        ],
+        subscribers: [
+          "/odom", "/tf", "/tf_static", "/mission/status", "/task/plan",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/other_ship/twist",
+          "/task2/opponent_detected",
+          "/task2/selected_opponent_marker", "/task2/selected_opponent_velocity_marker",
+          "/task2/points_filtered_visual", "/task2/self_vessel_marker",
+          "/tracked_objects/markers", "/mppi/crm_costmap",
+          "/planned_path_pruned", "/actual_path_marker",
+          "/local_costmap/costmap",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/zed2i/left/preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/joy/set_feedback", "/foxglove_log", "/mission/waypoint_markers", "/cmd_vel_markers",
+          "/planned_path_pruned",
+          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/compass/raw",
+          "/gui/ground_speed_mps",
+          "/gui/battery_percent",
+          "/gui/livox/points",
+          "/runtime_parameter_updates",
+        ],
+        service_servers: [],
+        service_clients: [
+          "/mission/list_tasks",
+          "/mission/get_status",
+          "/mission/start_task",
+          "/mission/stop_task",
+          "/control/set_mode",
+        ],
+        action_servers: [],
+        action_clients: ["/mission/run_task"],
+      },
+    },
+  },
+}

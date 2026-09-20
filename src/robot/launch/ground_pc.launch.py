@@ -164,6 +164,7 @@ def generate_launch_description():
             "role": "groundpc",
             "enable_zenoh_bridge": LaunchConfiguration("enable_zenoh_bridge"),
             "enable_critical_link": LaunchConfiguration("enable_critical_link"),
+            "zenoh_transport": LaunchConfiguration("zenoh_transport"),
         }.items(),
     )
 
@@ -208,6 +209,10 @@ def generate_launch_description():
                 "enable_zenoh_bridge",
                 default_value="true",
                 description="Start the Ground PC zenoh-bridge-ros2dds process.",
+            ),
+            DeclareLaunchArgument(
+                "zenoh_transport", default_value="tailscale", choices=["direct", "tailscale"],
+                description="Use Tailscale by default; pass direct to use the existing 10.42.0.0/24 link.",
             ),
             DeclareLaunchArgument(
                 "enable_critical_link",
