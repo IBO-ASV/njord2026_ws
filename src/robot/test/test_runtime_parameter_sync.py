@@ -25,7 +25,7 @@ def test_sync_can_start_without_overwriting_node_clients_property():
     rclpy.init()
     try:
         node = SYNC.RuntimeParameterSync()
-        assert node.parameter_clients == []
+        assert node.parameter_clients == {}
         node.destroy_node()
     finally:
         rclpy.shutdown()

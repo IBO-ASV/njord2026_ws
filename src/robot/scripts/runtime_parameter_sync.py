@@ -41,7 +41,7 @@ class RuntimeParameterSync(Node):
         self.config_file = Path(self.declare_parameter("config_file", "").value)
         self.publish_updates = self.declare_parameter("publish_updates", False).value
         self.last_mtime_ns = None
-        self.parameter_clients = []
+        self.parameter_clients = {}
         qos = QoSProfile(depth=1, reliability=ReliabilityPolicy.RELIABLE,
                          durability=DurabilityPolicy.TRANSIENT_LOCAL)
         self.publisher = self.create_publisher(String, "/runtime_parameter_updates", qos)
@@ -71,8 +71,11 @@ class RuntimeParameterSync(Node):
             self.get_logger().error(f"runtime parameter update rejected: {error}")
             return
         for node_name, values in targets.items():
-            client = self.create_client(SetParameters, f"{node_name}/set_parameters")
-            if not client.service_is_ready():
+            client = self.parameter_clients.get(node_name)
+            if client is None:
+                client = self.create_client(SetParameters, f"{node_name}/set_parameters")
+                self.parameter_clients[node_name] = client
+            if not client.wait_for_service(timeout_sec=1.0):
                 self.get_logger().warning(f"{node_name}: parameter service unavailable")
                 continue
             request = SetParameters.Request()
@@ -81,7 +84,6 @@ class RuntimeParameterSync(Node):
             ]
             future = client.call_async(request)
             future.add_done_callback(lambda done, node=node_name: self.report(node, done))
-            self.parameter_clients.append(client)
 
     def report(self, node_name, future):
         try:
