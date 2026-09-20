@@ -73,6 +73,7 @@ def generate_launch_description():
     enable_task1_safety_points = LaunchConfiguration("enable_task1_safety_points")
     enable_task1_default_buoy_roi = LaunchConfiguration("enable_task1_default_buoy_roi")
     enable_task2_autonomy = LaunchConfiguration("enable_task2_autonomy")
+    zenoh_transport = LaunchConfiguration("zenoh_transport")
     runtime_parameter_sync = Node(
         package="robot",
         executable="runtime_parameter_sync.py",
@@ -250,6 +251,7 @@ def generate_launch_description():
             "role": "jetson",
             "enable_zenoh_bridge": LaunchConfiguration("enable_zenoh_bridge"),
             "enable_critical_link": "false",
+            "zenoh_transport": zenoh_transport,
         },
     )
 
@@ -381,6 +383,10 @@ def generate_launch_description():
                 "enable_zenoh_bridge",
                 default_value="true",
                 description="Start the Jetson zenoh-bridge-ros2dds process.",
+            ),
+            DeclareLaunchArgument(
+                "zenoh_transport", default_value="tailscale", choices=["direct", "tailscale"],
+                description="Use Tailscale by default; pass direct to use the existing 10.42.0.0/24 link.",
             ),
             DeclareLaunchArgument("heartbeat_monitor_zed2i", default_value="true"),
             DeclareLaunchArgument("heartbeat_monitor_lidar", default_value="true"),

@@ -1,0 +1,71 @@
+{
+  // Jetson profile for the miniPC Tailscale endpoint. The direct-link profile
+  // remains bridge_jetson.json5 and is selected with zenoh_transport:=direct.
+  mode: "peer",
+
+  connect: {
+    endpoints: ["tcp/100.103.144.35:7447"],
+  },
+
+  scouting: {
+    multicast: { enabled: false },
+  },
+
+  plugins: {
+    ros2dds: {
+      domain: 7,
+
+      transient_local_cache_multiplier: 20,
+      queries_timeout: {
+        transient_local_subscribers: 10.0,
+      },
+
+      allow: {
+        publishers: [
+          "/odom", "/odometry/filtered/global", "/livox/imu",
+          "/task1/safety_points",
+          "/task2/safety_points", "/task2/points_filtered_visual",
+          "/task2/self_vessel_marker", "/tracked_objects/markers",
+          "/mppi/crm_costmap", "/planned_path_pruned",
+          "/docking/berth1_corrected", "/docking/berth2_corrected",
+          "/autonomy/ready", "/heartbeat/autonomy",
+          "/task2/buoy_pose_correction",
+          "/other_ship/twist",
+          "/task2/opponent_detected",
+          "/task2/selected_opponent_marker", "/task2/selected_opponent_velocity_marker",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/yolo/debug_preview/q40/compressed",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/zed2i/left/preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/foxglove_log",
+          "/gui/livox/points",
+        ],
+        subscribers: [
+          "/runtime_parameter_updates",
+          "/odom", "/odometry/filtered/global", "/odometry/filtered/local", "/tf", "/tf_static", "/livox/imu",
+          "/task1/safety_points",
+          "/task2/safety_points", "/task2/points_filtered_visual",
+          "/task2/self_vessel_marker", "/tracked_objects/markers",
+          "/mppi/crm_costmap", "/planned_path_pruned",
+          "/docking/berth1_nominal", "/docking/berth2_nominal",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/yolo/debug_preview/q40/compressed",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/zed2i/left/preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/foxglove_log",
+          "/gui/livox/points",
+        ],
+        service_servers: [], service_clients: [],
+        action_servers: [], action_clients: [],
+      },
+    },
+  },
+}
