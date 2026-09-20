@@ -1,7 +1,9 @@
 """Publish a low-latency left-eye JPEG preview from a ZED UVC stream."""
 
+import os
+
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument
+from launch.actions import DeclareLaunchArgument, OpaqueFunction
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
@@ -9,6 +11,31 @@ from launch_ros.actions import Node
 def generate_launch_description():
     raw_topic = LaunchConfiguration("raw_topic")
     output_prefix = LaunchConfiguration("output_prefix")
+
+    return LaunchDescription([
+        DeclareLaunchArgument(
+            "video_device",
+            default_value=(
+                "/dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_"
+                "OV0001-video-index0"
+            ),
+        ),
+        DeclareLaunchArgument("raw_topic", default_value="/zed2i/stereo/image_raw"),
+        DeclareLaunchArgument("output_prefix", default_value="/zed2i/left/preview"),
+        DeclareLaunchArgument("max_fps", default_value="10.0"),
+        OpaqueFunction(function=launch_setup),
+    ])
+
+
+def launch_setup(context, *args, **kwargs):
+    raw_topic = LaunchConfiguration("raw_topic")
+    output_prefix = LaunchConfiguration("output_prefix")
+    # usb_cam resolves a by-id symlink target relative to /dev, yielding an
+    # invalid /dev/../../videoN path.  Preserve the stable by-id default but
+    # hand usb_cam its canonical device path.
+    video_device = os.path.realpath(
+        LaunchConfiguration("video_device").perform(context)
+    )
 
     camera = Node(
         package="usb_cam",
@@ -20,7 +47,7 @@ def generate_launch_description():
             ("camera_info", "/zed2i/stereo/camera_info"),
         ],
         parameters=[{
-            "video_device": LaunchConfiguration("video_device"),
+            "video_device": video_device,
             "image_width": 2560,
             "image_height": 720,
             "framerate": 15.0,
@@ -45,20 +72,4 @@ def generate_launch_description():
         }],
     )
 
-    return LaunchDescription([
-        # /dev/videoN numbering is not stable across reconnects.  Match the
-        # left-eye device already recorded in zed2i_jetson_orin_nano.yaml so
-        # the V4L2 fallback cannot silently select the rear camera instead.
-        DeclareLaunchArgument(
-            "video_device",
-            default_value=(
-                "/dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_"
-                "OV0001-video-index0"
-            ),
-        ),
-        DeclareLaunchArgument("raw_topic", default_value="/zed2i/stereo/image_raw"),
-        DeclareLaunchArgument("output_prefix", default_value="/zed2i/left/preview"),
-        DeclareLaunchArgument("max_fps", default_value="10.0"),
-        camera,
-        preview,
-    ])
+    return [camera, preview]

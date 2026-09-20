@@ -1,6 +1,8 @@
 import importlib.util
 from pathlib import Path
 
+import rclpy
+
 
 MODULE = Path(__file__).parents[1] / "scripts" / "runtime_parameter_sync.py"
 SPEC = importlib.util.spec_from_file_location("runtime_parameter_sync", MODULE)
@@ -17,3 +19,13 @@ def test_role_parameters_accepts_runtime_values_and_rejects_nested_values():
     except ValueError:
         return
     assert False, "nested parameter mappings must be rejected"
+
+
+def test_sync_can_start_without_overwriting_node_clients_property():
+    rclpy.init()
+    try:
+        node = SYNC.RuntimeParameterSync()
+        assert node.parameter_clients == []
+        node.destroy_node()
+    finally:
+        rclpy.shutdown()
