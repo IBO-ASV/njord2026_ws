@@ -10,7 +10,8 @@
 
   // Jetson から疎通確認済みの miniPC 有線 NIC へ接続する。
   connect: {
-    endpoints: ["tcp/10.42.0.2:7447"],
+    // miniPC (gembu-elitemini-series) の Tailscale IPv4
+    endpoints: ["tcp/100.103.144.35:7447"],
   },
 
   scouting: {

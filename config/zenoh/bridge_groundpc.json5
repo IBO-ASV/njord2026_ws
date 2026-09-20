@@ -5,12 +5,10 @@
   //   従来どおりRTP/UDP専用経路を使う。
   mode: "peer",
 
-  // Ground PC と miniPC は 10.42.0.0/24 の直結リンクで接続する。
-  // mDNS の解決待ち／誤解決により bridge 接続が遅延することを避ける。
-  // スマートフォンInternet経路を使う場合も7447をInternetへ直接公開せず、
-  // WireGuard等のVPN内アドレスをendpointにする。
+  // Ground PC と miniPC は Tailscale のVPNアドレスで接続する。
+  // miniPC (gembu-elitemini-series) の Tailscale IPv4: 100.103.144.35
   connect: {
-    endpoints: ["tcp/10.42.0.2:7447"],
+    endpoints: ["tcp/100.103.144.35:7447"],
   },
 
   scouting: {
