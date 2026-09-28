@@ -10,3 +10,8 @@ adnav_driver:
     # sensors for observation and logging, but is not fused initially.
     packet_request: [20, 50, 28, 50]
     packet_timer_period: 1000
+
+    # The device stores 'internal GNSS enabled' in its Filter Options and it was found
+    # disabled, which keeps the navigation filter uninitialised (position = Sydney).
+    # Enforce it at every start (non-permanent write).
+    internal_gnss_enabled: 1
