@@ -9,7 +9,8 @@
 	url = https://github.com/IBO-ASV/pcl_segmentation.git
 [submodule "src/driver/ins/ros2-driver"]
 	path = src/driver/ins/ros2-driver
-	url = https://github.com/advanced-navigation/ros2-driver.git
+	url = https://github.com/IBO-ASV/ros2-driver.git
+	branch = master
 [submodule "src/driver/gnss/ntripcaster"]
 	path = src/driver/gnss/ntripcaster
 	url = https://github.com/IBO-ASV/ntripcaster.git
