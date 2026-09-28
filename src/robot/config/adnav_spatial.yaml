@@ -15,3 +15,7 @@ adnav_driver:
     # disabled, which keeps the navigation filter uninitialised (position = Sydney).
     # Enforce it at every start (non-permanent write).
     internal_gnss_enabled: 1
+
+    # Do not warn about 'UTC Time NOT Initialised' for this many seconds after
+    # start; the GNSS time is normally acquired within a few seconds.
+    utc_time_grace_period_s: 30.0
