@@ -157,13 +157,14 @@ jobs:
           smoke_log="$(mktemp)"
           python3 .github/scripts/task1_headless_smoke.py --timeout 45 >"${smoke_log}.probe" 2>&1 &
           probe_pid=$!
+          # The simulator's thruster profile requires filtered local odometry.
           ros2 launch task1_sim task1_sim.launch.py \
             driver_delay:=0.0 \
             nav2_delay:=0.0 \
             goal_delay:=0.0 \
             use_nav2:=false \
             use_sensor_noise:=false \
-            use_local_ekf:=false \
+            use_local_ekf:=true \
             use_global_ekf:=false \
             use_validator:=false \
             use_gui_dummy_publishers:=false \
