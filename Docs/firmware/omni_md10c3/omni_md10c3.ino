@@ -1,6 +1,5 @@
 #include <HardwareSerial.h>
 
-#include <algorithm>
 #include <cmath>
 
 #include "serial_protocol.hpp"
@@ -46,9 +45,24 @@ unsigned long last_valid_command_time_ms = 0;
 bool has_valid_command = false;
 bool last_direction_high[kMotorCount] = {false, false, false};
 
+// Keep the sketch compatible with the same Arduino ESP32 toolchain family as
+// the existing watercraft firmware.  std::clamp is C++17-only and is not
+// available in every supported Arduino core toolchain.
+float clampDuty(float duty)
+{
+  if (duty > kDutyLimit) {
+    return kDutyLimit;
+  }
+  if (duty < -kDutyLimit) {
+    return -kDutyLimit;
+  }
+  return duty;
+}
+
 uint32_t dutyToPwmCount(float duty)
 {
-  const float limited = std::clamp(std::fabs(duty), 0.0F, kDutyLimit);
+  const float magnitude = std::fabs(duty);
+  const float limited = magnitude > kDutyLimit ? kDutyLimit : magnitude;
   const uint32_t maximum = (1U << kPwmResolutionBits) - 1U;
   return static_cast<uint32_t>(std::lround(limited * static_cast<float>(maximum)));
 }
@@ -77,7 +91,7 @@ void applyDuty(const float (&duty)[kMotorCount])
     return;
   }
   for (size_t i = 0; i < kMotorCount; ++i) {
-    const float clamped = std::clamp(duty[i], -kDutyLimit, kDutyLimit);
+    const float clamped = clampDuty(duty[i]);
     const bool forward = clamped >= 0.0F;
     const bool direction_high = forward ^ kDirectionInverted[i];
     if (direction_high != last_direction_high[i]) {
@@ -126,7 +140,7 @@ bool processCommand(const uint8_t * raw, size_t raw_length)
     }
     // The firmware owns a second, non-bypassable duty boundary even if a
     // faulty or older host sends a larger finite value.
-    duty[i] = std::clamp(duty[i], -kDutyLimit, kDutyLimit);
+    duty[i] = clampDuty(duty[i]);
   }
   const uint8_t flags = payload[kMotorCount * sizeof(float)];
 

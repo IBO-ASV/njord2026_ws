@@ -40,6 +40,49 @@ jobs:
           if [[ -z "$base" || "$base" =~ ^0+$ ]]; then base="HEAD^"; fi
           python .github/scripts/check_changed_files.py --base "$base"
 
+  actuator-profile-test:
+    # Keep the three-wheel safety path independently testable.  The broader
+    # simulation job also builds robot, whose optional runtime dependencies
+    # are intentionally outside this actuator unit-test closure.
+    runs-on: ubuntu-22.04
+    container:
+      image: ros:humble-ros-base-jammy
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          submodules: false
+
+      - name: Install actuator test dependencies
+        run: |
+          apt-get update
+          apt-get install --no-install-recommends -y \
+            python3-colcon-common-extensions \
+            python3-rosdep
+          rosdep update
+          rosdep install --from-paths \
+            src/driver/micon/micon_driver_fd \
+            src/driver/micon/thruster_driver \
+            --ignore-src --rosdistro humble -r -y
+
+      - name: Build actuator profiles
+        run: |
+          source /opt/ros/humble/setup.bash
+          colcon build --event-handlers console_direct+ --packages-select \
+            micon_driver_fd \
+            thruster_driver
+
+      - name: Test actuator profiles
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          colcon test --event-handlers console_direct+ --packages-select \
+            micon_driver_fd \
+            thruster_driver
+          colcon test-result --verbose
+
   core-simulation-build:
     runs-on: ubuntu-22.04
     container:
