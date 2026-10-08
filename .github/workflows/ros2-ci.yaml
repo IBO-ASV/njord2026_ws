@@ -65,7 +65,7 @@ jobs:
           rosdep install --from-paths \
             src/driver/micon/micon_driver_fd \
             src/driver/micon/thruster_driver \
-            --ignore-src --rosdistro humble -r -y
+            --ignore-src --rosdistro humble --skip-keys xacro -r -y
 
       - name: Build actuator profiles
         run: |
