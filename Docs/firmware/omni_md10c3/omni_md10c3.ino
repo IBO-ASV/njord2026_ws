@@ -2,6 +2,7 @@
 
 #include <cmath>
 
+#include "frame_safety.hpp"
 #include "serial_protocol.hpp"
 
 namespace {
@@ -18,6 +19,7 @@ constexpr uint32_t kPwmFrequencyHz = 20000;
 constexpr uint8_t kPwmResolutionBits = 11;
 constexpr uint32_t kCommandTimeoutMs = 250;
 constexpr uint32_t kFrameInterByteTimeoutMs = 50;
+constexpr uint32_t kFrameTotalTimeoutMs = 50;
 constexpr uint32_t kDirectionChangeDeadtimeUs = 2000;
 constexpr unsigned long kSerialBaudRate = 115200;
 constexpr size_t kSerialBytesPerLoop = 128;
@@ -55,6 +57,7 @@ size_t encoded_frame_length = 0;
 bool discarding_oversized_frame = false;
 unsigned long last_valid_command_time_ms = 0;
 unsigned long last_partial_frame_byte_time_ms = 0;
+unsigned long partial_frame_start_time_ms = 0;
 bool has_valid_command = false;
 bool has_partial_frame = false;
 bool pwm_hardware_ready = false;
@@ -115,6 +118,16 @@ void enterSafeState()
     digitalWrite(kDirectionPins[i], LOW);
     last_direction_high[i] = false;
   }
+}
+
+void discardPartialFrameAndStop()
+{
+  encoded_frame_length = 0;
+  has_partial_frame = false;
+  // A delayed suffix cannot become a valid command.  Consume input until its
+  // delimiter, then accept only a newly framed command.
+  discarding_oversized_frame = true;
+  enterSafeState();
 }
 
 bool configurePins()
@@ -298,26 +311,36 @@ void processSerialInput()
       enterSafeState();
       continue;
     }
+    const unsigned long now = millis();
+    if (!has_partial_frame) {
+      partial_frame_start_time_ms = now;
+    }
     encoded_frame[encoded_frame_length++] = byte;
     has_partial_frame = true;
-    last_partial_frame_byte_time_ms = millis();
+    last_partial_frame_byte_time_ms = now;
   }
 }
 
 void enforceSafety()
 {
-  if (has_valid_command && millis() - last_valid_command_time_ms > kCommandTimeoutMs) {
+  const unsigned long now = millis();
+  const bool command_timed_out = has_valid_command &&
+    omni_md10c3::elapsedAtLeast(now, last_valid_command_time_ms, kCommandTimeoutMs);
+  if (command_timed_out) {
     enterSafeState();
   }
-  if (has_partial_frame &&
-    millis() - last_partial_frame_byte_time_ms > kFrameInterByteTimeoutMs)
+  if (omni_md10c3::mustDiscardPartialFrame(command_timed_out, has_partial_frame) ||
+    omni_md10c3::partialFrameExpired(
+      has_partial_frame, now, partial_frame_start_time_ms, last_partial_frame_byte_time_ms,
+      kFrameInterByteTimeoutMs, kFrameTotalTimeoutMs))
   {
-    // Do not accept a delayed suffix as the end of a frame that began before
-    // the communication watchdog expired.  Resynchronize only after its next
-    // delimiter, while keeping every output low.
-    encoded_frame_length = 0;
-    has_partial_frame = false;
-    discarding_oversized_frame = true;
+    discardPartialFrameAndStop();
+  }
+  if (omni_md10c3::calibrationPulseExpired(
+      kCalibrationOutputEnabled, calibration_pulse_active, now,
+      calibration_pulse_start_time_ms, kCalibrationPulseLimitMs))
+  {
+    calibration_pulse_latched = true;
     enterSafeState();
   }
 }

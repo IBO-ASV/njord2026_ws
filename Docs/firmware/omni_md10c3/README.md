@@ -38,8 +38,9 @@ payloadは校正済みの物理速度・回転数・推力ではなく、符号�
 ## 安全動作
 
 - 起動時、PWM初期化失敗、フレーム不正、CRC不一致、NaN/Infでは**全chを直ちに
-  PWM=0、DIR=LOW**にする。途中まで届いたフレームが50 msを超えた場合も破棄し、次の
-  delimiterまで後半だけを受理しない。
+  PWM=0、DIR=LOW**にする。途中まで届いたフレームはbyte間または全体の経過が50 msに
+  達した時点で破棄し、通信watchdog遷移時も破棄する。次のdelimiterまで後半だけを
+  受理しない。
 - 初期化・soft emergency stop・250 msの有効通信途絶では、全PWMを0、全DIRをLOWにする。
 - 有限値もfirmware内で `abs(duty) <= 0.50` に再clampする。host側にも同じ上限がある。
 - 正負が切り替わるchは、PWMを0にして2 ms待ってからDIRを切り替える。hostの疑似TTY
@@ -69,8 +70,9 @@ payloadは校正済みの物理速度・回転数・推力ではなく、符号�
    ```
 
    例: `[50, 0, 0]` はLFだけに +0.05 duty を要求する。hostは0.15、firmwareは
-   一輪・0.15・連続1秒で二重に制限し、ゼロまたはemergency frameを受けるまで次のpulseを
-   拒否する。実機への送信は本手順書だけでは許可されない。
+   一輪・0.15・連続1秒で二重に制限し、通信が途絶してもloop側で停止ラッチする。ゼロまたは
+   emergency frameを受けるまで次のpulseを拒否する。実機への送信は本手順書だけでは
+   許可されない。
 4. 期待する接線方向と逆なら、その輪だけfirmwareの `kDirectionInverted` を変更する。
    `duty_array` はYAMLの `reverse` を通らないため、校正時に通常profileの `reverse` を
    併用して補正してはならない。通常profileの `reverse` は `false` のまま維持する。

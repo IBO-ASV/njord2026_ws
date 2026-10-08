@@ -67,6 +67,10 @@ if(BUILD_TESTING)
   ament_add_gtest(test_serial_writer test/test_serial_writer.cpp)
   target_link_libraries(test_serial_writer serial_writer_lib bms_serial_reader_lib util)
   ament_target_dependencies(test_serial_writer rclcpp geometry_msgs std_msgs)
+
+  ament_add_gtest(test_omni_firmware_safety test/test_omni_firmware_safety.cpp)
+  target_include_directories(test_omni_firmware_safety PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../../../Docs/firmware/omni_md10c3)
 endif()
 
 ament_package()
