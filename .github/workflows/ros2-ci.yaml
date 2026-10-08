@@ -76,6 +76,7 @@ jobs:
 
       - name: Test actuator profiles
         run: |
+          python3 src/robot/test/test_thruster_profile_guard.py
           source /opt/ros/humble/setup.bash
           source install/setup.bash
           colcon test --event-handlers console_direct+ --packages-select \

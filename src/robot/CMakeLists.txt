@@ -84,6 +84,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_livox_config test/test_livox_config.py)
   ament_add_pytest_test(test_launch_roles test/test_launch_roles.py)
   ament_add_pytest_test(test_platform_manifest test/test_platform_manifest.py)
+  ament_add_pytest_test(test_thruster_profile_guard test/test_thruster_profile_guard.py)
 endif()
 
 ament_package()

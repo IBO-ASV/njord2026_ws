@@ -58,6 +58,12 @@ thruster_robot_description_file:=<robot>/urdf/omni_3wheel.urdf
 thruster_serial_config_file:=<micon_driver_fd>/config/omni_md10c3_calibration.yaml
 ```
 
+### 既存RPPでの3輪Task 1最小経路の制約
+
+- Task 1-1の最低確認にはNav2自律航行を含めない。実Nav2へ進む場合でも、既存Task 1のRPPと`vy=0`は前後移動と旋回だけの経路追従候補として使える。
+- 横移動を使う全方向経路追従を行う場合にだけ、holonomic planner/controllerと対応する経路・安全検証を別途追加する。今回それらは変更しない。
+- 3輪profileの`0.20 m/s`・`0.30 rad/s`は未校正の`cmd_vel`入力上限であり、実機速度・停止距離・Nav2追従性能を表さない。実測と低duty校正が終わるまで性能成功と扱わない。
+
 ## test07089 の整理
 
 - [ ] masterを基準に、各統合sliceを独立branchとdraft PRにする。

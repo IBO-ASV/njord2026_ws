@@ -10,6 +10,7 @@ mode live on the Jetson side (jetson_bringup.launch.py) and must not be
 duplicated here.
 """
 
+import importlib.util
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -19,6 +20,7 @@ from launch.actions import (
     ExecuteProcess,
     GroupAction,
     IncludeLaunchDescription,
+    OpaqueFunction,
     TimerAction,
 )
 from launch.conditions import IfCondition, UnlessCondition
@@ -26,6 +28,16 @@ from launch.launch_description_sources import AnyLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
+
+
+_PROFILE_GUARD_PATH = os.path.join(
+    os.path.dirname(os.path.abspath(__file__)), "thruster_profile_guard.py"
+)
+_PROFILE_GUARD_SPEC = importlib.util.spec_from_file_location(
+    "robot_thruster_profile_guard", _PROFILE_GUARD_PATH
+)
+_PROFILE_GUARD = importlib.util.module_from_spec(_PROFILE_GUARD_SPEC)
+_PROFILE_GUARD_SPEC.loader.exec_module(_PROFILE_GUARD)
 
 
 def include_launch(package_name, path_parts, condition, launch_arguments=None):
@@ -44,6 +56,17 @@ def include_launch(package_name, path_parts, condition, launch_arguments=None):
             )
         ],
     )
+
+
+def validate_thruster_profile_action(context):
+    """Reject a partial three-wheel profile before either actuator node starts."""
+    _PROFILE_GUARD.validate_thruster_profile_combination(
+        LaunchConfiguration("enable_thruster").perform(context),
+        LaunchConfiguration("thruster_config_file").perform(context),
+        LaunchConfiguration("thruster_robot_description_file").perform(context),
+        LaunchConfiguration("thruster_serial_config_file").perform(context),
+    )
+    return []
 
 
 def generate_launch_description():
@@ -298,6 +321,7 @@ def generate_launch_description():
             "use_velocity_feedback": thruster_use_velocity_feedback,
         },
     )
+    thruster_profile_guard = OpaqueFunction(function=validate_thruster_profile_action)
 
     thruster_serial = Node(
         package="micon_driver_fd",
@@ -786,6 +810,7 @@ def generate_launch_description():
             command_arbiter,
             control_manager_launch,
             mission_manager_launch,
+            thruster_profile_guard,
             thruster_launch,
             thruster_serial,
             bms_serial,
