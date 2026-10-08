@@ -71,7 +71,9 @@ macro(njord_detect_platform)
   # NJORD_HAS_CUDA stays OFF and the stub fallback is preserved.
   if(NOT CMAKE_CUDA_COMPILER AND CUDAToolkit_FOUND AND CUDAToolkit_NVCC_EXECUTABLE)
     set(CMAKE_CUDA_COMPILER "${CUDAToolkit_NVCC_EXECUTABLE}")
-    message(STATUS "njord_platform: check_language(CUDA) did not find nvcc on PATH; using CUDAToolkit_NVCC_EXECUTABLE=${CUDAToolkit_NVCC_EXECUTABLE}")
+    message(STATUS
+      "njord_platform: check_language(CUDA) did not find nvcc on PATH; using "
+      "CUDAToolkit_NVCC_EXECUTABLE=${CUDAToolkit_NVCC_EXECUTABLE}")
   endif()
 
   set(NJORD_HAS_CUDA OFF)
@@ -148,7 +150,7 @@ macro(njord_detect_platform)
   endif()
 
   if(_njord_zed_cuda_major AND CUDAToolkit_FOUND AND
-     CUDAToolkit_VERSION_MAJOR EQUAL _njord_zed_cuda_major)
+    CUDAToolkit_VERSION_MAJOR EQUAL _njord_zed_cuda_major)
     get_filename_component(ZED_DIR "${_njord_zed_config}" DIRECTORY)
     find_package(zed QUIET CONFIG PATHS "${ZED_DIR}" NO_DEFAULT_PATH)
     if(ZED_FOUND)
@@ -166,7 +168,9 @@ macro(njord_detect_platform)
     elseif(NOT CUDAToolkit_FOUND)
       message(STATUS "njord_platform: ZED SDK unavailable; requires CUDA ${_njord_zed_cuda_major}.x but no CUDA Toolkit found")
     elseif(NOT CUDAToolkit_VERSION_MAJOR EQUAL _njord_zed_cuda_major)
-      message(STATUS "njord_platform: ZED SDK unavailable; requires CUDA ${_njord_zed_cuda_major}.x but detected CUDA Toolkit is ${CUDAToolkit_VERSION}")
+      message(STATUS
+        "njord_platform: ZED SDK unavailable; requires CUDA ${_njord_zed_cuda_major}.x "
+        "but detected CUDA Toolkit is ${CUDAToolkit_VERSION}")
     else()
       message(STATUS "njord_platform: ZED SDK unavailable; find_package(zed) did not succeed")
     endif()
