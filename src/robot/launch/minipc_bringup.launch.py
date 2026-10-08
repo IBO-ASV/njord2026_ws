@@ -53,6 +53,13 @@ def generate_launch_description():
     default_thruster_urdf = os.path.join(
         get_package_share_directory("robot"), "urdf", "robot.urdf_modified.urdf"
     )
+    # Keep the established four-ESC watercraft protocol as the default.  A
+    # separate file is required to opt in to the incompatible MD10C 3-wheel
+    # packet format, so a wheel-base launch cannot silently drive the vessel
+    # firmware with a different message type.
+    default_thruster_serial_config = os.path.join(
+        get_package_share_directory("micon_driver_fd"), "config", "esc4_force.yaml"
+    )
 
     serial_port = LaunchConfiguration("serial_port")
     baud = LaunchConfiguration("baud")
@@ -119,6 +126,7 @@ def generate_launch_description():
     thruster_config_file = LaunchConfiguration("thruster_config_file")
     thruster_robot_description_file = LaunchConfiguration("thruster_robot_description_file")
     thruster_use_velocity_feedback = LaunchConfiguration("thruster_use_velocity_feedback")
+    thruster_serial_config_file = LaunchConfiguration("thruster_serial_config_file")
 
     # robot_state_publisher and base_link->um982_link static TF are started by
     # localization.launch.py. Do not start them again here.
@@ -297,6 +305,7 @@ def generate_launch_description():
         name="thruster_serial",
         output="screen",
         parameters=[
+            thruster_serial_config_file,
             {
                 "serial_port": serial_port,
                 "baud": baud,
@@ -753,6 +762,15 @@ def generate_launch_description():
                 "thruster_use_velocity_feedback",
                 default_value="false",
                 description="Use measured local odometry velocity in thruster control.",
+            ),
+            DeclareLaunchArgument(
+                "thruster_serial_config_file",
+                default_value=default_thruster_serial_config,
+                description=(
+                    "Serial command profile YAML. Keep the default esc4_force profile for "
+                    "the watercraft; pass micon_driver_fd/config/omni_md10c3.yaml only "
+                    "with the dedicated three-wheel MD10C firmware."
+                ),
             ),
             localization_launch,
             um982_launch,

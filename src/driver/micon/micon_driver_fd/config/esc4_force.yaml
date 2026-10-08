@@ -1,0 +1,5 @@
+# Default profile used by minipc_bringup for the existing watercraft firmware.
+# Its type 0x01, four-float force-command frame is intentionally unchanged.
+thruster_serial:
+  ros__parameters:
+    command_profile: "esc4_force"

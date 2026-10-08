@@ -31,6 +31,22 @@ or non-finite input as an emergency stop, and applies its own command timeout.
 It remains compatible with the watercraft firmware because the type `0x01`
 wire format is unchanged.
 
+`robot/launch/minipc_bringup.launch.py` loads
+`config/esc4_force.yaml` by default.  For the three-wheel base, both the
+allocator configuration and the serial configuration must be selected in the
+same launch; do not switch only one side:
+
+```text
+thruster_config_file:=<thruster_driver>/config/omni_md10c3.yaml
+thruster_robot_description_file:=<robot>/urdf/omni_3wheel.urdf
+thruster_serial_config_file:=<micon_driver_fd>/config/omni_md10c3.yaml
+```
+
+The three-wheel allocation profile has a deliberate configuration interlock
+and the new firmware also starts output-locked.  Keep both locks in place
+until the wheel polarity and external electrical stop have been checked using
+the firmware README's low-duty, one-wheel-at-a-time procedure.
+
 Every 50 ms, `serial_writer` sends a `THRUSTER_COMMAND` frame compatible with
 `Docs/PROTOCOL.md`:
 
