@@ -105,11 +105,17 @@ TEST(ThrusterDriverNodeSafety, RejectsNonFiniteTwistAndUsesSteadyWatchdog)
   rclcpp::executors::SingleThreadedExecutor executor;
   executor.add_node(driver);
   executor.add_node(io);
+  // Let DDS discover both endpoints before sending the first command.
+  spinFor(executor, 30ms);
 
   geometry_msgs::msg::Twist finite_command;
   finite_command.linear.x = 0.05;
-  cmd_pub->publish(finite_command);
-  spinFor(executor, 80ms);
+  const auto finite_command_deadline = std::chrono::steady_clock::now() + 80ms;
+  while (std::chrono::steady_clock::now() < finite_command_deadline) {
+    cmd_pub->publish(finite_command);
+    executor.spin_some();
+    std::this_thread::sleep_for(2ms);
+  }
   ASSERT_EQ(latest_output.size(), 3U);
   EXPECT_TRUE(std::any_of(
     latest_output.begin(), latest_output.end(), [](float value) {return std::fabs(value) > 1e-4F;}));
@@ -120,8 +126,12 @@ TEST(ThrusterDriverNodeSafety, RejectsNonFiniteTwistAndUsesSteadyWatchdog)
   spinFor(executor, 20ms);
   EXPECT_TRUE(isAllZero(latest_output));
 
-  cmd_pub->publish(finite_command);
-  spinFor(executor, 20ms);
+  const auto recovered_command_deadline = std::chrono::steady_clock::now() + 30ms;
+  while (std::chrono::steady_clock::now() < recovered_command_deadline) {
+    cmd_pub->publish(finite_command);
+    executor.spin_some();
+    std::this_thread::sleep_for(2ms);
+  }
   EXPECT_TRUE(std::any_of(
     latest_output.begin(), latest_output.end(), [](float value) {return std::fabs(value) > 1e-4F;}));
 
