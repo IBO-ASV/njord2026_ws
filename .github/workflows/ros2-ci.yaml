@@ -158,7 +158,10 @@ jobs:
           python3 .github/scripts/task1_headless_smoke.py --timeout 45 >"${smoke_log}.probe" 2>&1 &
           probe_pid=$!
           # The simulator's thruster profile requires filtered local odometry.
-          ros2 launch task1_sim task1_sim.launch.py \
+          # Give the launch tree its own process group.  ROS launch can have
+          # several descendants, so a single-parent SIGINT is not sufficient
+          # to bound the smoke-test cleanup on a CI runner.
+          setsid ros2 launch task1_sim task1_sim.launch.py \
             driver_delay:=0.0 \
             nav2_delay:=0.0 \
             goal_delay:=0.0 \
@@ -172,7 +175,17 @@ jobs:
             use_cardinal_perception_sim:=false >"${smoke_log}" 2>&1 &
           launch_pid=$!
           cleanup() {
-            kill -INT "${launch_pid}" 2>/dev/null || true
+            kill -INT -- "-${launch_pid}" 2>/dev/null || true
+            for _ in {1..10}; do
+              if ! kill -0 "${launch_pid}" 2>/dev/null; then
+                wait "${launch_pid}" 2>/dev/null || true
+                return
+              fi
+              sleep 1
+            done
+            kill -TERM -- "-${launch_pid}" 2>/dev/null || true
+            sleep 2
+            kill -KILL -- "-${launch_pid}" 2>/dev/null || true
             wait "${launch_pid}" 2>/dev/null || true
           }
           trap cleanup EXIT
