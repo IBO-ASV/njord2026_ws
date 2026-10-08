@@ -126,16 +126,6 @@ bool isFiniteBoundedNonzero(const Md10c3Frame & frame)
   return nonzero;
 }
 
-void spinFor(rclcpp::executors::SingleThreadedExecutor & executor,
-             std::chrono::milliseconds duration)
-{
-  const auto deadline = std::chrono::steady_clock::now() + duration;
-  while (std::chrono::steady_clock::now() < deadline) {
-    executor.spin_some();
-    std::this_thread::sleep_for(2ms);
-  }
-}
-
 bool waitForFrame(
   int masterFd,
   rclcpp::executors::SingleThreadedExecutor & executor,
@@ -200,6 +190,8 @@ rclcpp::NodeOptions threeWheelSerialOptions(const std::string & serialPort)
   options.arguments(
   {
     "--ros-args",
+    "-r",
+    "__node:=thruster_serial",
     "--params-file",
     std::string(MICON_DRIVER_FD_SOURCE_DIR) + "/config/omni_md10c3.yaml",
   });
