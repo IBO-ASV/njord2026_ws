@@ -198,7 +198,8 @@ TEST(SerialWriterMd10c3, ClampsSignTransitionsAndStopsOnInvalidInput)
 
   if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
   rclcpp::NodeOptions options;
-  options.parameter_overrides({
+  options.parameter_overrides(
+  {
     rclcpp::Parameter("serial_port", std::string(slave_name)),
     rclcpp::Parameter("command_profile", "md10c3_duty"),
     rclcpp::Parameter("md10c_duty_limit", 0.5),
@@ -272,7 +273,8 @@ TEST(SerialWriterMd10c3, StopsAllChannelsAfterCommandTimeout)
 
   if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
   rclcpp::NodeOptions options;
-  options.parameter_overrides({
+  options.parameter_overrides(
+  {
     rclcpp::Parameter("serial_port", std::string(slave_name)),
     rclcpp::Parameter("command_profile", "md10c3_duty"),
     rclcpp::Parameter("md10c_duty_limit", 0.5),
@@ -357,7 +359,8 @@ TEST(SerialWriterIntegration, WritesRosInputsToPseudoTerminal)
 
   if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
   rclcpp::NodeOptions options;
-  options.parameter_overrides({
+  options.parameter_overrides(
+  {
     rclcpp::Parameter("serial_port", std::string(slave_name)),
     rclcpp::Parameter("ground_station_heartbeat_timeout_sec", 0.05),
   });

@@ -251,8 +251,9 @@ void SerialWriter::thrust_cb(const std_msgs::msg::Float32MultiArray::SharedPtr m
 
   if (command_profile_ == CommandProfile::MD10C3_DUTY) {
     for (size_t i = 0; i < md10c_duty_.size(); ++i) {
-      md10c_duty_[i] = static_cast<float>(std::clamp(
-        static_cast<double>(msg->data[i]), -md10c_duty_limit_, md10c_duty_limit_));
+      md10c_duty_[i] = static_cast<float>(
+        std::clamp(
+          static_cast<double>(msg->data[i]), -md10c_duty_limit_, md10c_duty_limit_));
     }
   } else {
     for (size_t i = 0; i < thrust_.size(); ++i) {
