@@ -261,6 +261,61 @@ TEST(SerialWriterMd10c3, ClampsSignTransitionsAndStopsOnInvalidInput)
   rclcpp::shutdown();
 }
 
+TEST(SerialWriterMd10c3, StopsAllChannelsAfterCommandTimeout)
+{
+  int master_fd = -1;
+  int slave_fd = -1;
+  char slave_name[128]{};
+  ASSERT_EQ(openpty(&master_fd, &slave_fd, slave_name, nullptr, nullptr), 0);
+  close(slave_fd);
+  fcntl(master_fd, F_SETFL, fcntl(master_fd, F_GETFL, 0) | O_NONBLOCK);
+
+  if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+  rclcpp::NodeOptions options;
+  options.parameter_overrides({
+    rclcpp::Parameter("serial_port", std::string(slave_name)),
+    rclcpp::Parameter("command_profile", "md10c3_duty"),
+    rclcpp::Parameter("md10c_duty_limit", 0.5),
+    rclcpp::Parameter("command_timeout_sec", 0.05),
+  });
+  auto writer = std::make_shared<micon_driver_fd::SerialWriter>(options);
+  auto publisher_node = std::make_shared<rclcpp::Node>("serial_writer_md10c3_timeout_publisher");
+  auto duty_pub = publisher_node->create_publisher<std_msgs::msg::Float32MultiArray>(
+    "/thruster_command", 10);
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(writer);
+  executor.add_node(publisher_node);
+
+  std_msgs::msg::Float32MultiArray duty;
+  duty.data = {0.10F, -0.20F, 0.30F};
+  const auto valid_deadline = std::chrono::steady_clock::now() + 90ms;
+  while (std::chrono::steady_clock::now() < valid_deadline) {
+    duty_pub->publish(duty);
+    executor.spin_some();
+    std::this_thread::sleep_for(5ms);
+  }
+  std::vector<uint8_t> received(4096);
+  ASSERT_GT(read(master_fd, received.data(), received.size()), 0);
+
+  const auto timeout_deadline = std::chrono::steady_clock::now() + 120ms;
+  while (std::chrono::steady_clock::now() < timeout_deadline) {
+    executor.spin_some();
+    std::this_thread::sleep_for(5ms);
+  }
+  const ssize_t count = read(master_fd, received.data(), received.size());
+  ASSERT_GT(count, 0);
+  received.resize(static_cast<size_t>(count));
+  expect_omni_md10c3_frame(
+    last_packet_from_serial_bytes(received), {{0.0F, 0.0F, 0.0F}}, 0x08);
+
+  close(master_fd);
+  executor.remove_node(publisher_node);
+  executor.remove_node(writer);
+  writer.reset();
+  publisher_node.reset();
+  rclcpp::shutdown();
+}
+
 TEST(BmsCsv, ParsesCellVoltagesAndTemperature)
 {
   micon_driver_fd::BmsTelemetry telemetry;
