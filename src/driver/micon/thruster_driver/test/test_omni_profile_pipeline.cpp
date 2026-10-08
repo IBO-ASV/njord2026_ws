@@ -253,13 +253,22 @@ TEST(ThreeWheelProfilePipeline, UsesType02AndStopsOnInvalidOrStaleHostCommand)
   executor.add_node(driver);
   executor.add_node(serialWriter);
   executor.add_node(io);
-  spinFor(executor, 40ms);
+  const auto discoveryDeadline = std::chrono::steady_clock::now() + 2s;
+  while (std::chrono::steady_clock::now() < discoveryDeadline &&
+    (commandPublisher->get_subscription_count() == 0U ||
+    io->count_subscribers("/test_omni_profile_thruster_command") == 0U))
+  {
+    executor.spin_some();
+    std::this_thread::sleep_for(2ms);
+  }
+  ASSERT_GT(commandPublisher->get_subscription_count(), 0U);
+  ASSERT_GT(io->count_subscribers("/test_omni_profile_thruster_command"), 0U);
 
   geometry_msgs::msg::Twist finiteCommand;
   finiteCommand.linear.x = 0.05;
   finiteCommand.linear.y = -0.02;
   finiteCommand.angular.z = 0.05;
-  const auto finiteDeadline = std::chrono::steady_clock::now() + 100ms;
+  const auto finiteDeadline = std::chrono::steady_clock::now() + 350ms;
   while (std::chrono::steady_clock::now() < finiteDeadline) {
     commandPublisher->publish(finiteCommand);
     executor.spin_some();
