@@ -132,6 +132,68 @@ void expect_omni_md10c3_frame(
   EXPECT_EQ(raw[micon_driver_fd::kHeaderSize + duty.size() * sizeof(float)], expected_flags);
 }
 
+bool matches_omni_md10c3_frame(
+  const micon_driver_fd::Packet & packet,
+  const std::array<float, 3> & duty,
+  uint8_t expected_flags)
+{
+  if (packet.empty() || packet.back() != 0) {
+    return false;
+  }
+  const std::vector<uint8_t> raw = cobs_decode(packet.data(), packet.size() - 1U);
+  if (raw.size() != micon_driver_fd::kOmniMd10c3RawFrameSize ||
+    raw[0] != micon_driver_fd::kProtocolVersion ||
+    raw[1] != micon_driver_fd::kOmniMd10c3CommandType ||
+    raw[4] != micon_driver_fd::kOmniMd10c3PayloadSize ||
+    raw[micon_driver_fd::kHeaderSize + duty.size() * sizeof(float)] != expected_flags)
+  {
+    return false;
+  }
+  for (size_t i = 0; i < duty.size(); ++i) {
+    if (std::fabs(
+        read_float32_le(raw.data() + micon_driver_fd::kHeaderSize + i * sizeof(float)) -
+        duty[i]) > 1.0e-6F)
+    {
+      return false;
+    }
+  }
+  return true;
+}
+
+micon_driver_fd::Packet await_omni_md10c3_frame(
+  int master_fd,
+  rclcpp::executors::SingleThreadedExecutor & executor,
+  const std::array<float, 3> & duty,
+  uint8_t expected_flags,
+  std::chrono::milliseconds timeout)
+{
+  micon_driver_fd::Packet encoded;
+  std::array<uint8_t, 256> received{};
+  const auto deadline = std::chrono::steady_clock::now() + timeout;
+  while (std::chrono::steady_clock::now() < deadline) {
+    executor.spin_some();
+    ssize_t count = 0;
+    while ((count = read(master_fd, received.data(), received.size())) > 0) {
+      for (ssize_t index = 0; index < count; ++index) {
+        const uint8_t byte = received[static_cast<size_t>(index)];
+        if (byte == 0U) {
+          encoded.push_back(byte);
+          if (matches_omni_md10c3_frame(encoded, duty, expected_flags)) {
+            return encoded;
+          }
+          encoded.clear();
+        } else if (encoded.size() < micon_driver_fd::kOmniMd10c3RawFrameSize + 1U) {
+          encoded.push_back(byte);
+        } else {
+          encoded.clear();
+        }
+      }
+    }
+    std::this_thread::sleep_for(2ms);
+  }
+  return {};
+}
+
 micon_driver_fd::Packet last_packet_from_serial_bytes(const std::vector<uint8_t> & bytes)
 {
   const auto last_delimiter = std::find(bytes.rbegin(), bytes.rend(), 0);
@@ -221,12 +283,11 @@ TEST(SerialWriterMd10c3, ClampsSignTransitionsAndStopsOnInvalidInput)
     executor.spin_some();
     std::this_thread::sleep_for(5ms);
   }
-  std::vector<uint8_t> received(4096);
-  ssize_t count = read(master_fd, received.data(), received.size());
-  ASSERT_GT(count, 0);
-  received.resize(static_cast<size_t>(count));
+  const auto clamped_packet = await_omni_md10c3_frame(
+    master_fd, executor, {{0.5F, -0.5F, 0.2F}}, 0x00, 250ms);
+  ASSERT_FALSE(clamped_packet.empty());
   expect_omni_md10c3_frame(
-    last_packet_from_serial_bytes(received), {{0.5F, -0.5F, 0.2F}}, 0x00);
+    clamped_packet, {{0.5F, -0.5F, 0.2F}}, 0x00);
 
   duty.data = {-0.1F, 0.1F, -0.2F};
   const auto reversal_deadline = std::chrono::steady_clock::now() + 80ms;
@@ -235,11 +296,11 @@ TEST(SerialWriterMd10c3, ClampsSignTransitionsAndStopsOnInvalidInput)
     executor.spin_some();
     std::this_thread::sleep_for(5ms);
   }
-  count = read(master_fd, received.data(), received.size());
-  ASSERT_GT(count, 0);
-  received.resize(static_cast<size_t>(count));
+  const auto reversed_packet = await_omni_md10c3_frame(
+    master_fd, executor, {{-0.1F, 0.1F, -0.2F}}, 0x00, 250ms);
+  ASSERT_FALSE(reversed_packet.empty());
   expect_omni_md10c3_frame(
-    last_packet_from_serial_bytes(received), {{-0.1F, 0.1F, -0.2F}}, 0x00);
+    reversed_packet, {{-0.1F, 0.1F, -0.2F}}, 0x00);
 
   duty.data = {std::numeric_limits<float>::quiet_NaN(), 0.0F, 0.0F};
   const auto invalid_deadline = std::chrono::steady_clock::now() + 80ms;
@@ -248,11 +309,11 @@ TEST(SerialWriterMd10c3, ClampsSignTransitionsAndStopsOnInvalidInput)
     executor.spin_some();
     std::this_thread::sleep_for(5ms);
   }
-  count = read(master_fd, received.data(), received.size());
-  ASSERT_GT(count, 0);
-  received.resize(static_cast<size_t>(count));
+  const auto stopped_packet = await_omni_md10c3_frame(
+    master_fd, executor, {{0.0F, 0.0F, 0.0F}}, 0x08, 250ms);
+  ASSERT_FALSE(stopped_packet.empty());
   expect_omni_md10c3_frame(
-    last_packet_from_serial_bytes(received), {{0.0F, 0.0F, 0.0F}}, 0x08);
+    stopped_packet, {{0.0F, 0.0F, 0.0F}}, 0x08);
 
   close(master_fd);
   executor.remove_node(publisher_node);
