@@ -74,6 +74,7 @@ if(BUILD_TESTING)
 endif()
 
 ament_export_libraries(serial_writer_lib)
+ament_export_include_directories(include)
 ament_export_dependencies(rclcpp geometry_msgs std_msgs)
 
 ament_package()
