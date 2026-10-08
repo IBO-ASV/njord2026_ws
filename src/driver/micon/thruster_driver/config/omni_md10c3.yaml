@@ -1,0 +1,73 @@
+# Three-wheel omnidirectional base for the MD10C profile.
+#
+# Frame convention: +x forward, +y left, +yaw counter-clockwise.  Wheel order
+# is fixed end-to-end as left-front, rear, right-front.  `angle_rad` is the
+# positive wheel-force direction, not the position angle.  For the confirmed
+# wheel position angles [+60, +180, -60] degrees, the assumed tangential force
+# directions are [+150, -90, +30] degrees respectively.
+#
+# This profile is deliberately locked.  The physical motor polarity has not
+# been measured; the node refuses to start until the final operator has
+# performed the wheel-by-wheel check and changes
+# safety.actuator_configuration_confirmed to true.
+thruster_driver_node:
+  ros__parameters:
+    input_mode: "cmd_vel"
+    # This activates the dedicated body-Twist -> wheel-angular-velocity ->
+    # open-loop duty path.  It does not use the ASV wrench allocator.
+    actuator_model: "omni_wheel_duty"
+
+    input_scaling:
+      # These are command limits, not calibrated physical speed limits.
+      max_linear_x: 0.20
+      max_linear_y: 0.20
+      max_angular_z: 0.30
+
+    control:
+      rate_hz: 50.0
+      # There is no encoder, so this profile intentionally performs no
+      # velocity feedback control.  Its Twist mapping is open-loop only.
+      use_velocity_feedback: false
+
+    omni:
+      wheel_radius_m: 0.0635
+      # Uncalibrated open-loop scale [duty / (wheel rad/s)].  It is chosen
+      # conservatively for first low-duty checks, not as a motor model.
+      duty_per_wheel_rad_s: [0.05, 0.05, 0.05]
+
+    output:
+      # micon_driver_fd's md10c3_duty profile accepts this topic as signed
+      # duty ratio.  It must not be interpreted as calibrated force or speed.
+      mode: "duty_ratio"
+      duty_limit: 0.50
+
+    safety:
+      watchdog_timeout_sec: 0.25
+      # Deliberate interlock: set true only after the corresponding MD10C
+      # firmware is built with its own output interlock released and each
+      # wheel's `reverse` sign has been verified at a low duty.
+      actuator_configuration_confirmed: false
+
+    static_map:
+      deadzone_pos: 0.0
+      deadzone_neg: 0.0
+      thrusters:
+        forward_gain: [1.0, 1.0, 1.0]
+        reverse_gain: [1.0, 1.0, 1.0]
+        offset: [0.0, 0.0, 0.0]
+
+    thrusters:
+      ids: ["LF", "REAR", "RF"]
+      links: ["omni_left_front", "omni_rear", "omni_right_front"]
+      # Assumed CCW-tangential positive drive directions.  Physical motor
+      # polarity is intentionally unverified; calibrate and change each item
+      # independently rather than changing geometry or wheel order.
+      angle_rad: [2.617994, -1.570796, 0.523599]
+      reverse: [false, false, false]
+      # Required by the shared config schema; unused by omni_wheel_duty.
+      max_thrust: [1.0, 1.0, 1.0]
+
+    topics:
+      cmd_vel: "cmd_vel"
+      feedback_odometry: "/odometry/filtered/local"
+      sim_thruster_command: "/thruster_command"

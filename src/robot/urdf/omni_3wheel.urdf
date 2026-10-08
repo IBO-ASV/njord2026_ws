@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<!--
+  Dedicated geometry for the three-wheel omni MD10C profile.
+  This model is intentionally separate from the watercraft URDF.  The fixed
+  origins are measured from base_link in metres: radius 0.300 m, with position
+  angles +60, 180, and -60 degrees under +x forward / +y left.
+-->
+<robot name="njord_omni_3wheel">
+  <link name="base_link"/>
+
+  <link name="omni_left_front"/>
+  <joint name="base_to_omni_left_front" type="fixed">
+    <parent link="base_link"/>
+    <child link="omni_left_front"/>
+    <origin xyz="0.150000 0.259808 0.0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="omni_rear"/>
+  <joint name="base_to_omni_rear" type="fixed">
+    <parent link="base_link"/>
+    <child link="omni_rear"/>
+    <origin xyz="-0.300000 0.000000 0.0" rpy="0 0 0"/>
+  </joint>
+
+  <link name="omni_right_front"/>
+  <joint name="base_to_omni_right_front" type="fixed">
+    <parent link="base_link"/>
+    <child link="omni_right_front"/>
+    <origin xyz="0.150000 -0.259808 0.0" rpy="0 0 0"/>
+  </joint>
+</robot>

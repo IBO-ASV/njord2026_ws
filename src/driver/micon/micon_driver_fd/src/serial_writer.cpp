@@ -1,10 +1,13 @@
 #include "micon_driver_fd/serial_writer.hpp"
 
+#include <algorithm>
+#include <cmath>
 #include <cstring>
 #include <cerrno>
 #include <fcntl.h>
 #include <functional>
 #include <limits>
+#include <stdexcept>
 #include <termios.h>
 #include <unistd.h>
 
@@ -82,22 +85,23 @@ Packet cobs_encode(const Packet & raw)
   return encoded;
 }
 
-}  // namespace
-
-Packet encode_packet(
-  const std::array<float, 4> & thrust,
+Packet encode_command_packet(
+  uint8_t message_type,
+  const float * values,
+  size_t value_count,
   const Flags & flags,
   uint16_t sequence)
 {
   Packet raw;
-  raw.reserve(kRawFrameSize);
+  const size_t payload_size = value_count * sizeof(float) + 1U;
+  raw.reserve(kHeaderSize + payload_size + kCrcSize);
   raw.push_back(kProtocolVersion);
-  raw.push_back(kThrusterCommandType);
+  raw.push_back(message_type);
   append_uint16_le(raw, sequence);
-  raw.push_back(static_cast<uint8_t>(kPayloadSize));
+  raw.push_back(static_cast<uint8_t>(payload_size));
 
-  for (size_t i = 0; i < thrust.size(); ++i) {
-    append_float32_le(raw, thrust[i]);
+  for (size_t i = 0; i < value_count; ++i) {
+    append_float32_le(raw, values[i]);
   }
   uint8_t control_flags = 0;
   if (flags.emergency) {control_flags |= (1u << 3);}
@@ -114,12 +118,46 @@ Packet encode_packet(
   return packet;
 }
 
+}  // namespace
+
+Packet encode_packet(
+  const std::array<float, 4> & thrust,
+  const Flags & flags,
+  uint16_t sequence)
+{
+  return encode_command_packet(
+    kThrusterCommandType, thrust.data(), thrust.size(), flags, sequence);
+}
+
+Packet encode_md10c3_packet(
+  const std::array<float, 3> & duty,
+  const Flags & flags,
+  uint16_t sequence)
+{
+  return encode_command_packet(
+    kOmniMd10c3CommandType, duty.data(), duty.size(), flags, sequence);
+}
+
 SerialWriter::SerialWriter(const rclcpp::NodeOptions & options)
 : Node("serial_writer", options)
 {
   serial_port_ = declare_parameter<std::string>("serial_port", "/dev/ttyUSB0");
   baud_ = declare_parameter<int>("baud", 115200);
   command_topic_ = declare_parameter<std::string>("command_topic", "/thruster_command");
+  const std::string command_profile = declare_parameter<std::string>(
+    "command_profile", "esc4_force");
+  if (command_profile == "esc4_force") {
+    command_profile_ = CommandProfile::ESC4_FORCE;
+  } else if (command_profile == "md10c3_duty") {
+    command_profile_ = CommandProfile::MD10C3_DUTY;
+  } else {
+    throw std::runtime_error(
+            "command_profile must be 'esc4_force' or 'md10c3_duty'");
+  }
+  md10c_duty_limit_ = std::clamp(
+    declare_parameter<double>("md10c_duty_limit", 0.5), 0.0, 0.5);
+  command_timeout_sec_ = std::max(
+    0.0, declare_parameter<double>("command_timeout_sec", 0.0));
   ground_station_heartbeat_topic_ = declare_parameter<std::string>(
     "ground_station_heartbeat_topic", "/heartbeat/ground_station");
   ground_station_heartbeat_timeout_sec_ = declare_parameter<double>(
@@ -162,11 +200,12 @@ SerialWriter::~SerialWriter()
   // Send an explicit final stop command before closing the port.  This makes
   // shutdown safe even if the ESP32 has not reached its communication timeout
   // yet, and leaves the warning LEDs in the commanded emergency/red state.
-  const std::array<float, 4> zero_thrust{{0.0F, 0.0F, 0.0F, 0.0F}};
   Flags shutdown_flags;
   shutdown_flags.emergency = true;
   shutdown_flags.red = true;
-  const Packet packet = encode_packet(zero_thrust, shutdown_flags, sequence_++);
+  const Packet packet = command_profile_ == CommandProfile::MD10C3_DUTY ?
+    encode_md10c3_packet({{0.0F, 0.0F, 0.0F}}, shutdown_flags, sequence_++) :
+    encode_packet({{0.0F, 0.0F, 0.0F, 0.0F}}, shutdown_flags, sequence_++);
 
   size_t written = 0;
   for (int attempt = 0; written < packet.size() && attempt < 100; ++attempt) {
@@ -192,9 +231,37 @@ SerialWriter::~SerialWriter()
 void SerialWriter::thrust_cb(const std_msgs::msg::Float32MultiArray::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  for (size_t i = 0; i < thrust_.size(); ++i) {
-    thrust_[i] = i < msg->data.size() ? msg->data[i] : 0.0f;
+  const size_t expected_size = command_profile_ == CommandProfile::MD10C3_DUTY ?
+    md10c_duty_.size() : thrust_.size();
+  if (msg->data.size() != expected_size) {
+    thrust_.fill(0.0F);
+    md10c_duty_.fill(0.0F);
+    command_valid_ = false;
+    return;
   }
+
+  for (size_t i = 0; i < expected_size; ++i) {
+    if (!std::isfinite(msg->data[i])) {
+      thrust_.fill(0.0F);
+      md10c_duty_.fill(0.0F);
+      command_valid_ = false;
+      return;
+    }
+  }
+
+  if (command_profile_ == CommandProfile::MD10C3_DUTY) {
+    for (size_t i = 0; i < md10c_duty_.size(); ++i) {
+      md10c_duty_[i] = static_cast<float>(std::clamp(
+        static_cast<double>(msg->data[i]), -md10c_duty_limit_, md10c_duty_limit_));
+    }
+  } else {
+    for (size_t i = 0; i < thrust_.size(); ++i) {
+      thrust_[i] = msg->data[i];
+    }
+  }
+  command_received_ = true;
+  command_valid_ = true;
+  last_valid_command_ = std::chrono::steady_clock::now();
 }
 
 void SerialWriter::soft_emg_cb(const std_msgs::msg::Bool::SharedPtr msg)
@@ -252,7 +319,22 @@ void SerialWriter::timer_cb()
   Packet packet;
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    packet = encode_packet(thrust_, flags_, sequence_++);
+    Flags packet_flags = flags_;
+    if (command_profile_ == CommandProfile::MD10C3_DUTY) {
+      const auto now = std::chrono::steady_clock::now();
+      const bool timed_out = command_timeout_sec_ > 0.0 &&
+        (!command_received_ || std::chrono::duration<double>(now - last_valid_command_).count() >
+        command_timeout_sec_);
+      // A three-wheel motor profile must never resume from a malformed,
+      // non-finite, absent, or stale command; make every one of those an
+      // explicit software emergency stop at the firmware boundary.
+      packet_flags.emergency = packet_flags.emergency || !command_valid_ || timed_out;
+      const std::array<float, 3> duty_for_packet = packet_flags.emergency ?
+        std::array<float, 3>{{0.0F, 0.0F, 0.0F}} : md10c_duty_;
+      packet = encode_md10c3_packet(duty_for_packet, packet_flags, sequence_++);
+    } else {
+      packet = encode_packet(thrust_, packet_flags, sequence_++);
+    }
   }
   const ssize_t result = write(fd_, packet.data(), packet.size());
   if (result != static_cast<ssize_t>(packet.size())) {
@@ -307,15 +389,23 @@ void SerialWriter::publish_safety_state()
 {
   bool soft_emg = false;
   bool relay_active = false;
+  bool command_fault = false;
   {
     std::lock_guard<std::mutex> lock(mutex_);
     soft_emg = soft_emg_ || ground_station_timeout_emg_;
     relay_active = relay_active_;
+    if (command_profile_ == CommandProfile::MD10C3_DUTY) {
+      const bool command_timed_out = command_timeout_sec_ > 0.0 &&
+        (!command_received_ || std::chrono::duration<double>(
+          std::chrono::steady_clock::now() - last_valid_command_).count() >
+        command_timeout_sec_);
+      command_fault = !command_valid_ || command_timed_out;
+    }
   }
   pub_relay_active_->publish(std_msgs::msg::Bool().set__data(relay_active));
   // GPIO15 follows relay state; it is not an independent physical E-stop input.
   // A commanded soft stop has priority, because it can itself change relay state.
-  const auto state = soft_emg ? EmergencyStopState::SOFT_EMG :
+  const auto state = (soft_emg || command_fault) ? EmergencyStopState::SOFT_EMG :
     relay_active ? EmergencyStopState::HARD_EMG : EmergencyStopState::RUNNING;
   pub_safety_emergency_->publish(
     std_msgs::msg::UInt8().set__data(

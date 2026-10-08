@@ -21,6 +21,16 @@ be added alongside it without changing the manual-control package.
   `ground_station_heartbeat_topic` (default `/heartbeat/ground_station`); a
   timeout forces `SOFT_EMG`.
 
+The default `command_profile:=esc4_force` is the existing watercraft protocol:
+four force values in N, message type `0x01`.  Do not use it for the three-wheel
+MD10C base.  `config/omni_md10c3.yaml` opts into the independent
+`command_profile:=md10c3_duty` protocol (message type `0x02`, exactly three
+signed duty ratios).  That profile clamps every host command to
+`abs(duty) <= md10c_duty_limit` (hard upper bound 0.50), rejects a wrong-sized
+or non-finite input as an emergency stop, and applies its own command timeout.
+It remains compatible with the watercraft firmware because the type `0x01`
+wire format is unchanged.
+
 Every 50 ms, `serial_writer` sends a `THRUSTER_COMMAND` frame compatible with
 `Docs/PROTOCOL.md`:
 

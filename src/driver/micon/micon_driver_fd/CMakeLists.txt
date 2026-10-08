@@ -50,6 +50,7 @@ install(TARGETS serial_writer_lib serial_writer thruster_serial bms_serial_reade
 )
 
 install(DIRECTORY include/ DESTINATION include)
+install(DIRECTORY config/ DESTINATION share/${PROJECT_NAME})
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)

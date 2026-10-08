@@ -20,6 +20,14 @@ std::vector<njord::thruster_driver::ThrusterGeometry> xConfiguration()
     {-0.353553, 0.353553, -3.0 * kPi / 4.0, 1.0, false}};
 }
 
+std::vector<njord::thruster_driver::OmniWheelGeometry> threeWheelOmniKinematics()
+{
+  return {
+    {0.150000, 0.259808, 5.0 * kPi / 6.0, 0.0635, 0.05, false},
+    {-0.300000, 0.000000, -kPi / 2.0, 0.0635, 0.05, false},
+    {0.150000, -0.259808, kPi / 6.0, 0.0635, 0.05, false}};
+}
+
 void expectTracksAxis(const std::array<double, 3> & requested)
 {
   const auto geometry = xConfiguration();
@@ -61,4 +69,42 @@ TEST(ThrusterAllocation, AppliesWiringReverseWithoutChangingPhysicalWrench)
   EXPECT_NEAR(wrench[0], 0.4, 1e-6);
   EXPECT_NEAR(wrench[1], 0.0, 1e-6);
   EXPECT_NEAR(wrench[2], 0.0, 1e-6);
+}
+
+TEST(OmniKinematics, MapsPureAndMixedBodyTwistToSignedWheelDuty)
+{
+  const auto wheels = threeWheelOmniKinematics();
+  const auto surge = njord::thruster_driver::bodyTwistToWheelDuty(wheels, 0.05, 0.0, 0.0);
+  EXPECT_LT(surge[0], 0.0);
+  EXPECT_NEAR(surge[1], 0.0, 1e-6);
+  EXPECT_GT(surge[2], 0.0);
+
+  const auto sway = njord::thruster_driver::bodyTwistToWheelDuty(wheels, 0.0, 0.05, 0.0);
+  EXPECT_GT(sway[0], 0.0);
+  EXPECT_LT(sway[1], 0.0);
+  EXPECT_GT(sway[2], 0.0);
+
+  const auto yaw = njord::thruster_driver::bodyTwistToWheelDuty(wheels, 0.0, 0.0, 0.10);
+  EXPECT_GT(yaw[0], 0.0);
+  EXPECT_GT(yaw[1], 0.0);
+  EXPECT_GT(yaw[2], 0.0);
+
+  const auto mixed = njord::thruster_driver::bodyTwistToWheelDuty(wheels, 0.05, -0.02, 0.10);
+  EXPECT_NE(mixed[0], surge[0]);
+  EXPECT_NE(mixed[1], surge[1]);
+  EXPECT_NE(mixed[2], surge[2]);
+}
+
+TEST(OmniKinematics, SaturatesAndAppliesPerWheelReverse)
+{
+  const auto wheels = threeWheelOmniKinematics();
+  const auto saturated = njord::thruster_driver::bodyTwistToWheelDuty(
+    wheels, 100.0, 100.0, 100.0);
+  EXPECT_LE(*std::max_element(saturated.begin(), saturated.end()), 1.0);
+  EXPECT_GE(*std::min_element(saturated.begin(), saturated.end()), -1.0);
+
+  auto reversed = wheels;
+  reversed[1].reverse = true;
+  const auto yaw = njord::thruster_driver::bodyTwistToWheelDuty(reversed, 0.0, 0.0, 0.10);
+  EXPECT_LT(yaw[1], 0.0);
 }

@@ -48,6 +48,7 @@ private:
 
   std::vector<double> computeWrench(double dt);
   std::vector<double> allocateWrench(const std::vector<double> & wrench) const;
+  std::vector<double> computeOmniWheelDuty() const;
   double applyStaticMap(double value, const ThrusterConfig & thruster) const;
   double applyDeadzone(double value, double deadzone) const;
   void publishCommands(const std::vector<double> & commands);
@@ -109,6 +110,17 @@ private:
   double deadzone_neg_{0.0};
 
   int duty_resolution_{1000};
+
+  // `force_newton` publishes the allocated command multiplied by each
+  // thruster's calibrated max_thrust.  `duty_ratio` publishes the normalized
+  // command directly, clamped by output.duty_limit.  The latter is for motor
+  // drivers such as MD10C that do not accept a force command.
+  std::string output_mode_{"force_newton"};
+  double duty_limit_{1.0};
+  bool actuator_configuration_confirmed_{true};
+  std::string actuator_model_{"wrench_allocation"};
+  double omni_wheel_radius_m_{0.0};
+  std::vector<double> omni_duty_per_wheel_rad_s_;
 
   geometry_msgs::msg::Twist latest_cmd_;
   double meas_surge_{0.0};

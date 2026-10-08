@@ -111,11 +111,31 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
   deadzone_neg_ = this->declare_parameter<double>("static_map.deadzone_neg", 0.0);
 
   duty_resolution_ = this->declare_parameter<int>("duty_resolution", 1000);
+  output_mode_ = toLower(
+    this->declare_parameter<std::string>("output.mode", "force_newton"));
+  duty_limit_ = clamp(
+    this->declare_parameter<double>("output.duty_limit", 1.0), 0.0, 1.0);
+  actuator_configuration_confirmed_ = this->declare_parameter<bool>(
+    "safety.actuator_configuration_confirmed", true);
+  if (output_mode_ != "force_newton" && output_mode_ != "duty_ratio") {
+    throw std::runtime_error("output.mode must be 'force_newton' or 'duty_ratio'");
+  }
+  actuator_model_ = toLower(
+    this->declare_parameter<std::string>("actuator_model", "wrench_allocation"));
+  if (actuator_model_ != "wrench_allocation" && actuator_model_ != "omni_wheel_duty") {
+    throw std::runtime_error(
+            "actuator_model must be 'wrench_allocation' or 'omni_wheel_duty'");
+  }
 
   loadThrusterConfigs();
   const std::string robot_description =
     this->declare_parameter<std::string>("robot_description", "");
   loadThrusterPosesFromUrdf(robot_description);
+  if (actuator_model_ == "omni_wheel_duty") {
+    omni_wheel_radius_m_ = this->declare_parameter<double>("omni.wheel_radius_m", 0.0);
+    omni_duty_per_wheel_rad_s_ = getDoubleVector(
+      "omni.duty_per_wheel_rad_s", std::vector<double>(thrusters_.size(), 0.0));
+  }
   validateThrusterConfigs();
 
   const std::string cmd_vel_topic =
@@ -131,7 +151,8 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
     this->create_publisher<std_msgs::msg::Float32MultiArray>(sim_command_topic, 10);
 
   pub_current_force_ =
-    this->create_publisher<std_msgs::msg::Float32MultiArray>("/debug/current_force", 10);
+    this->create_publisher<std_msgs::msg::Float32MultiArray>(
+      output_mode_ == "duty_ratio" ? "/debug/current_duty" : "/debug/current_force", 10);
   pub_dob_estimate_ =
     this->create_publisher<std_msgs::msg::Float32MultiArray>("/debug/dob_estimate", 10);
 
@@ -163,9 +184,11 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
 
   RCLCPP_INFO(
     this->get_logger(),
-    "thruster_driver started. mode=%s output=%s thrusters=%zu velocity_feedback=%s dob=%s",
+    "thruster_driver started. mode=%s output=%s/%s model=%s thrusters=%zu velocity_feedback=%s dob=%s",
     input_mode_.c_str(),
     sim_command_topic.c_str(),
+    output_mode_.c_str(),
+    actuator_model_.c_str(),
     thrusters_.size(),
     use_velocity_feedback_ ? "on" : "off",
     dob_enable_ ? "on" : "off");
@@ -225,19 +248,24 @@ void ThrusterDriverNode::controlTimerCallback()
     return;
   }
 
-  const std::vector<double> wrench = computeWrench(dt);
-  std::vector<double> allocation_wrench = wrench;
-  for (std::size_t i = 0; i < allocation_wrench.size(); ++i) {
-    allocation_wrench[i] *= allocation_wrench_sign_[i];
+  std::vector<double> commands;
+  if (actuator_model_ == "omni_wheel_duty") {
+    commands = computeOmniWheelDuty();
+  } else {
+    const std::vector<double> wrench = computeWrench(dt);
+    std::vector<double> allocation_wrench = wrench;
+    for (std::size_t i = 0; i < allocation_wrench.size(); ++i) {
+      allocation_wrench[i] *= allocation_wrench_sign_[i];
+    }
+    commands = allocateWrench(allocation_wrench);
+    prev_wrench_ = wrench;
   }
-  std::vector<double> commands = allocateWrench(allocation_wrench);
 
   for (std::size_t i = 0; i < commands.size(); ++i) {
     commands[i] = applyStaticMap(commands[i], thrusters_[i]);
   }
 
   publishCommands(commands);
-  prev_wrench_ = wrench;
 }
 
 void ThrusterDriverNode::loadThrusterConfigs()
@@ -339,6 +367,26 @@ void ThrusterDriverNode::validateThrusterConfigs() const
     throw std::runtime_error("At least three thrusters are required for surge/sway/yaw allocation");
   }
 
+  if (!actuator_configuration_confirmed_) {
+    throw std::runtime_error(
+            "Actuator configuration is intentionally locked. Verify physical wheel direction and "
+            "set safety.actuator_configuration_confirmed:=true before enabling this profile.");
+  }
+
+  if (actuator_model_ == "omni_wheel_duty") {
+    if (!std::isfinite(omni_wheel_radius_m_) || omni_wheel_radius_m_ <= 0.0 ||
+      omni_duty_per_wheel_rad_s_.size() != thrusters_.size())
+    {
+      throw std::runtime_error(
+              "omni.wheel_radius_m and omni.duty_per_wheel_rad_s must match the wheel config");
+    }
+    for (const double gain : omni_duty_per_wheel_rad_s_) {
+      if (!std::isfinite(gain) || gain < 0.0) {
+        throw std::runtime_error("omni.duty_per_wheel_rad_s must be finite and non-negative");
+      }
+    }
+  }
+
   for (std::size_t i = 0; i < thrusters_.size(); ++i) {
     for (std::size_t j = i + 1U; j < thrusters_.size(); ++j) {
       if (thrusters_[i].id == thrusters_[j].id || thrusters_[i].link == thrusters_[j].link) {
@@ -403,6 +451,23 @@ std::vector<double> ThrusterDriverNode::allocateWrench(const std::vector<double>
   return njord::thruster_driver::allocateWrench(geometry, wrench, allocation_regularization_);
 }
 
+std::vector<double> ThrusterDriverNode::computeOmniWheelDuty() const
+{
+  std::vector<OmniWheelGeometry> wheels;
+  wheels.reserve(thrusters_.size());
+  for (std::size_t i = 0; i < thrusters_.size(); ++i) {
+    const auto & wheel = thrusters_[i];
+    wheels.push_back({
+      wheel.x, wheel.y, wheel.angle_rad, omni_wheel_radius_m_,
+      omni_duty_per_wheel_rad_s_[i], wheel.reverse});
+  }
+  return bodyTwistToWheelDuty(
+    wheels,
+    clamp(latest_cmd_.linear.x, -max_linear_x_, max_linear_x_),
+    clamp(latest_cmd_.linear.y, -max_linear_y_, max_linear_y_),
+    clamp(latest_cmd_.angular.z, -max_angular_z_, max_angular_z_));
+}
+
 double ThrusterDriverNode::applyStaticMap(double value, const ThrusterConfig & thruster) const
 {
   double mapped = value;
@@ -432,8 +497,11 @@ void ThrusterDriverNode::publishCommands(const std::vector<double> & commands)
     std_msgs::msg::Float32MultiArray msg;
     msg.data.reserve(commands.size());
     for (std::size_t i = 0; i < commands.size(); ++i) {
-      const double newtons = clamp(commands[i], -1.0, 1.0) * thrusters_[i].max_thrust;
-      msg.data.push_back(static_cast<float>(newtons));
+      const double normalized = clamp(commands[i], -1.0, 1.0);
+      const double output = output_mode_ == "duty_ratio" ?
+        clamp(normalized, -duty_limit_, duty_limit_) :
+        normalized * thrusters_[i].max_thrust;
+      msg.data.push_back(static_cast<float>(output));
     }
     pub_thruster_command_->publish(msg);
   }

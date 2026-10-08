@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstring>
 #include <memory>
+#include <limits>
 #include <thread>
 #include <vector>
 
@@ -112,6 +113,42 @@ void expect_thruster_command_frame(
   EXPECT_EQ(received_crc, calculated_crc);
 }
 
+void expect_omni_md10c3_frame(
+  const micon_driver_fd::Packet & packet,
+  const std::array<float, 3> & duty,
+  uint8_t expected_flags)
+{
+  ASSERT_FALSE(packet.empty());
+  ASSERT_EQ(packet.back(), 0);
+  const std::vector<uint8_t> raw = cobs_decode(packet.data(), packet.size() - 1U);
+  ASSERT_EQ(raw.size(), micon_driver_fd::kOmniMd10c3RawFrameSize);
+  EXPECT_EQ(raw[0], micon_driver_fd::kProtocolVersion);
+  EXPECT_EQ(raw[1], micon_driver_fd::kOmniMd10c3CommandType);
+  EXPECT_EQ(raw[4], micon_driver_fd::kOmniMd10c3PayloadSize);
+  for (size_t i = 0; i < duty.size(); ++i) {
+    EXPECT_FLOAT_EQ(
+      read_float32_le(raw.data() + micon_driver_fd::kHeaderSize + i * sizeof(float)), duty[i]);
+  }
+  EXPECT_EQ(raw[micon_driver_fd::kHeaderSize + duty.size() * sizeof(float)], expected_flags);
+}
+
+micon_driver_fd::Packet last_packet_from_serial_bytes(const std::vector<uint8_t> & bytes)
+{
+  const auto last_delimiter = std::find(bytes.rbegin(), bytes.rend(), 0);
+  if (last_delimiter == bytes.rend()) {
+    return {};
+  }
+  const size_t last_delimiter_index =
+    bytes.size() - 1U - static_cast<size_t>(last_delimiter - bytes.rbegin());
+  const auto previous_delimiter = std::find(
+    bytes.rbegin() + static_cast<std::ptrdiff_t>(bytes.size() - last_delimiter_index),
+    bytes.rend(), 0);
+  const size_t frame_begin = previous_delimiter == bytes.rend() ? 0U :
+    bytes.size() - static_cast<size_t>(previous_delimiter - bytes.rbegin());
+  return {bytes.begin() + static_cast<std::ptrdiff_t>(frame_begin),
+    bytes.begin() + static_cast<std::ptrdiff_t>(last_delimiter_index + 1U)};
+}
+
 }  // namespace
 
 TEST(SerialPacket, EncodesFloatsAndFlags)
@@ -123,6 +160,105 @@ TEST(SerialPacket, EncodesFloatsAndFlags)
   flags.red = true;
   const auto packet = micon_driver_fd::encode_packet(thrust, flags, 42);
   expect_thruster_command_frame(packet, thrust, 0x0D, 42);
+}
+
+TEST(SerialPacket, EncodesThreeWheelMd10cDutyAndFlags)
+{
+  const std::array<float, 3> duty{{0.10F, -0.20F, 0.50F}};
+  micon_driver_fd::Flags flags;
+  flags.emergency = true;
+  const auto packet = micon_driver_fd::encode_md10c3_packet(duty, flags, 7);
+  ASSERT_FALSE(packet.empty());
+  ASSERT_EQ(packet.back(), 0);
+
+  const std::vector<uint8_t> raw = cobs_decode(packet.data(), packet.size() - 1U);
+  ASSERT_EQ(raw.size(), micon_driver_fd::kOmniMd10c3RawFrameSize);
+  EXPECT_EQ(raw[0], micon_driver_fd::kProtocolVersion);
+  EXPECT_EQ(raw[1], micon_driver_fd::kOmniMd10c3CommandType);
+  EXPECT_EQ(read_uint16_le(raw.data() + 2), 7);
+  EXPECT_EQ(raw[4], micon_driver_fd::kOmniMd10c3PayloadSize);
+  for (size_t i = 0; i < duty.size(); ++i) {
+    EXPECT_FLOAT_EQ(
+      read_float32_le(raw.data() + micon_driver_fd::kHeaderSize + i * sizeof(float)), duty[i]);
+  }
+  EXPECT_EQ(raw[micon_driver_fd::kHeaderSize + duty.size() * sizeof(float)], 0x08);
+  EXPECT_EQ(
+    read_uint16_le(raw.data() + raw.size() - micon_driver_fd::kCrcSize),
+    crc16_ccitt_false(raw.data(), raw.size() - micon_driver_fd::kCrcSize));
+}
+
+TEST(SerialWriterMd10c3, ClampsSignTransitionsAndStopsOnInvalidInput)
+{
+  int master_fd = -1;
+  int slave_fd = -1;
+  char slave_name[128]{};
+  ASSERT_EQ(openpty(&master_fd, &slave_fd, slave_name, nullptr, nullptr), 0);
+  close(slave_fd);
+  fcntl(master_fd, F_SETFL, fcntl(master_fd, F_GETFL, 0) | O_NONBLOCK);
+
+  if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+  rclcpp::NodeOptions options;
+  options.parameter_overrides({
+    rclcpp::Parameter("serial_port", std::string(slave_name)),
+    rclcpp::Parameter("command_profile", "md10c3_duty"),
+    rclcpp::Parameter("md10c_duty_limit", 0.5),
+    rclcpp::Parameter("command_timeout_sec", 0.20),
+  });
+  auto writer = std::make_shared<micon_driver_fd::SerialWriter>(options);
+  auto publisher_node = std::make_shared<rclcpp::Node>("serial_writer_md10c3_test_publisher");
+  auto duty_pub = publisher_node->create_publisher<std_msgs::msg::Float32MultiArray>(
+    "/thruster_command", 10);
+  rclcpp::executors::SingleThreadedExecutor executor;
+  executor.add_node(writer);
+  executor.add_node(publisher_node);
+
+  std_msgs::msg::Float32MultiArray duty;
+  duty.data = {0.8F, -0.8F, 0.2F};
+  const auto valid_deadline = std::chrono::steady_clock::now() + 120ms;
+  while (std::chrono::steady_clock::now() < valid_deadline) {
+    duty_pub->publish(duty);
+    executor.spin_some();
+    std::this_thread::sleep_for(5ms);
+  }
+  std::vector<uint8_t> received(4096);
+  ssize_t count = read(master_fd, received.data(), received.size());
+  ASSERT_GT(count, 0);
+  received.resize(static_cast<size_t>(count));
+  expect_omni_md10c3_frame(
+    last_packet_from_serial_bytes(received), {{0.5F, -0.5F, 0.2F}}, 0x00);
+
+  duty.data = {-0.1F, 0.1F, -0.2F};
+  const auto reversal_deadline = std::chrono::steady_clock::now() + 80ms;
+  while (std::chrono::steady_clock::now() < reversal_deadline) {
+    duty_pub->publish(duty);
+    executor.spin_some();
+    std::this_thread::sleep_for(5ms);
+  }
+  count = read(master_fd, received.data(), received.size());
+  ASSERT_GT(count, 0);
+  received.resize(static_cast<size_t>(count));
+  expect_omni_md10c3_frame(
+    last_packet_from_serial_bytes(received), {{-0.1F, 0.1F, -0.2F}}, 0x00);
+
+  duty.data = {std::numeric_limits<float>::quiet_NaN(), 0.0F, 0.0F};
+  const auto invalid_deadline = std::chrono::steady_clock::now() + 80ms;
+  while (std::chrono::steady_clock::now() < invalid_deadline) {
+    duty_pub->publish(duty);
+    executor.spin_some();
+    std::this_thread::sleep_for(5ms);
+  }
+  count = read(master_fd, received.data(), received.size());
+  ASSERT_GT(count, 0);
+  received.resize(static_cast<size_t>(count));
+  expect_omni_md10c3_frame(
+    last_packet_from_serial_bytes(received), {{0.0F, 0.0F, 0.0F}}, 0x08);
+
+  close(master_fd);
+  executor.remove_node(publisher_node);
+  executor.remove_node(writer);
+  writer.reset();
+  publisher_node.reset();
+  rclcpp::shutdown();
 }
 
 TEST(BmsCsv, ParsesCellVoltagesAndTemperature)

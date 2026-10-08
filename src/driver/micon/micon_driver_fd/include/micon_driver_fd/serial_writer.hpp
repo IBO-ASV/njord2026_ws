@@ -35,16 +35,24 @@ enum class EmergencyStopState : uint8_t
 
 constexpr uint8_t kProtocolVersion = 0x01;
 constexpr uint8_t kThrusterCommandType = 0x01;
+constexpr uint8_t kOmniMd10c3CommandType = 0x02;
 constexpr size_t kHeaderSize = 5;
 constexpr size_t kCrcSize = 2;
 constexpr size_t kPayloadSize = 4 * sizeof(float) + 1;
 constexpr size_t kRawFrameSize = kHeaderSize + kPayloadSize + kCrcSize;
 constexpr size_t kMaxEncodedFrameSize = kRawFrameSize + 1;
 constexpr size_t kPacketSize = kMaxEncodedFrameSize + 1;
+constexpr size_t kOmniMd10c3PayloadSize = 3 * sizeof(float) + 1;
+constexpr size_t kOmniMd10c3RawFrameSize =
+  kHeaderSize + kOmniMd10c3PayloadSize + kCrcSize;
 using Packet = std::vector<uint8_t>;
 
 Packet encode_packet(
   const std::array<float, 4> & thrust,
+  const Flags & flags,
+  uint16_t sequence = 0);
+Packet encode_md10c3_packet(
+  const std::array<float, 3> & duty,
   const Flags & flags,
   uint16_t sequence = 0);
 
@@ -69,6 +77,12 @@ private:
   void publish_safety_state();
   int open_serial(const std::string & device, int baud);
 
+  enum class CommandProfile
+  {
+    ESC4_FORCE,
+    MD10C3_DUTY,
+  };
+
   Flags flags_;
   std::array<float, 4> thrust_{{0.0f, 0.0f, 0.0f, 0.0f}};
   std::mutex mutex_;
@@ -77,6 +91,13 @@ private:
   std::string serial_port_;
   int baud_{115200};
   std::string command_topic_;
+  CommandProfile command_profile_{CommandProfile::ESC4_FORCE};
+  double md10c_duty_limit_{0.5};
+  double command_timeout_sec_{0.0};
+  std::array<float, 3> md10c_duty_{{0.0f, 0.0f, 0.0f}};
+  bool command_received_{false};
+  bool command_valid_{false};
+  std::chrono::steady_clock::time_point last_valid_command_{};
   std::string ground_station_heartbeat_topic_;
   double ground_station_heartbeat_timeout_sec_{0.0};
   bool soft_emg_{false};

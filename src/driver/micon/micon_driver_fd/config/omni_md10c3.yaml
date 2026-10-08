@@ -1,0 +1,11 @@
+thruster_serial:
+  ros__parameters:
+    # This is intentionally a separate profile from the watercraft's four
+    # ESC force-command protocol (command_profile: esc4_force).
+    command_profile: "md10c3_duty"
+    command_topic: "/thruster_command"
+    # Host-side boundary: every finite command is clamped before serialization.
+    md10c_duty_limit: 0.50
+    # No valid 3-element command after this interval becomes an explicit soft
+    # emergency-stop frame.  The MD10C firmware independently enforces it.
+    command_timeout_sec: 0.25

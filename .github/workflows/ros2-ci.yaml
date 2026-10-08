@@ -69,6 +69,7 @@ jobs:
             src/navigation/path_generator/catmull_rom \
             src/navigation/buoy_obstacle_publisher \
             src/diagnostics/diagnostic_monitors \
+            src/driver/micon/micon_driver_fd \
             src/driver/micon/thruster_driver \
             src/robot \
             src/sim/dutyed_tf_pub_with_disturbance \
@@ -93,6 +94,7 @@ jobs:
             catmull_rom_path_smoother \
             buoy_obstacle_publisher \
             diagnostic_monitors \
+            micon_driver_fd \
             thruster_driver \
             robot \
             dutyed_tf_pub_with_disturbance \
@@ -108,6 +110,7 @@ jobs:
           source install/setup.bash
           colcon test --event-handlers console_direct+ --packages-select \
             njord_platform \
+            micon_driver_fd \
             dutyed_tf_pub_with_disturbance \
             operation_validator \
             task1_sim \

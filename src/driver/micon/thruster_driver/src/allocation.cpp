@@ -136,5 +136,42 @@ std::vector<double> commandToWrench(
   return wrench;
 }
 
+std::vector<double> bodyTwistToWheelDuty(
+  const std::vector<OmniWheelGeometry> & wheels,
+  double linear_x_mps,
+  double linear_y_mps,
+  double angular_z_rad_s)
+{
+  if (wheels.size() < 3U) {
+    throw std::invalid_argument("omni kinematics requires at least three wheels");
+  }
+
+  std::vector<double> duty;
+  duty.reserve(wheels.size());
+  for (const auto & wheel : wheels) {
+    if (!std::isfinite(wheel.wheel_radius_m) || wheel.wheel_radius_m <= 0.0 ||
+      !std::isfinite(wheel.duty_per_wheel_rad_s) || wheel.duty_per_wheel_rad_s < 0.0)
+    {
+      throw std::invalid_argument("omni wheel radius and duty gain must be finite and valid");
+    }
+
+    const double drive_x = std::cos(wheel.drive_angle_rad);
+    const double drive_y = std::sin(wheel.drive_angle_rad);
+    // Velocity of the wheel centre from planar body twist, projected onto the
+    // wheel drive/tangent direction.  It is then converted to wheel angular
+    // speed; the final duty gain remains explicitly uncalibrated open loop.
+    const double tangential_velocity_mps =
+      drive_x * (linear_x_mps - angular_z_rad_s * wheel.y) +
+      drive_y * (linear_y_mps + angular_z_rad_s * wheel.x);
+    double command =
+      tangential_velocity_mps / wheel.wheel_radius_m * wheel.duty_per_wheel_rad_s;
+    if (wheel.reverse) {
+      command *= -1.0;
+    }
+    duty.push_back(std::clamp(command, -1.0, 1.0));
+  }
+  return duty;
+}
+
 }  // namespace thruster_driver
 }  // namespace njord
