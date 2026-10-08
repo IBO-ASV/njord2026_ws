@@ -32,6 +32,8 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>sensor_sim_with_noise</exec_depend>
   <depend>launch_ros</depend>
+  <!-- task1_sim.launch.py owns the nav/manual command arbitration node. -->
+  <exec_depend>twist_mux</exec_depend>
 
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>
