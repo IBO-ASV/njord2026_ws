@@ -150,6 +150,37 @@ jobs:
             task2_sim \
             task3_sim
 
+      - name: Run headless Task1 command-path smoke
+        run: |
+          source /opt/ros/humble/setup.bash
+          source install/setup.bash
+          smoke_log="$(mktemp)"
+          python3 .github/scripts/task1_headless_smoke.py --timeout 45 >"${smoke_log}.probe" 2>&1 &
+          probe_pid=$!
+          ros2 launch task1_sim task1_sim.launch.py \
+            driver_delay:=0.0 \
+            nav2_delay:=0.0 \
+            goal_delay:=0.0 \
+            use_nav2:=false \
+            use_sensor_noise:=false \
+            use_local_ekf:=false \
+            use_global_ekf:=false \
+            use_validator:=false \
+            use_gui_dummy_publishers:=false \
+            use_foxglove_bridge:=false \
+            use_cardinal_perception_sim:=false >"${smoke_log}" 2>&1 &
+          launch_pid=$!
+          cleanup() {
+            kill -INT "${launch_pid}" 2>/dev/null || true
+            wait "${launch_pid}" 2>/dev/null || true
+          }
+          trap cleanup EXIT
+          if ! wait "${probe_pid}"; then
+            cat "${smoke_log}.probe"
+            cat "${smoke_log}"
+            exit 1
+          fi
+
       - name: Test core simulation packages
         run: |
           source /opt/ros/humble/setup.bash
