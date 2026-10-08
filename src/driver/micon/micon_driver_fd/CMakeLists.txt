@@ -73,4 +73,7 @@ if(BUILD_TESTING)
     ${CMAKE_CURRENT_SOURCE_DIR}/../../../../Docs/firmware/omni_md10c3)
 endif()
 
+ament_export_libraries(serial_writer_lib)
+ament_export_dependencies(rclcpp geometry_msgs std_msgs)
+
 ament_package()

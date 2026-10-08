@@ -51,11 +51,22 @@ install(DIRECTORY launch config
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(micon_driver_fd REQUIRED)
   ament_add_gtest(test_allocation test/test_allocation.cpp)
   target_link_libraries(test_allocation thruster_allocation)
   ament_add_gtest(test_node_safety test/test_node_safety.cpp)
   target_link_libraries(test_node_safety thruster_driver_component)
   ament_target_dependencies(test_node_safety rclcpp geometry_msgs std_msgs)
+  ament_add_gtest(test_omni_profile_pipeline test/test_omni_profile_pipeline.cpp)
+  target_compile_definitions(test_omni_profile_pipeline PRIVATE
+    THRUSTER_DRIVER_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}"
+    MICON_DRIVER_FD_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}/../micon_driver_fd")
+  target_link_libraries(test_omni_profile_pipeline
+    thruster_driver_component
+    ${micon_driver_fd_LIBRARIES}
+    util)
+  ament_target_dependencies(test_omni_profile_pipeline
+    micon_driver_fd rclcpp geometry_msgs std_msgs)
 endif()
 
 ament_export_include_directories(include)
