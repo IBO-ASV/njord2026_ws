@@ -28,10 +28,59 @@ inline bool partialFrameExpired(
          elapsedAtLeast(now, frame_started_at, total_frame_limit));
 }
 
-inline bool mustDiscardPartialFrame(bool command_timed_out, bool has_partial_frame)
+// Tracks the delimiter recovery boundary separately from the watchdog.  When
+// the watchdog fires while a frame is partial, only the suffix of *that*
+// frame is discarded.  A frame that starts after its delimiter is allowed to
+// arrive over later loop iterations and may clear the watchdog once valid.
+class FrameRecoveryState
 {
-  return command_timed_out && has_partial_frame;
-}
+public:
+  bool onWatchdog(bool command_timed_out, bool has_partial_frame)
+  {
+    const bool timeout_transition = command_timed_out && !command_timeout_active_;
+    command_timeout_active_ = command_timed_out;
+    if (timeout_transition && has_partial_frame) {
+      discardUntilDelimiter();
+      return true;
+    }
+    return false;
+  }
+
+  void onValidCommand()
+  {
+    command_timeout_active_ = false;
+  }
+
+  void discardUntilDelimiter()
+  {
+    discarding_until_delimiter_ = true;
+  }
+
+  // Returns true only when the delimiter belongs to a frame that should be
+  // decoded.  A discarded suffix's delimiter just restores the parser.
+  bool onDelimiter()
+  {
+    if (discarding_until_delimiter_) {
+      discarding_until_delimiter_ = false;
+      return false;
+    }
+    return true;
+  }
+
+  bool acceptsData() const
+  {
+    return !discarding_until_delimiter_;
+  }
+
+  bool commandTimeoutActive() const
+  {
+    return command_timeout_active_;
+  }
+
+private:
+  bool command_timeout_active_ = false;
+  bool discarding_until_delimiter_ = false;
+};
 
 inline bool calibrationPulseExpired(
   bool calibration_enabled,

@@ -54,7 +54,7 @@ static_assert(kRawFrameSize <= serial_protocol::kMaximumRawFrameSize,
 
 uint8_t encoded_frame[serial_protocol::kMaximumEncodedFrameSize];
 size_t encoded_frame_length = 0;
-bool discarding_oversized_frame = false;
+omni_md10c3::FrameRecoveryState frame_recovery_state;
 unsigned long last_valid_command_time_ms = 0;
 unsigned long last_partial_frame_byte_time_ms = 0;
 unsigned long partial_frame_start_time_ms = 0;
@@ -126,7 +126,7 @@ void discardPartialFrameAndStop()
   has_partial_frame = false;
   // A delayed suffix cannot become a valid command.  Consume input until its
   // delimiter, then accept only a newly framed command.
-  discarding_oversized_frame = true;
+  frame_recovery_state.discardUntilDelimiter();
   enterSafeState();
 }
 
@@ -256,6 +256,7 @@ bool processCommand(const uint8_t * raw, size_t raw_length)
 
   has_valid_command = true;
   last_valid_command_time_ms = millis();
+  frame_recovery_state.onValidCommand();
   if ((flags & kEmergencyStopMask) != 0U) {
     calibration_pulse_active = false;
     calibration_pulse_latched = false;
@@ -292,23 +293,20 @@ void processSerialInput()
     ++processed_bytes;
     const uint8_t byte = static_cast<uint8_t>(received);
     if (byte == 0) {
-      if (discarding_oversized_frame) {
-        discarding_oversized_frame = false;
-      } else if (encoded_frame_length > 0) {
+      if (frame_recovery_state.onDelimiter() && encoded_frame_length > 0) {
         processEncodedFrame();
       }
       encoded_frame_length = 0;
       has_partial_frame = false;
       continue;
     }
-    if (discarding_oversized_frame) {
+    if (!frame_recovery_state.acceptsData()) {
       continue;
     }
     if (encoded_frame_length >= sizeof(encoded_frame)) {
       encoded_frame_length = 0;
-      discarding_oversized_frame = true;
       has_partial_frame = false;
-      enterSafeState();
+      discardPartialFrameAndStop();
       continue;
     }
     const unsigned long now = millis();
@@ -329,7 +327,10 @@ void enforceSafety()
   if (command_timed_out) {
     enterSafeState();
   }
-  if (omni_md10c3::mustDiscardPartialFrame(command_timed_out, has_partial_frame) ||
+  // Discard a partial only as the watchdog crosses into timeout.  Once its
+  // delimiter has been consumed, a fresh command may be received across
+  // multiple loop iterations and clear the watchdog normally.
+  if (frame_recovery_state.onWatchdog(command_timed_out, has_partial_frame) ||
     omni_md10c3::partialFrameExpired(
       has_partial_frame, now, partial_frame_start_time_ms, last_partial_frame_byte_time_ms,
       kFrameInterByteTimeoutMs, kFrameTotalTimeoutMs))
