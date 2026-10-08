@@ -1,4 +1,4 @@
-# 3輪オムニ MD10C firmware（出力ロック状態）
+# 3輪オムニ MD10C firmware（既定ロック・校正専用モード付き）
 
 これは3輪オムニ台車用の専用ESP32 firmwareである。既存の水上機用4 ESC firmware
 [`../../firm1/firm1.ino`](../../firm1/firm1.ino)を置き換えない。水上機は従来どおり
@@ -37,26 +37,48 @@ payloadは校正済みの物理速度・回転数・推力ではなく、符号�
 
 ## 安全動作
 
-- 起動時、フレーム不正、CRC不一致、NaN/InfではPWMを更新しない。
+- 起動時、PWM初期化失敗、フレーム不正、CRC不一致、NaN/Infでは**全chを直ちに
+  PWM=0、DIR=LOW**にする。途中まで届いたフレームが50 msを超えた場合も破棄し、次の
+  delimiterまで後半だけを受理しない。
 - 初期化・soft emergency stop・250 msの有効通信途絶では、全PWMを0、全DIRをLOWにする。
 - 有限値もfirmware内で `abs(duty) <= 0.50` に再clampする。host側にも同じ上限がある。
 - 正負が切り替わるchは、PWMを0にして2 ms待ってからDIRを切り替える。hostの疑似TTY
   テストでも正負符号がそのまま専用packetへ保存されることを確認する。
-- `kMotorOutputEnabled` は既定で `false`。そのままコンパイルしても出力は必ず0である。
+- `kMotorOutputEnabled` と `kCalibrationOutputEnabled` は既定で `false`。そのまま
+  コンパイルしても出力は必ず0である。両方を同時に `true` にするとコンパイルエラーに
+  なる。校正モードは一輪のみ、`abs(duty) <= 0.15`、連続1秒で停止ラッチとする。
+- PWMはMD10Cが許容する最大20 kHzのまま、ESP32 LEDCで成立する11 bitを使う。各
+  `ledcAttach` / 初期化時のゼロ書込みを確認し、失敗時はPWMをdetachして全GPIOをLOWの
+  ままラッチする。
 - この基板のMD10C profileには検証済みの独立した物理E-stop入力を定義していない。実機の
   電源遮断・非常停止系を別途確認し、出力ロック解除前に試験すること。
 
 ## 校正と有効化（実機ではまだ実施しない）
 
 1. 台車を持ち上げるか、車輪を完全に浮かせる。物理E-stop、電源遮断、監視者を準備する。
-2. `kMotorOutputEnabled` をまだ `false` のまま、`arduino-cli compile --fqbn esp32:esp32:esp32 Docs/firmware/omni_md10c3` を行う。uploadは電源を切り、明示承認後だけ実施する。
-3. wheel 1輪ずつ、`0.05`から開始して `0.05`刻みで最大`0.15`まで、各1秒以下で正負を確認する。
-   期待する接線方向と逆なら、その輪だけ `kDirectionInverted` と YAMLの `reverse` のどちらを
-   正の定義にするかを一箇所へ決め、二重反転にしない。
-4. 3輪とも確認後、host YAMLの `safety.actuator_configuration_confirmed:=true` と
-   firmwareの `kMotorOutputEnabled=true` を同じ試験記録で解除する。最初の地上試験は
+2. まず両方の出力flagを `false` のままcompileして、出力ロック状態であることを確認する。
+   uploadは電源を切り、明示承認後だけ実施する。
+3. **極性確認だけ**を許可するとき、`kMotorOutputEnabled=false` を保ち、
+   `kCalibrationOutputEnabled=true` だけにしてbuild/uploadする。通常profileではなく、下の
+   3個を必ず組にして選び、`/omni_calibration_duty_int16` に一輪だけのInt16配列を送る。
+
+   ```text
+   thruster_config_file:=<thruster_driver>/config/omni_md10c3_calibration.yaml
+   thruster_robot_description_file:=<robot>/urdf/omni_3wheel.urdf
+   thruster_serial_config_file:=<micon_driver_fd>/config/omni_md10c3_calibration.yaml
+   ```
+
+   例: `[50, 0, 0]` はLFだけに +0.05 duty を要求する。hostは0.15、firmwareは
+   一輪・0.15・連続1秒で二重に制限し、ゼロまたはemergency frameを受けるまで次のpulseを
+   拒否する。実機への送信は本手順書だけでは許可されない。
+4. 期待する接線方向と逆なら、その輪だけfirmwareの `kDirectionInverted` を変更する。
+   `duty_array` はYAMLの `reverse` を通らないため、校正時に通常profileの `reverse` を
+   併用して補正してはならない。通常profileの `reverse` は `false` のまま維持する。
+5. 3輪の極性・物理停止・配線記録をレビュー後、校正flagを再び `false` にし、通常運用を
+   許可する場合だけ `kMotorOutputEnabled=true` と通常YAMLの
+   `safety.actuator_configuration_confirmed:=true` を同じ試験記録で解除する。最初の地上試験は
    duty 0.05以下、1方向ずつ、短時間に限定する。
-5. 速度・回頭の校正は外部自己位置（モーションキャプチャ、既知距離のタイム計測、または
+6. 速度・回頭の校正は外部自己位置（モーションキャプチャ、既知距離のタイム計測、または
    LiDAR/GNSSの妥当性確認済みodometry）で行う。エンコーダ無しのため、`cmd_vel`を物理速度と
    解釈せず、方向ごとの不感帯・正負非対称・電圧低下を別表に記録する。
 

@@ -8,6 +8,7 @@
 #include <std_msgs/msg/int16_multi_array.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
 
+#include <chrono>
 #include <string>
 #include <vector>
 
@@ -53,6 +54,7 @@ private:
   double applyDeadzone(double value, double deadzone) const;
   void publishCommands(const std::vector<double> & commands);
   double clamp(double value, double min_value, double max_value) const;
+  static bool hasFiniteTwist(const geometry_msgs::msg::Twist & twist);
   std::vector<double> getDoubleVector(
     const std::string & name,
     const std::vector<double> & defaults);
@@ -123,6 +125,10 @@ private:
   std::vector<double> omni_duty_per_wheel_rad_s_;
 
   geometry_msgs::msg::Twist latest_cmd_;
+  // This is a hardware-output watchdog.  It deliberately uses a monotonic
+  // clock, because the control timer is a wall timer and simulated ROS time
+  // can pause or jump while a real motor driver is still energized.
+  bool cmd_vel_input_valid_{false};
   double meas_surge_{0.0};
   double meas_sway_{0.0};
   double meas_yaw_{0.0};
@@ -137,9 +143,9 @@ private:
   std::vector<double> dob_hat_{0.0, 0.0, 0.0};
   std::vector<double> dob_lpf_{0.0, 0.0, 0.0};
 
-  rclcpp::Time last_cmd_time_;
-  rclcpp::Time last_feedback_time_;
-  rclcpp::Time last_control_time_;
+  std::chrono::steady_clock::time_point last_cmd_time_;
+  std::chrono::steady_clock::time_point last_feedback_time_;
+  std::chrono::steady_clock::time_point last_control_time_;
 };
 
 }  // namespace thruster_driver

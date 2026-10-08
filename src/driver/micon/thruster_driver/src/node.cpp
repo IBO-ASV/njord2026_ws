@@ -42,9 +42,9 @@ std::vector<double> parseDoubleList(const std::string & text)
 
 ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
 : Node("thruster_driver_node", options),
-  last_cmd_time_(this->now()),
-  last_feedback_time_(this->now()),
-  last_control_time_(this->now())
+  last_cmd_time_(std::chrono::steady_clock::now()),
+  last_feedback_time_(std::chrono::steady_clock::now()),
+  last_control_time_(std::chrono::steady_clock::now())
 {
   input_mode_ = toLower(this->declare_parameter<std::string>("input_mode", "cmd_vel"));
 
@@ -196,8 +196,20 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
 
 void ThrusterDriverNode::cmdVelCallback(const geometry_msgs::msg::Twist::SharedPtr msg)
 {
+  // Reject before any clamp.  std::min/std::max have surprising NaN behaviour
+  // and can otherwise turn a malformed Twist into a non-zero bounded command.
+  if (!hasFiniteTwist(*msg)) {
+    latest_cmd_ = geometry_msgs::msg::Twist{};
+    cmd_vel_input_valid_ = false;
+    publishCommands(std::vector<double>(thrusters_.size(), 0.0));
+    RCLCPP_ERROR_THROTTLE(
+      this->get_logger(), *this->get_clock(), 2000,
+      "Rejected non-finite cmd_vel; publishing a zero command until a finite Twist arrives.");
+    return;
+  }
   latest_cmd_ = *msg;
-  last_cmd_time_ = this->now();
+  cmd_vel_input_valid_ = true;
+  last_cmd_time_ = std::chrono::steady_clock::now();
 }
 
 void ThrusterDriverNode::dutyArrayCallback(const std_msgs::msg::Int16MultiArray::SharedPtr msg)
@@ -228,18 +240,21 @@ void ThrusterDriverNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr m
   meas_sway_ = msg->twist.twist.linear.y;
   meas_yaw_ = msg->twist.twist.angular.z;
   have_feedback_ = true;
-  last_feedback_time_ = this->now();
+  last_feedback_time_ = std::chrono::steady_clock::now();
 }
 
 void ThrusterDriverNode::controlTimerCallback()
 {
-  const auto now = this->now();
-  const double dt = std::max(1e-4, (now - last_control_time_).seconds());
+  const auto now = std::chrono::steady_clock::now();
+  const double dt = std::max(
+    1e-4, std::chrono::duration<double>(now - last_control_time_).count());
   last_control_time_ = now;
 
-  const bool cmd_timeout = (now - last_cmd_time_).seconds() > watchdog_timeout_sec_;
+  const bool cmd_timeout = !cmd_vel_input_valid_ ||
+    std::chrono::duration<double>(now - last_cmd_time_).count() > watchdog_timeout_sec_;
   const bool feedback_timeout = use_velocity_feedback_ &&
-    (!have_feedback_ || (now - last_feedback_time_).seconds() > feedback_timeout_sec_);
+    (!have_feedback_ ||
+    std::chrono::duration<double>(now - last_feedback_time_).count() > feedback_timeout_sec_);
 
   if (cmd_timeout || (feedback_timeout && stop_on_feedback_timeout_)) {
     publishCommands(std::vector<double>(thrusters_.size(), 0.0));
@@ -523,7 +538,20 @@ void ThrusterDriverNode::publishCommands(const std::vector<double> & commands)
 
 double ThrusterDriverNode::clamp(double value, double min_value, double max_value) const
 {
+  if (!std::isfinite(value)) {
+    return 0.0;
+  }
   return std::max(min_value, std::min(value, max_value));
+}
+
+bool ThrusterDriverNode::hasFiniteTwist(const geometry_msgs::msg::Twist & twist)
+{
+  return std::isfinite(twist.linear.x) &&
+         std::isfinite(twist.linear.y) &&
+         std::isfinite(twist.linear.z) &&
+         std::isfinite(twist.angular.x) &&
+         std::isfinite(twist.angular.y) &&
+         std::isfinite(twist.angular.z);
 }
 
 std::vector<double> ThrusterDriverNode::getDoubleVector(

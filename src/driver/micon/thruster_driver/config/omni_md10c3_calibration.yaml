@@ -1,0 +1,42 @@
+# Bench-only profile for confirming one MD10C wheel's polarity.
+#
+# It accepts a direct Int16 array scaled by duty_resolution: for example
+# [50, 0, 0] is +0.05 duty on LF.  This bypasses cmd_vel and vehicle
+# kinematics on purpose.  Do not use it while any wheel touches the ground.
+thruster_driver_node:
+  ros__parameters:
+    input_mode: "duty_array"
+    actuator_model: "omni_wheel_duty"
+    duty_resolution: 1000
+
+    omni:
+      wheel_radius_m: 0.0635
+      duty_per_wheel_rad_s: [0.05, 0.05, 0.05]
+
+    output:
+      mode: "duty_ratio"
+      duty_limit: 0.15
+
+    safety:
+      # This profile is deliberately usable only with the firmware's separate
+      # calibration-output flag, which caps one wheel for at most one second.
+      actuator_configuration_confirmed: true
+
+    static_map:
+      deadzone_pos: 0.0
+      deadzone_neg: 0.0
+      thrusters:
+        forward_gain: [1.0, 1.0, 1.0]
+        reverse_gain: [1.0, 1.0, 1.0]
+        offset: [0.0, 0.0, 0.0]
+
+    thrusters:
+      ids: ["LF", "REAR", "RF"]
+      links: ["omni_left_front", "omni_rear", "omni_right_front"]
+      angle_rad: [2.617994, -1.570796, 0.523599]
+      reverse: [false, false, false]
+      max_thrust: [1.0, 1.0, 1.0]
+
+    topics:
+      duty_array: "/omni_calibration_duty_int16"
+      sim_thruster_command: "/thruster_command"

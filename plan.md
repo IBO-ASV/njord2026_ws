@@ -45,8 +45,10 @@
 ## 現在の3輪オムニslice
 
 `codex/tri-omni-task1-1` は上表のslice 2へ入る候補であり、水上機の型`0x01`を
-維持したまま、3輪MD10C型`0x02`を別profileに分離する。最新commitは
-`a7806a1`で、host/firmwareの出力lockは未校正のまま既定で有効である。
+維持したまま、3輪MD10C型`0x02`を別profileに分離する。この文書はbranch先端commitを
+統合基準にしない。master向けsliceでは、レビュー済みの固定commitをPR本文に明示し、
+`codex/tri-omni-task1-1` のHEADを暗黙に基準にしない。host/firmwareの出力lockは未校正の
+まま既定で有効である。
 
 受入にはROS CI、hostのpseudo-TTY試験、firmware compile、輪別極性確認、外部停止確認が
 必要である。極性・配線・物理速度校正が未確認の間は実機出力を有効化しない。

@@ -1,5 +1,10 @@
 # thruster_driver
 
+> **Profile boundary:** the legacy watercraft profile is four-element Newton
+> output, but the independent `omni_wheel_duty` profile is three-element
+> signed duty output.  Do not read the legacy four-thruster description below
+> as applying to the MD10C configuration; see the profile contract at the end.
+
 `cmd_vel` と feedback odometry から船体 wrench を計算し、URDF 上の
 4スラスタ配置に配分して `/thruster_command` へ publish します。
 
@@ -107,3 +112,20 @@ BlueRobotics T200 @16V の最大推力 **≈51.5N** です。
 > スラスタ関連の配列 (`ids`, `links`, `angle_rad`, `reverse`, `max_thrust`,
 > `static_map.thrusters.*`) は必ず `thrusters.ids` と同じ長さにしてください。
 > 長さが不一致だとノード起動時に例外で停止します。
+# Profile-specific output contract
+
+`/thruster_command` is **not always Newton**.  The original marine
+`wrench_allocation` / `force_newton` profile publishes exactly four `float32`
+force values in N.  The independent `omni_wheel_duty` profile in
+`config/omni_md10c3.yaml` publishes exactly three signed duty ratios and must
+only be paired with `micon_driver_fd/config/omni_md10c3.yaml`.
+
+The serial boundary now rejects rather than pads or truncates malformed input:
+`esc4_force` requires exactly four finite values, and `md10c3_duty` requires
+exactly three finite values.  Existing workspace producers were checked:
+the normal marine `thruster_driver` configuration has four IDs and its
+`Float32MultiArray` producer therefore emits four values; the three-wheel
+profiles select their dedicated three-element configuration.  External or
+ad-hoc publishers must meet the same exact-length contract.
+
+<!-- End of profile-specific contract. -->

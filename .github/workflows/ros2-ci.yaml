@@ -127,7 +127,10 @@ jobs:
         run: |
           source /opt/ros/humble/setup.bash
           source scripts/njord_env.sh
-          colcon build --event-handlers console_direct+ --packages-select \
+          # robot has in-workspace runtime dependencies.  Build the requested
+          # packages with their source closure so its generated package.sh is
+          # available instead of failing midway through the selected list.
+          colcon build --event-handlers console_direct+ --packages-up-to \
             njord_platform \
             njord_interfaces \
             pcl_det \

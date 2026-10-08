@@ -154,10 +154,28 @@ SerialWriter::SerialWriter(const rclcpp::NodeOptions & options)
     throw std::runtime_error(
             "command_profile must be 'esc4_force' or 'md10c3_duty'");
   }
-  md10c_duty_limit_ = std::clamp(
-    declare_parameter<double>("md10c_duty_limit", 0.5), 0.0, 0.5);
-  command_timeout_sec_ = std::max(
-    0.0, declare_parameter<double>("command_timeout_sec", 0.0));
+  const double configured_duty_limit = declare_parameter<double>("md10c_duty_limit", 0.5);
+  if (!std::isfinite(configured_duty_limit) || configured_duty_limit < 0.0 ||
+    configured_duty_limit > 0.5)
+  {
+    throw std::runtime_error("md10c_duty_limit must be finite and within [0.0, 0.5]");
+  }
+  md10c_duty_limit_ = configured_duty_limit;
+
+  // Legacy four-ESC deployments intentionally keep their previous opt-in
+  // timeout semantics.  A selected MD10C profile is a motor-output safety
+  // boundary, however, so it always gets a finite fail-safe default and rejects
+  // an attempt to disable that boundary.
+  const double configured_timeout = declare_parameter<double>(
+    "command_timeout_sec", command_profile_ == CommandProfile::MD10C3_DUTY ? 0.25 : 0.0);
+  if (!std::isfinite(configured_timeout)) {
+    throw std::runtime_error("command_timeout_sec must be finite");
+  }
+  if (command_profile_ == CommandProfile::MD10C3_DUTY && configured_timeout <= 0.0) {
+    throw std::runtime_error("md10c3_duty requires command_timeout_sec greater than zero");
+  }
+  command_timeout_sec_ = command_profile_ == CommandProfile::MD10C3_DUTY ?
+    configured_timeout : std::max(0.0, configured_timeout);
   ground_station_heartbeat_topic_ = declare_parameter<std::string>(
     "ground_station_heartbeat_topic", "/heartbeat/ground_station");
   ground_station_heartbeat_timeout_sec_ = declare_parameter<double>(

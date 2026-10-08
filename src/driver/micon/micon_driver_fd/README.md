@@ -9,7 +9,9 @@ be added alongside it without changing the manual-control package.
 `thruster_serial` is the named executable used by the miniPC bringup.
 `serial_writer` remains as a compatibility alias for existing standalone launch files.
 
-- subscribes `command_topic` (`std_msgs/msg/Float32MultiArray`), first 4 thrust commands in N
+- subscribes `command_topic` (`std_msgs/msg/Float32MultiArray`): exactly four
+  finite force values in N for the marine profile, or exactly three finite
+  signed duty ratios for the MD10C profile
 - subscribes `/soft_emg`, `/red`, `/yellow`, `/green` (`std_msgs/msg/Bool`)
 - publishes `/micon/relay_active` (`std_msgs/msg/Bool`) from the firmware's relay-state byte
   and `/safety/emergency_stop` (`std_msgs/msg/UInt8`): `RUNNING=0`, `SOFT_EMG=1`,
@@ -27,9 +29,19 @@ MD10C base.  `config/omni_md10c3.yaml` opts into the independent
 `command_profile:=md10c3_duty` protocol (message type `0x02`, exactly three
 signed duty ratios).  That profile clamps every host command to
 `abs(duty) <= md10c_duty_limit` (hard upper bound 0.50), rejects a wrong-sized
-or non-finite input as an emergency stop, and applies its own command timeout.
+or non-finite input as an emergency stop, and requires a positive finite
+`command_timeout_sec` (default 0.25 s even if its YAML is omitted).  Invalid
+or non-finite `md10c_duty_limit` is rejected at startup rather than silently
+clamped.  The legacy marine profile retains its default disabled timeout.
 It remains compatible with the watercraft firmware because the type `0x01`
 wire format is unchanged.
+
+The serial boundary no longer pads or truncates a command: `esc4_force`
+requires exactly four finite inputs and `md10c3_duty` exactly three.  The
+workspace's normal marine producer is `thruster_driver` with four configured
+thruster IDs; the three-wheel launch selects the separate three-element profile.
+External publishers must be updated if they previously relied on padding or
+truncation.
 
 `robot/launch/minipc_bringup.launch.py` loads
 `config/esc4_force.yaml` by default.  For the three-wheel base, both the

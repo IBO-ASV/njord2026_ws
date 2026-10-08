@@ -1,0 +1,8 @@
+# Bench-only companion of thruster_driver/omni_md10c3_calibration.yaml.
+# The firmware independently caps calibration output at 0.15 and one second.
+thruster_serial:
+  ros__parameters:
+    command_profile: "md10c3_duty"
+    command_topic: "/thruster_command"
+    md10c_duty_limit: 0.15
+    command_timeout_sec: 0.25

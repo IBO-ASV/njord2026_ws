@@ -25,10 +25,17 @@ PR に分けるための実行チェックリストである。状態や計測�
 - [x] 水上機用の type `0x01` / 4×force[N] profileを既定として残す。
 - [x] host・firmwareの双方で duty を `abs <= 0.50` に制限し、無効入力・
   watchdog timeout・soft emergency で全chをゼロにする。
+- [x] `cmd_vel` のNaN/Infをクランプ前に拒否し、即時ゼロ・fault状態にする。
+  実機出力watchdogはROS時刻ではなく単調時計を使う（`use_sim_time`停止・巻戻りでも
+  古い命令を継続しない）。
 - [ ] 実機の外部電源遮断・非常停止経路を確認し、MD10C profileの独立E-stopと
   誤認しない。
-- [ ] 各輪を浮かせた状態で、低duty・1輪ずつ、実配線の極性を確認する。
-  `reverse` と firmware の `kDirectionInverted` は同じ物理反転を二重に設定しない。
+- [ ] 各輪を浮かせた状態で、**校正専用firmware mode** と次のcalibration YAML三点セットを
+  用い、低duty・1輪ずつ・1秒以内で実配線の極性を確認する。通常profileの `reverse` は
+  校正に使わず、物理極性は firmware の `kDirectionInverted` 一箇所だけで補正する。
+- [ ] 校正専用modeは `kCalibrationOutputEnabled=true` と
+  `kMotorOutputEnabled=false` の排他的buildに限る。host/firmwareとも duty `<=0.15`、
+  firmwareは一輪・連続1秒で停止ラッチすることを手順書どおり確認する。
 - [ ] 校正記録をレビュー後にのみ、host YAML の
   `safety.actuator_configuration_confirmed` と firmware の
   `kMotorOutputEnabled` の二つのlockを解除する。
@@ -41,6 +48,14 @@ PR に分けるための実行チェックリストである。状態や計測�
 thruster_config_file:=<thruster_driver>/config/omni_md10c3.yaml
 thruster_robot_description_file:=<robot>/urdf/omni_3wheel.urdf
 thruster_serial_config_file:=<micon_driver_fd>/config/omni_md10c3.yaml
+```
+
+極性校正だけでは、通常profileの代わりに次の三点を同時に選ぶ。
+
+```text
+thruster_config_file:=<thruster_driver>/config/omni_md10c3_calibration.yaml
+thruster_robot_description_file:=<robot>/urdf/omni_3wheel.urdf
+thruster_serial_config_file:=<micon_driver_fd>/config/omni_md10c3_calibration.yaml
 ```
 
 ## test07089 の整理

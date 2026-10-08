@@ -318,6 +318,59 @@ TEST(SerialWriterMd10c3, StopsAllChannelsAfterCommandTimeout)
   rclcpp::shutdown();
 }
 
+TEST(SerialWriterMd10c3, RequiresFiniteDutyLimitAndPositiveTimeout)
+{
+  if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+
+  rclcpp::NodeOptions nonfinite_limit;
+  nonfinite_limit.parameter_overrides(
+  {
+    rclcpp::Parameter("serial_port", "/dev/null"),
+    rclcpp::Parameter("command_profile", "md10c3_duty"),
+    rclcpp::Parameter("md10c_duty_limit", std::numeric_limits<double>::quiet_NaN()),
+  });
+  EXPECT_THROW(
+    {auto writer = std::make_shared<micon_driver_fd::SerialWriter>(nonfinite_limit);},
+    std::runtime_error);
+
+  rclcpp::NodeOptions disabled_timeout;
+  disabled_timeout.parameter_overrides(
+  {
+    rclcpp::Parameter("serial_port", "/dev/null"),
+    rclcpp::Parameter("command_profile", "md10c3_duty"),
+    rclcpp::Parameter("command_timeout_sec", 0.0),
+  });
+  EXPECT_THROW(
+    {auto writer = std::make_shared<micon_driver_fd::SerialWriter>(disabled_timeout);},
+    std::runtime_error);
+
+  rclcpp::NodeOptions md10c_default_timeout;
+  md10c_default_timeout.parameter_overrides(
+  {
+    rclcpp::Parameter("serial_port", "/dev/null"),
+    rclcpp::Parameter("command_profile", "md10c3_duty"),
+  });
+  auto md10c_writer = std::make_shared<micon_driver_fd::SerialWriter>(md10c_default_timeout);
+  double md10c_timeout = 0.0;
+  ASSERT_TRUE(md10c_writer->get_parameter("command_timeout_sec", md10c_timeout));
+  EXPECT_DOUBLE_EQ(md10c_timeout, 0.25);
+
+  rclcpp::NodeOptions marine_default_timeout;
+  marine_default_timeout.parameter_overrides(
+  {
+    rclcpp::Parameter("serial_port", "/dev/null"),
+    rclcpp::Parameter("command_profile", "esc4_force"),
+  });
+  auto marine_writer = std::make_shared<micon_driver_fd::SerialWriter>(marine_default_timeout);
+  double marine_timeout = 1.0;
+  ASSERT_TRUE(marine_writer->get_parameter("command_timeout_sec", marine_timeout));
+  EXPECT_DOUBLE_EQ(marine_timeout, 0.0);
+
+  md10c_writer.reset();
+  marine_writer.reset();
+  rclcpp::shutdown();
+}
+
 TEST(BmsCsv, ParsesCellVoltagesAndTemperature)
 {
   micon_driver_fd::BmsTelemetry telemetry;
