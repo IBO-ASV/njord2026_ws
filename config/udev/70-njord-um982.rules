@@ -1,0 +1,2 @@
+# Only the UM982 CH340 attached at the verified AGX USB connector.
+SUBSYSTEM=="tty", ATTRS{idVendor}=="1a86", ATTRS{idProduct}=="7523", ENV{ID_PATH}=="platform-3610000.usb-usb-0:4.1:1.0", OWNER="ibo", GROUP="ibo", MODE="0660"
