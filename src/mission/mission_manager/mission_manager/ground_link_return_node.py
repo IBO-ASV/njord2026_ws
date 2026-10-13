@@ -7,6 +7,7 @@ import time
 from pathlib import Path
 
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from geometry_msgs.msg import PoseWithCovarianceStamped, Twist
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
@@ -24,7 +25,7 @@ TRANSIENT_QOS = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
 class GroundLinkReturnNode(Node):
     def __init__(self) -> None:
         super().__init__("ground_link_return_monitor")
-        default_home = str(Path(__file__).resolve().parents[1] / "config" / "home.yaml")
+        default_home = str(Path(get_package_share_directory("mission_manager")) / "config" / "home.yaml")
         home_file = Path(self.declare_parameter("home_file", default_home).value)
         self._evaluator = GroundLinkReturnEvaluator(load_home_datum(home_file))
         self._last_status = ""

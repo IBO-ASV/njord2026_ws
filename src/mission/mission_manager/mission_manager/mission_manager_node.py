@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Callable, Optional, Sequence
 
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import Point, PoseStamped
 from geographic_msgs.msg import GeoPoint
@@ -328,12 +329,12 @@ class MissionManager(Node):
         configured = str(self.get_parameter("registry_file").value)
         if configured:
             return Path(configured)
-        return Path(__file__).resolve().parents[1] / "config" / "task_registry.yaml"
+        return Path(get_package_share_directory("mission_manager")) / "config" / "task_registry.yaml"
 
     @staticmethod
     def _waypoint_share_path() -> Path:
-        # Source-tree fallback keeps the first migration slice testable before install.
-        return Path(__file__).resolve().parents[3] / "navigation" / "path_generator" / "waypoint_publisher"
+        # Installed packages keep their resources in the ament share directory.
+        return Path(get_package_share_directory("waypoint_publisher"))
 
     def _goal_callback(self, goal_request) -> GoalResponse:
         # Admission happens atomically in execute/start callbacks to preserve request-id semantics.

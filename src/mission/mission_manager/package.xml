@@ -23,6 +23,8 @@
   <depend>waypoint_transformer</depend>
   <depend>launch</depend>
   <depend>launch_ros</depend>
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>waypoint_publisher</exec_depend>
   <exec_depend>python3-yaml</exec_depend>
   <test_depend>python3-pytest</test_depend>
   <export><build_type>ament_python</build_type></export>
