@@ -3,7 +3,7 @@
 Playback follows bag recording timestamps, not hardware synchronization.
 Fresh display stamps prevent backwards time at repeat boundaries.
 """
-import sys,time,yaml
+import sys,time,yaml,os
 from pathlib import Path
 import rclpy,rosbag2_py
 from rclpy.node import Node
@@ -18,7 +18,11 @@ class Preview(Node):
   self.path=path
   info=yaml.safe_load((Path(path)/'metadata.yaml').read_text())['rosbag2_bagfile_information']
   self.zero=info['starting_time']['nanoseconds_since_epoch']
-  self.duration=info['duration']['nanoseconds']*1e-9+.15
+  source_duration=info['duration']['nanoseconds']*1e-9
+  self.offset=float(os.environ.get('PREVIEW_START_OFFSET','0'))
+  if not 0<=self.offset<source_duration:raise ValueError('Start offset outside source duration')
+  self.zero+=round(self.offset*1e9)
+  self.duration=source_duration-self.offset+.15
   available={t['topic_metadata']['name'] for t in info['topics_with_message_count'] if t['message_count']>0}
   self.types={t:cls for t,cls in {'/livox/lidar':PointCloud2,'/back_cam/image_raw/compressed':CompressedImage}.items() if t in available}
   self.label=Path(path).name
@@ -31,7 +35,9 @@ class Preview(Node):
   self.reader.open(rosbag2_py.StorageOptions(uri=self.path,storage_id='mcap'),rosbag2_py.ConverterOptions('',''))
   self.reader.set_filter(rosbag2_py.StorageFilter(topics=list(self.types)))
   self.pending=self.reader.read_next() if self.reader.has_next() else None
-  if self.pending is None:raise RuntimeError('No camera or LiDAR messages')
+  while self.pending is not None and self.pending[2]<self.zero:
+   self.pending=self.reader.read_next() if self.reader.has_next() else None
+  if self.pending is None:raise RuntimeError('No readable sensor messages after start offset')
   self.begin=time.monotonic();self.last_status=-1
   self.get_logger().info(f'Loop {self.cycle}: {self.duration:.2f} seconds')
  def tick(self):
@@ -46,7 +52,7 @@ class Preview(Node):
    self.pending=self.reader.read_next() if self.reader.has_next() else None
   if int(elapsed)!=self.last_status:
    self.last_status=int(elapsed)
-   self.status.publish(String(data=f'RECORDED {self.label} | source +{elapsed:.1f}s | raw LiDAR | no GLIM/tracks | recording-time playback'))
+   self.status.publish(String(data=f'RECORDED {self.label} | source +{self.offset+elapsed:.1f}s | raw LiDAR | no GLIM/tracks | recording-time playback'))
    marker=Marker();marker.action=Marker.DELETEALL;marker.header.frame_id='livox_frame';marker.header.stamp=self.get_clock().now().to_msg();self.clear.publish(MarkerArray(markers=[marker]))
 
 rclpy.init();node=Preview(sys.argv[1])

@@ -138,3 +138,12 @@ This mode computes cluster detection boxes; it does not use the earlier GLIM
 odometry or track ID 220. Log: `/home/ibo/rosbags/foxglove_aug10_035200_detection.log`.
 Windows subscribed specifically to detection boxes and received three messages
 successfully after the switch. Python compilation passed.
+
+### Second half only
+Current replay starts at source +202.7143936565 s via
+`PREVIEW_START_OFFSET=202.7143936565`, repeating only the latter half.
+Japanese recording time: approximately 03:55:22.860 to 03:58:45.574.
+The streaming player skips pre-offset records on every loop; no source changes.
+Window length approximately 202.7 s. Status retains the full source offset.
+Log: `/home/ibo/rosbags/foxglove_aug10_035200_second_half.log`.
+Python compilation and Windows detection-only WebSocket reception passed.
