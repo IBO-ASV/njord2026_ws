@@ -127,3 +127,8 @@ flowchart LR
 
 Diagrams show configured responsibilities. See hardware limitations for what is
 currently running live and what has only been verified from recorded data.
+
+Ground station was restarted with permission and the updated bridge rules.
+Final 15-second ground reception: safety cloud 71, buoy array 222, camera 45.
+Both Task1/Task2 configurations are installed; hardware/live limitations above
+remain. No propulsion or autonomous mission was started.
