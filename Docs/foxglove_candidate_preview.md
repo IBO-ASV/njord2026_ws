@@ -118,3 +118,13 @@ Validation: Python compilation passed. In an 8-second ROS subscription check,
 30 detection arrays containing 59 total boxes and 239 camera frames arrived;
 all detection frames were `base_link`. Windows WebSocket independently
 received three messages subscribed specifically to `/preview/detections`.
+
+### Playback correction
+The metadata reports 732.75 s, but a full sequential reader scan currently
+returns only 653 LiDAR and 1936 compressed camera messages, in the first two
+minute bins. Expected metadata counts were 7229 and 18360. The reason for
+this metadata/readable-content mismatch (e.g. incomplete file/index) remains
+unresolved; do not claim the full 12-minute recording is available.
+The player now repeats on actual sensor EOF instead of leaving an empty wait
+until metadata duration expires. After restart both camera-only and detection-only
+Windows WebSocket checks each received three messages successfully.

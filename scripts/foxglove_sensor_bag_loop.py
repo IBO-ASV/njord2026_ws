@@ -34,7 +34,9 @@ class Preview(Node):
   self.get_logger().info(f'Loop {self.cycle}: {self.duration:.2f} seconds')
  def tick(self):
   elapsed=time.monotonic()-self.begin
-  if elapsed>=self.duration:self.cycle+=1;self.reset();elapsed=0.
+  if self.pending is None or elapsed>=self.duration:
+   self.get_logger().info(f'End of readable sensor data at {elapsed:.2f}s; restarting')
+   self.cycle+=1;self.reset();elapsed=0.
   count=0
   while self.pending and (self.pending[2]-self.zero)*1e-9<=elapsed and count<12:
    topic,data,stamp=self.pending;m=deserialize_message(data,self.types[topic]);m.header.stamp=self.get_clock().now().to_msg()
