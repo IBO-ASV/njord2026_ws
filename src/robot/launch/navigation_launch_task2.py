@@ -29,7 +29,7 @@ def generate_launch_description():
         ),
         allow_substs=True,
     )
-    remappings = [("/tf", "tf"), ("/tf_static", "tf_static")]
+    remappings = [("/tf", "tf"), ("/tf_static", "tf_static"), ("odom", "/odometry/filtered/local")]
     common = {
         "output": "screen",
         "parameters": [configured_params],

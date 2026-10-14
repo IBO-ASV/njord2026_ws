@@ -63,6 +63,7 @@ def generate_launch_description():
     um982_feedback_mode = LaunchConfiguration("um982_feedback_mode")
     enable_um982 = LaunchConfiguration("enable_um982")
     enable_localization = LaunchConfiguration("enable_localization")
+    enable_feedback_filter = LaunchConfiguration("enable_feedback_filter")
     enable_thruster = LaunchConfiguration("enable_thruster")
     enable_alert_lamp = LaunchConfiguration("enable_alert_lamp")
     alert_lamp_require_rtk_fix = LaunchConfiguration("alert_lamp_require_rtk_fix")
@@ -198,7 +199,7 @@ def generate_launch_description():
         IfCondition(
             PythonExpression(
                 [
-                    "'", enable_um982, "'.lower() in ('true', '1', 'yes', 'on') and '",
+                    "'", enable_feedback_filter, "' == 'true' and '", enable_um982, "'.lower() in ('true', '1', 'yes', 'on') and '",
                     use_ekf_local, "'.lower() not in ('true', '1', 'yes', 'on')",
                 ]
             )
@@ -610,6 +611,7 @@ def generate_launch_description():
             DeclareLaunchArgument("enable_um982", default_value="true"),
             DeclareLaunchArgument("enable_drogger_rzs", default_value="false"),
             DeclareLaunchArgument("enable_imu", default_value="false"),
+            DeclareLaunchArgument("enable_feedback_filter", default_value="true"),
             DeclareLaunchArgument("enable_localization", default_value="true"),
             DeclareLaunchArgument("enable_thruster", default_value="true"),
             DeclareLaunchArgument("enable_alert_lamp", default_value="true"),
