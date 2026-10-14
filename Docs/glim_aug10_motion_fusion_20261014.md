@@ -110,3 +110,23 @@ latency and stamped ego-odom buffering before tracking updates.
 
 Reference for local/global separation:
 https://github.com/cra-ros-pkg/robot_localization/blob/rolling-devel/doc/integrating_gps.rst
+
+## Follow-up: approximately one-meter vessel candidates
+
+Searching the complete acquisition-order result for clusters with median longest
+extent 0.5-1.8 m identifies a stronger compact moving candidate outside 180-270 s:
+track 220 at 337.02-340.72 s (5:37-5:41). There are 13 confirmed observations,
+median dimensions 0.943 x 0.569 m, median 22 points, net displacement 6.99 m,
+and estimated ground-speed median 1.73 m/s. Dimension p10-p90 ranges are
+0.893-1.063 m long and 0.532-0.667 m wide. In three point-cloud snapshots the
+compact isolated returns follow a nearly straight trajectory. It is the preferred
+one-meter vessel candidate among those inspected, not a verified ship identity.
+Review 330-355 s to include its intermittently observed surroundings.
+
+Track 0 at 20.67-32.97 s has median dimensions 1.370 x 0.649 m and 37 observations,
+but its dimensions and track path vary substantially (length p10-p90 0.886-3.265 m).
+It is a weaker candidate with possible segmentation/association changes.
+
+These are observed cluster extents, not measured hull dimensions. Speed and vessel
+identity remain unvalidated. Artifact directory glim_aug10_ordered_20261014 contains
+one_meter_candidates.png/json and one_meter_plot.py; the upper plot row is track 220.
