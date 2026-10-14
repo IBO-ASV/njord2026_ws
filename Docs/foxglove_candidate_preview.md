@@ -47,3 +47,30 @@ Sources:
 https://docs.foxglove.dev/docs/visualization/connecting/live
 https://docs.foxglove.dev/docs/visualization/panels/3d
 https://docs.rs/foxglove/latest/src/foxglove/websocket/handshake.rs.html
+
+## Camera clip (2026-10-14)
+
+The preview on port 8766 now loops `rosbag2_2026_08_10-03_48_56`.
+Original source is unchanged. Acquisition-ordered sensors:
+`/home/ibo/rosbags/aug10_camera_acquisition_ordered`.
+GLIM + local EKF + tracking results:
+`/home/ibo/rosbags/glim_aug10_camera_20261014/output_bag`.
+Display clip: `/home/ibo/rosbags/foxglove_camera_clip`.
+Prepared with `scripts/prepare_foxglove_camera_clip.py RESULT_ROOT CLIP_PATH SOURCE_BAG`.
+
+Contains 116 filtered clouds, 115 track frames, and 819 back-camera JPEG images
+(640 x 480; all decoded successfully). Camera starts at source +3.469 s and
+ends at +30.917 s. Acquisition headers schedule camera and perception together;
+loop publisher refreshes visualization timestamps only. Planar odom transform
+and assumed LiDAR mounting remain the same as the previous offline evaluation.
+No camera-to-LiDAR projection/calibration or semantic vessel identification is claimed.
+A sampled image shows the quay and a moored vessel. This is a different scene
+from candidate 220; candidate IDs must not be associated across these bags.
+
+Foxglove Image panel topic: `/preview/camera/back/compressed`.
+3D panel: enable `/preview/points` and `/preview/tracks`, frame `odom`.
+Object candidates are blue, ownship arrow green. All output is recorded replay.
+Current isolated domain 76 preview process group: 729382.
+Stop only this preview with `kill -INT -- -729382` after checking its command.
+Restart using the existing launch and the camera clip path. Live station stays running.
+Log: `/home/ibo/rosbags/foxglove_camera_preview.log`.
