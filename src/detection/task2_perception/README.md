@@ -31,12 +31,12 @@ pcl_segmentation submodule (reused AS-IS, zero modification):
         -> /pcl/preprocessed
     ground_remover_node -> /pcl/nonground
     cluster_node -> /pcl/cluster_centroids (PoseArray)
-    ship_tracker_node (EKF, Hungarian association)
+    ship_tracker_node (stamped ego pose -> odom-frame detections -> EKF, Hungarian association)
         -> /tracked_objects
            (ship_perception_msgs/TrackedObjectArray,
             pose base_link-relative, twist RELATIVE and
             expressed in the object body frame — the
-            tracker's ego compensation is a no-op stub)
+            tracker keeps ego-compensated state internally and exports relative twist)
         -> TF base_link -> tracked_obj_{id}
     |
     v
@@ -91,7 +91,7 @@ rosbagでこの一連の認識を確認する場合は、`robot/task2_bag_percep
 - **Water removal** cannot eat walls or decks: the RANSAC plane is accepted
   only when its normal is near-vertical (`water_plane_normal_z_min`) AND its
   height is within `water_plane_max_height_error_m` of `waterline_z_m`.
-- **Velocities**: the tracker EKF already estimates velocity; nothing here
+- **Velocities**: the tracker first converts detections into odom using timestamp-aligned ego poses. It estimates fixed-frame velocity and exports base-relative body twist for compatibility. Nothing here
   numerically differentiates positions. The selector rotates the body-frame
   twist into base_link axes, adds the ego twist (`/odometry/filtered/local`,
   child frame base_link), rotates into map, then applies the same low-pass +

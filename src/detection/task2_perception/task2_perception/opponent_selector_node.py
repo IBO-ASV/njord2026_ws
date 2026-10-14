@@ -3,7 +3,7 @@
 
 Subscribes /tracked_objects (ship_perception_msgs/TrackedObjectArray; pose is
 base_link-relative, twist is the RELATIVE velocity expressed in the OBJECT
-body frame — the submodule tracker's ego compensation is a no-op stub) plus
+body frame — the tracker exports relative body twist after its internal ego-pose compensation) plus
 the ego odometry, selects one opponent via the configured policy, rotates the
 twist into base_link axes, ego-compensates, converts to the map frame,
 smooths, and publishes:
