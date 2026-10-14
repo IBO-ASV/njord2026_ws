@@ -86,4 +86,6 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_platform_manifest test/test_platform_manifest.py)
 endif()
 
+install(PROGRAMS scripts/gnss_heading_imu.py DESTINATION lib/${PROJECT_NAME} RENAME gnss_heading_imu)
+
 ament_package()

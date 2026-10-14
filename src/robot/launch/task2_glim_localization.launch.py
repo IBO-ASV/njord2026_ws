@@ -26,14 +26,15 @@ def setup(context):
  p.write_text(json.dumps(data,indent=2))
  sim=LaunchConfiguration('use_sim_time')
  return [
-  Node(package='glim_ros',executable='glim_rosnode',name='task2_glim',parameters=[{'config_path':str(config),'use_sim_time':sim}],remappings=[('/task2_glim/odom','/task2/glim/raw_odom'),('/tf','/task2/glim/private_tf'),('/tf_static','/task2/glim/private_tf_static')],output='screen'),
+  Node(package='glim_ros',executable='glim_rosnode',name='task2_glim',parameters=[{'config_path':str(config),'use_sim_time':sim}],remappings=[('/task2_glim/odom','/task2/glim/raw_odom'),('/tf','/task2/glim/private_tf')],output='screen'),
   Node(package='task2_perception',executable='glim_base_odom_adapter',name='task2_glim_adapter',parameters=[{'use_sim_time':sim}],remappings=[('/glim_ros/odom','/task2/glim/raw_odom'),('/glim_base/odom','/task2/glim/base_odom')],output='screen'),
-  Node(package='robot_localization',executable='ekf_node',name='ekf_filter_node_glim_local',parameters=[str(share/'config/ekf_glim_local.yaml'),{'use_sim_time':sim}],remappings=[('/odom','/task2/glim/base_odom'),('odometry/filtered','/task2/odometry/local')],output='screen'),
+  Node(package='robot_localization',executable='ekf_node',name='ekf_filter_node_glim_local',parameters=[str(share/'config/ekf_glim_local.yaml'),{'use_sim_time':sim}],remappings=[('/odom','/task2/glim/base_odom'),('odometry/filtered',LaunchConfiguration('local_odom_topic'))],output='screen'),
   Node(package='tf2_ros',executable='static_transform_publisher',name='task2_bag_livox_mount',arguments=['--x','0.5','--y','0','--z','0.8','--roll','3.141592653589793','--pitch','0','--yaw','0','--frame-id','base_link','--child-frame-id','livox_frame'],condition=IfCondition(LaunchConfiguration('publish_livox_mount_tf')))
  ]
 
 def generate_launch_description():
  return LaunchDescription([
+  DeclareLaunchArgument('local_odom_topic',default_value='/task2/odometry/local'),
   DeclareLaunchArgument('use_sim_time',default_value='false'),
   DeclareLaunchArgument('glim_imu_topic',default_value='/livox/imu'),
   DeclareLaunchArgument('glim_points_topic',default_value='/livox/lidar'),
