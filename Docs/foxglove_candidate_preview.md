@@ -128,3 +128,13 @@ unresolved; do not claim the full 12-minute recording is available.
 The player now repeats on actual sensor EOF instead of leaving an empty wait
 until metadata duration expires. After restart both camera-only and detection-only
 Windows WebSocket checks each received three messages successfully.
+
+### Current source: third bag
+Switched to `rosbag2_2026_08_10-03_52_00` at user request, camera omitted.
+Same detection launcher and domain 76, port 8766, base_link frame.
+The player now advertises only sensor topics with messages in the source and
+labels the status with the actual bag name. No stale camera publisher exists.
+This mode computes cluster detection boxes; it does not use the earlier GLIM
+odometry or track ID 220. Log: `/home/ibo/rosbags/foxglove_aug10_035200_detection.log`.
+Windows subscribed specifically to detection boxes and received three messages
+successfully after the switch. Python compilation passed.

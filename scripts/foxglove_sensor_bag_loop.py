@@ -19,8 +19,10 @@ class Preview(Node):
   info=yaml.safe_load((Path(path)/'metadata.yaml').read_text())['rosbag2_bagfile_information']
   self.zero=info['starting_time']['nanoseconds_since_epoch']
   self.duration=info['duration']['nanoseconds']*1e-9+.15
-  self.types={'/livox/lidar':PointCloud2,'/back_cam/image_raw/compressed':CompressedImage}
-  self.pubs={t:self.create_publisher(cls,out,3) for t,cls,out in [('/livox/lidar',PointCloud2,'/preview/points'),('/back_cam/image_raw/compressed',CompressedImage,'/preview/camera/back/compressed')]}
+  available={t['topic_metadata']['name'] for t in info['topics_with_message_count'] if t['message_count']>0}
+  self.types={t:cls for t,cls in {'/livox/lidar':PointCloud2,'/back_cam/image_raw/compressed':CompressedImage}.items() if t in available}
+  self.label=Path(path).name
+  self.pubs={t:self.create_publisher(cls,out,3) for t,cls,out in [('/livox/lidar',PointCloud2,'/preview/points'),('/back_cam/image_raw/compressed',CompressedImage,'/preview/camera/back/compressed')] if t in self.types}
   self.status=self.create_publisher(String,'/preview/status',3)
   self.clear=self.create_publisher(MarkerArray,'/preview/tracks',1)
   self.cycle=0;self.last_status=-1;self.reset();self.create_timer(.005,self.tick)
@@ -44,7 +46,7 @@ class Preview(Node):
    self.pending=self.reader.read_next() if self.reader.has_next() else None
   if int(elapsed)!=self.last_status:
    self.last_status=int(elapsed)
-   self.status.publish(String(data=f'RECORDED Aug10 04:01:37 | source +{elapsed:.1f}s | camera + raw LiDAR | no GLIM/tracks | recording-time playback'))
+   self.status.publish(String(data=f'RECORDED {self.label} | source +{elapsed:.1f}s | raw LiDAR | no GLIM/tracks | recording-time playback'))
    marker=Marker();marker.action=Marker.DELETEALL;marker.header.frame_id='livox_frame';marker.header.stamp=self.get_clock().now().to_msg();self.clear.publish(MarkerArray(markers=[marker]))
 
 rclpy.init();node=Preview(sys.argv[1])
