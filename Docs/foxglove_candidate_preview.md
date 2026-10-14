@@ -147,3 +147,16 @@ The streaming player skips pre-offset records on every loop; no source changes.
 Window length approximately 202.7 s. Status retains the full source offset.
 Log: `/home/ibo/rosbags/foxglove_aug10_035200_second_half.log`.
 Python compilation and Windows detection-only WebSocket reception passed.
+
+### Own-vessel catamaran overlay
+`/preview/ownship` now publishes a cyan catamaran outline at base_link origin.
+It reuses the GNSS Map Telemetry GUI's silhouette, scaled visually to the
+existing 2.4 m x 1.6 m self-crop bounds (not a measured hull model).
+Enable this topic in the 3D panel; keep fixed/display frame base_link for the
+current own-vessel-relative preview. The existing GUI map panel also receives
+recorded `/sensor/vehicle_gnss/fix/raw` and `/tf`; these are historical data,
+not live GNSS or newly estimated GLIM odometry. Only visualization timestamps
+are refreshed. Other recorded control topics remain excluded.
+Bridge whitelist includes those two specific topics. Second-half window stays
+unchanged. Python compilation passed; Windows ownship-only subscription received
+three marker messages. User Foxglove panel toggles remain to be enabled.

@@ -8,7 +8,9 @@ from pathlib import Path
 import rclpy,rosbag2_py
 from rclpy.node import Node
 from rclpy.serialization import deserialize_message
-from sensor_msgs.msg import PointCloud2,CompressedImage
+from sensor_msgs.msg import PointCloud2,CompressedImage,NavSatFix
+from tf2_msgs.msg import TFMessage
+from geometry_msgs.msg import Point
 from std_msgs.msg import String
 from visualization_msgs.msg import Marker,MarkerArray
 
@@ -24,10 +26,11 @@ class Preview(Node):
   self.zero+=round(self.offset*1e9)
   self.duration=source_duration-self.offset+.15
   available={t['topic_metadata']['name'] for t in info['topics_with_message_count'] if t['message_count']>0}
-  self.types={t:cls for t,cls in {'/livox/lidar':PointCloud2,'/back_cam/image_raw/compressed':CompressedImage}.items() if t in available}
+  self.types={t:cls for t,cls in {'/livox/lidar':PointCloud2,'/back_cam/image_raw/compressed':CompressedImage,'/sensor/vehicle_gnss/fix/raw':NavSatFix,'/tf':TFMessage}.items() if t in available}
   self.label=Path(path).name
-  self.pubs={t:self.create_publisher(cls,out,3) for t,cls,out in [('/livox/lidar',PointCloud2,'/preview/points'),('/back_cam/image_raw/compressed',CompressedImage,'/preview/camera/back/compressed')] if t in self.types}
+  self.pubs={t:self.create_publisher(cls,out,3) for t,cls,out in [('/livox/lidar',PointCloud2,'/preview/points'),('/back_cam/image_raw/compressed',CompressedImage,'/preview/camera/back/compressed'),('/sensor/vehicle_gnss/fix/raw',NavSatFix,'/sensor/vehicle_gnss/fix/raw'),('/tf',TFMessage,'/tf')] if t in self.types}
   self.status=self.create_publisher(String,'/preview/status',3)
+  self.ownship=self.create_publisher(MarkerArray,'/preview/ownship',1)
   self.clear=self.create_publisher(MarkerArray,'/preview/tracks',1)
   self.cycle=0;self.last_status=-1;self.reset();self.create_timer(.005,self.tick)
  def reset(self):
@@ -47,11 +50,19 @@ class Preview(Node):
    self.cycle+=1;self.reset();elapsed=0.
   count=0
   while self.pending and (self.pending[2]-self.zero)*1e-9<=elapsed and count<12:
-   topic,data,stamp=self.pending;m=deserialize_message(data,self.types[topic]);m.header.stamp=self.get_clock().now().to_msg()
+   topic,data,stamp=self.pending;m=deserialize_message(data,self.types[topic]);now=self.get_clock().now().to_msg()
+   if hasattr(m,'header'):m.header.stamp=now
+   if hasattr(m,'transforms'):
+    for transform in m.transforms:transform.header.stamp=now
    self.pubs[topic].publish(m);count+=1
    self.pending=self.reader.read_next() if self.reader.has_next() else None
   if int(elapsed)!=self.last_status:
    self.last_status=int(elapsed)
+   hull=Marker();hull.header.frame_id='base_link';hull.header.stamp=self.get_clock().now().to_msg();hull.ns='ownship_catamaran';hull.id=0;hull.type=Marker.LINE_STRIP;hull.action=Marker.ADD;hull.pose.orientation.w=1.;hull.scale.x=.08;hull.color.r=.0;hull.color.g=.9;hull.color.b=1.;hull.color.a=1.
+   # Reuse the GNSS Map Telemetry GUI silhouette; +X is the bow.
+   outline=[(11,3),(7,11),(7,30),(11,37),(15,30),(15,22),(25,22),(25,30),(29,37),(33,30),(33,11),(29,3),(25,11),(25,18),(15,18),(15,11),(11,3)]
+   hull.points=[Point(x=(20-y)*2.4/34,y=(20-x)*1.6/26,z=.15) for x,y in outline]
+   self.ownship.publish(MarkerArray(markers=[hull]))
    self.status.publish(String(data=f'RECORDED {self.label} | source +{self.offset+elapsed:.1f}s | raw LiDAR | no GLIM/tracks | recording-time playback'))
    marker=Marker();marker.action=Marker.DELETEALL;marker.header.frame_id='livox_frame';marker.header.stamp=self.get_clock().now().to_msg();self.clear.publish(MarkerArray(markers=[marker]))
 
