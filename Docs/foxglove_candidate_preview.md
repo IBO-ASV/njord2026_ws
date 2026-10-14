@@ -74,3 +74,47 @@ Current isolated domain 76 preview process group: 729382.
 Stop only this preview with `kill -INT -- -729382` after checking its command.
 Restart using the existing launch and the camera clip path. Live station stays running.
 Log: `/home/ibo/rosbags/foxglove_camera_preview.log`.
+
+## Fourth bag with detection boxes (2026-10-14)
+
+Current source: `rosbag2_2026_08_10-04_01_37`, 732.75 seconds.
+Current launcher: `scripts/foxglove_detection_preview.launch.py`, isolated
+ROS domain 76, WebSocket `ws://100.115.34.103:8766`.
+Process group 943071; log `/home/ibo/rosbags/foxglove_aug10_040137_detection.log`.
+This supersedes the previous camera clip preview. No live control nodes launched.
+
+The streaming player reads only LiDAR and compressed camera topics, avoiding
+loading the 12-minute recording into RAM. Source files are not modified.
+It schedules by recording timestamps and refreshes display headers. This is
+approximate camera/LiDAR temporal alignment, not hardware synchronization.
+The first sampled camera recording delay was 0.202 s; LiDAR was 0.102 s.
+Repeated playback is configured; a whole 12-minute cycle has not been observed.
+
+The existing task2 cloud filter, preprocessing, ground removal and clustering
+compute fresh detection boxes during replay. Green boxes are unclassified
+LiDAR clusters, not confirmed vessels or persistent tracking IDs. No odometry,
+velocity, CPA/TCPA or camera-image bounding boxes are produced in this mode.
+Recorded IMU count is zero, preventing the previous GLIM configuration from
+running unchanged. Recorded odometry exists but its quality/coverage has not
+been validated for this preview.
+
+Foxglove settings:
+- Fixed/display frame: `base_link` (not `odom`).
+- Enable `/preview/points` for raw cloud and `/preview/detections` for boxes.
+- `/preview/filtered_points` optionally shows the cloud after task2 filtering.
+- Image panel: `/preview/camera/back/compressed`.
+- `/preview/tracks` only clears markers from older previews.
+
+Limitations: mounting TF uses base->LiDAR offset (0.5,0,0.8), roll pi,
+matching the source bag static transform; physical calibration is not independently
+verified. Camera extrinsics are not calibrated
+here. Detection range is 1.5-40 m, rear ROI only 10 m, size cutoff 5 m,
+water band -0.3..0.15 m, cluster tolerance 1 m. These can omit small/low or
+rear objects and merge nearby objects. A back-camera image can show objects
+outside the detection ROI. Camera/LiDAR alignment and semantic labels must be
+checked before interpreting boxes as other vessels.
+
+Validation: Python compilation passed. In an 8-second ROS subscription check,
+30 detection arrays containing 59 total boxes and 239 camera frames arrived;
+all detection frames were `base_link`. Windows WebSocket independently
+received three messages subscribed specifically to `/preview/detections`.
