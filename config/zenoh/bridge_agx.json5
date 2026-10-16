@@ -68,7 +68,9 @@
           "/gui/livox/points",
           "/task1/safety_points_visual"
         ],
-        "subscribers": [],
+        "subscribers": [
+          "/runtime_parameter_updates"
+        ],
         "service_servers": [
           "/mission/list_tasks",
           "/mission/get_status",

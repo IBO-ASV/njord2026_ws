@@ -44,11 +44,17 @@ def generate_launch_description():
                       'enable_autonomy_supervisor': 'false', 'active_nav2_profile': cfg('task'),
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
+    runtime_parameter_sync = Node(
+        package='robot', executable='runtime_parameter_sync.py',
+        name='runtime_parameter_sync', output='screen',
+        parameters=[{'role': 'minipc', 'publish_updates': False}],
+    )
     return LaunchDescription([
         SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
         SetEnvironmentVariable("CYCLONEDDS_URI", PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"])),
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '5'),
+        runtime_parameter_sync,
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
         include('robot', 'minipc_bringup.launch.py', core_args),
         include('robot','onboard_localization.launch.py',{'use_sim_time':cfg('use_sim_time'),'glim_acc_scale':cfg('glim_acc_scale'),'enable_gnss_map':cfg('enable_um982')},IfCondition(cfg('enable_glim'))),

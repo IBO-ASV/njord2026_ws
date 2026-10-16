@@ -1,0 +1,4 @@
+# Ground-edited parameters received by the onboard AGX.
+groundpc: {}
+minipc: {}
+jetson: {}
