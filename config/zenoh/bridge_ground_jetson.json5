@@ -15,7 +15,9 @@
       "domain": 6,
       "ros_automatic_discovery_range": "LOCALHOST",
       "allow": {
-        "publishers": [],
+        "publishers": [
+          "/runtime_parameter_updates"
+        ],
         "subscribers": [
           "/odom",
           "/odometry/filtered/global",

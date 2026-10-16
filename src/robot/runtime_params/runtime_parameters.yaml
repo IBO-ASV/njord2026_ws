@@ -1,0 +1,5 @@
+# Edit on the Jetson ground station; changes publish over Zenoh immediately.
+# Only parameters declared by a running target node can be changed.
+groundpc: {}
+minipc: {}
+jetson: {}

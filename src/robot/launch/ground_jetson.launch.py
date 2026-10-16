@@ -9,11 +9,24 @@ from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
+    runtime_parameter_sync = Node(
+        package='robot', executable='runtime_parameter_sync.py',
+        name='runtime_parameter_sync', output='screen',
+        parameters=[{
+            'role': 'groundpc',
+            'config_file': PathJoinSubstitution([
+                FindPackageShare('robot'), 'runtime_params', 'runtime_parameters.yaml'
+            ]),
+            'publish_updates': True,
+        }],
+    )
+
     return LaunchDescription([
         SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
         SetEnvironmentVariable("CYCLONEDDS_URI", PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"])),
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
         SetEnvironmentVariable('ROS_DOMAIN_ID','6'),
+        runtime_parameter_sync,
         DeclareLaunchArgument('enable_critical_link',default_value='true'),
         GroupAction(scoped=True,actions=[IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('robot'),'launch','ground_pc.launch.py'])),

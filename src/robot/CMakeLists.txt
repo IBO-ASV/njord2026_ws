@@ -46,7 +46,7 @@ install(TARGETS pass_through_goal_checker
 install(FILES goal_checker_plugin.xml DESTINATION share/${PROJECT_NAME})
 
 install(DIRECTORY
-  launch config urdf
+  launch config urdf runtime_params
   DESTINATION share/${PROJECT_NAME}
 )
 
@@ -87,5 +87,7 @@ if(BUILD_TESTING)
 endif()
 
 install(PROGRAMS scripts/gnss_heading_imu.py DESTINATION lib/${PROJECT_NAME} RENAME gnss_heading_imu)
+
+install(PROGRAMS scripts/runtime_parameter_sync.py DESTINATION lib/robot)
 
 ament_package()
