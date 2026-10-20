@@ -39,7 +39,7 @@ controller_server:
       regulated_linear_scaling_min_speed: 0.1
       use_cost_regulated_linear_velocity_scaling: false
       use_collision_detection: false
-      transform_tolerance: 0.3
+      transform_tolerance: 4.0
       # Match the final smoother so neither layer introduces an extra ramp.
       max_linear_accel: 0.5
 

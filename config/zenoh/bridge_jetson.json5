@@ -31,6 +31,7 @@
 
       allow: {
         publishers: [
+          "/zed2i/left/image_raw",
           "/odom", "/odometry/filtered/global", "/livox/imu",
           "/task1/safety_points",
           "/planned_path_pruned", "/mppi/crm_costmap",
