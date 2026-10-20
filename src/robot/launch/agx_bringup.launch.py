@@ -72,7 +72,7 @@ def generate_launch_description():
         include('robot', 'heartbeat.launch.py', {'role':'jetson'}),
         Node(package='livox_gui_telemetry', executable='livox_gui_downsampler',
              name='livox_gui_downsampler', output='screen', condition=IfCondition(cfg('enable_mid360'))),
-        ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID','zenoh-bridge-ros2dds','-c',
+        ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID',str(Path.home()/'.local/bin/zenoh-bridge-ros2dds'),'-c',
             PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_agx.json5'])],output='screen'),
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),
