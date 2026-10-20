@@ -9,7 +9,7 @@ critical_link_receiver:
       - "wired_lan|192.168.1.2|45100"
       - "usb|192.168.1.2|45100"
       - "ops_lan|10.42.0.2|45100"
-      - "tailscale|100.82.157.125|45101"
+      - "tailscale|100.73.137.72|45101"
     # Use a stable /dev/serial/by-id path for the vessel ESP32.
     serial_device: ""
     serial_baud: 921600
