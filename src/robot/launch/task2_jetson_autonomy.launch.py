@@ -67,7 +67,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument("own_odom_topic", default_value="/odometry/filtered/local"),
         DeclareLaunchArgument("enable_ship_tracking", default_value="true"),
-        DeclareLaunchArgument("ego_odom_source", default_value="external", choices=["external", "glim"]),
+        DeclareLaunchArgument("ego_odom_source", default_value="glim", choices=["external", "glim"]),
         DeclareLaunchArgument("start_planner", default_value="true"),
         DeclareLaunchArgument("use_sim_time", default_value="false"),
         DeclareLaunchArgument("glim_imu_topic", default_value="/livox/imu"),

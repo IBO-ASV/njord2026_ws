@@ -293,7 +293,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "enable_glim",
-                default_value="false",
+                default_value="true",
                 description="Load GLIM into the Livox component container",
             ),
             DeclareLaunchArgument(

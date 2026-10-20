@@ -429,7 +429,8 @@ def test_standalone_does_not_restore_removed_or_unsafe_defaults():
     assert '"enable_drogger_rzs", default_value="false"' in source
     assert '"enable_glim",\n                default_value="false"' in source
     assert '"enable_pcl_buoy_detection", default_value="false"' in source
-    assert '"enable_ground_video", default_value="true"' in source
+    assert "enable_ground_video_h264" in source
+    assert "enable_ground_video_jpeg" in source
     assert '"enable_zenoh_bridge", default_value="false"' in source
     assert '"enable_critical_link", default_value="false"' in source
 
@@ -513,11 +514,12 @@ def test_jetson_bringup_source_has_no_minipc_only_packages():
         )
 
 
-def test_jetson_heavy_features_and_startup_are_opt_in_or_staggered():
+def test_jetson_glim_and_startup_defaults():
     source = _read_launch_source("jetson_bringup.launch.py")
-    assert '"enable_glim",\n                default_value="false"' in source
+    assert '"enable_glim",\n                default_value="true"' in source
     assert '"enable_pcl_buoy_detection",\n                default_value="false"' in source
-    assert '"enable_ground_video", default_value="true"' in source
+    assert "enable_ground_video_h264" in source
+    assert "enable_ground_video_jpeg" in source
     assert '"ground_video_draw_detections",\n                default_value="true"' in source
     assert '"camera_start_delay",\n                default_value="5.0"' in source
 
