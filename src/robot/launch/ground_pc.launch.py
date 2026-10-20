@@ -2,12 +2,10 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription
+from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.conditions import IfCondition
-from launch.launch_description_sources import (
-    AnyLaunchDescriptionSource,
-    PythonLaunchDescriptionSource,
-)
+from launch.launch_description_sources import PythonLaunchDescriptionSource
+
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackagePrefix, FindPackageShare
@@ -66,13 +64,33 @@ def generate_launch_description():
         }.items(),
     )
 
-    foxglove_bridge_launch = IncludeLaunchDescription(
-        AnyLaunchDescriptionSource(
-            PathJoinSubstitution(
-                [FindPackageShare("foxglove_bridge"), "launch", "foxglove_bridge_launch.xml"]
-            )
-        ),
+    foxglove_bridge_launch = Node(
+        package="foxglove_bridge",
+        executable="foxglove_bridge",
+        name="foxglove_bridge",
+        parameters=[{
+            "port": 8765,
+            "capabilities": [
+                "clientPublish", "parameters", "parametersSubscribe",
+                "services", "connectionGraph", "assets",
+            ],
+        }],
+        output="screen",
         condition=IfCondition(enable_foxglove_bridge),
+    )
+
+    runtime_parameter_sync = Node(
+        package="robot",
+        executable="runtime_parameter_sync.py",
+        name="runtime_parameter_sync",
+        output="screen",
+        parameters=[{
+            "role": "groundpc",
+            "config_file": PathJoinSubstitution([
+                FindPackageShare("robot"), "runtime_params", "runtime_parameters.yaml"
+            ]),
+            "publish_updates": True,
+        }],
     )
 
     joy_node = Node(
@@ -156,6 +174,15 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
+            SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
+            SetEnvironmentVariable(
+                "CYCLONEDDS_URI",
+                PathJoinSubstitution([
+                    FindPackageShare("robot"), "config", "cyclonedds_agx.xml"
+                ]),
+            ),
+            SetEnvironmentVariable("ROS_DOMAIN_ID", "6"),
+            SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
             # The two receivers ingest different RTP streams and must keep
             # separate UDP ports and ROS topics.
             DeclareLaunchArgument("front_video_port", default_value="5600"),
@@ -179,11 +206,12 @@ def generate_launch_description():
             DeclareLaunchArgument("enable_ntrip_caster", default_value="true"),
             DeclareLaunchArgument(
                 "enable_foxglove_bridge",
-                default_value="false",
+                default_value="true",
                 description="Expose vessel telemetry and waypoint markers to the Ground PC Foxglove GUI.",
             ),
             DeclareLaunchArgument("enable_livox_gui_telemetry", default_value="true", description="Integrate bounded Livox GUI clouds into an odom map."),
             livox_splat_mapper,
+            runtime_parameter_sync,
             DeclareLaunchArgument(
                 "enable_zenoh_bridge",
                 default_value="true",

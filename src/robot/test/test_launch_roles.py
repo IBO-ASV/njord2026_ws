@@ -341,7 +341,9 @@ def test_operator_nodes_have_single_machine_owners():
     assert 'executable="foxglove_logger_node"' in minipc_source
 
     assert 'executable="joy_node"' in ground_source
-    assert 'foxglove_bridge_launch.xml' in ground_source
+    assert 'package="foxglove_bridge"' in ground_source
+    assert 'executable="foxglove_bridge"' in ground_source
+    assert '"services"' in ground_source
 
 
 def test_ground_pc_publishes_the_actual_route_marker_from_shared_tf():
@@ -810,7 +812,7 @@ def test_verified_wired_link_is_used_for_zenoh_and_critical_link():
     ground = (root / "src" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
     assert '"ops_lan|10.42.0.1|10.42.0.2|45100"' in ground
-    assert '"tailscale|100.123.47.2|100.82.157.125|45101"' in ground
+    assert '"tailscale|100.115.34.103|100.73.137.72|45101"' in ground
     assert '"ops_lan|10.42.0.2|45100"' in vessel
     assert '"tailscale|100.82.157.125|45101"' in vessel
 
@@ -909,6 +911,23 @@ def test_networking_launch_starts_bridge_and_the_correct_critical_link_roles():
     assert '"vessel_receiver.launch.py"' in source
     assert '_role_condition("groundpc")' in source
     assert '_role_condition("minipc")' in source
+
+
+def test_ground_pc_is_the_unified_agx_and_minipc_station():
+    root = Path(_LAUNCH_DIR).parents[2]
+    source = _read_launch_source("ground_pc.launch.py")
+    bridge = (root / "config" / "zenoh" / "bridge_groundpc.json5").read_text(
+        encoding="utf-8"
+    )
+    assert '"role": "groundpc"' in source
+    assert 'executable="runtime_parameter_sync.py"' in source
+    assert '"/runtime_parameter_updates"' in bridge
+    for endpoint in ("tcp/10.42.0.2:7447", "tcp/100.73.137.72:7447"):
+        assert endpoint in bridge
+    assert '"/agx/rosbag/set_recording"' in bridge
+    assert '"/agx/rosbag/recording_status"' in bridge
+    assert not (root / "src" / "robot" / "launch" / "ground_jetson.launch.py").exists()
+    assert not (root / "config" / "zenoh" / "bridge_ground_jetson.json5").exists()
 
 
 def test_foxglove_v3_telemetry_reaches_the_ground_pc():
