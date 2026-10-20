@@ -48,6 +48,7 @@
   <exec_depend>robot_localization</exec_depend>
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>simple_manual</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
   <exec_depend>tf_frame_arrow_publisher</exec_depend>
   <exec_depend>usb_cam</exec_depend>

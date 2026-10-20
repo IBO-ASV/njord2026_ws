@@ -33,7 +33,7 @@ def generate_launch_description():
             launch_arguments={'enable_zenoh_bridge':'false','enable_critical_link':'false',
                               'enable_foxglove_bridge':'false'}.items())]),
         Node(package='foxglove_bridge', executable='foxglove_bridge', name='foxglove_bridge',
-             parameters=[{'port':8765}], output='screen'),
+             parameters=[{'port':8765, 'capabilities':['clientPublish','parameters','parametersSubscribe','services','connectionGraph','assets']}], output='screen'),
         ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID','zenoh-bridge-ros2dds','-c',
             PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_ground_jetson.json5'])], output='screen'),
         Node(package='critical_link',executable='critical_link_sender',name='critical_link_sender',
