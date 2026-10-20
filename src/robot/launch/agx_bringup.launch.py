@@ -57,6 +57,7 @@ def generate_launch_description():
         runtime_parameter_sync,
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
         include('robot', 'minipc_bringup.launch.py', core_args),
+        Node(package='robot', executable='agx_rosbag_record_manager', name='agx_rosbag_record_manager', output='screen'),
         include('robot','onboard_localization.launch.py',{'use_sim_time':cfg('use_sim_time'),'glim_acc_scale':cfg('glim_acc_scale'),'enable_gnss_map':cfg('enable_um982')},IfCondition(cfg('enable_glim'))),
         include('robot','onboard_perception.launch.py',{'task':cfg('task'),'use_sim_time':cfg('use_sim_time'),'start_planner':cfg('enable_nav2')},IfCondition(cfg('enable_task_perception'))),
         include('robot', 'lidar.launch.py', {'lidar_model': cfg('lidar_model'), 'enable_glim': 'false'}, IfCondition(cfg('enable_mid360'))),

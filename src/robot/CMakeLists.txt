@@ -89,5 +89,6 @@ endif()
 install(PROGRAMS scripts/gnss_heading_imu.py DESTINATION lib/${PROJECT_NAME} RENAME gnss_heading_imu)
 
 install(PROGRAMS scripts/runtime_parameter_sync.py DESTINATION lib/robot)
+install(PROGRAMS scripts/agx_rosbag_record_manager.py DESTINATION lib/robot RENAME agx_rosbag_record_manager)
 
 ament_package()
