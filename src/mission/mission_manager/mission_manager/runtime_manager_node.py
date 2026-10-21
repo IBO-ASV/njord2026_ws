@@ -28,7 +28,7 @@ class RuntimeManager(Node):
         super().__init__("runtime_manager")
         self.declare_parameter("sigint_timeout_sec", 1.0)
         self.declare_parameter("sigterm_timeout_sec", 0.5)
-        self.declare_parameter("nav2_ready_timeout_sec", 30.0)
+        self.declare_parameter("nav2_ready_timeout_sec", 45.0)
         self.declare_parameter("nav2_ready_poll_sec", 0.5)
         self.declare_parameter("nav2_lifecycle_query_timeout_sec", 3.0)
         self.declare_parameter("runtime_mode", "nav2")
@@ -153,14 +153,13 @@ class RuntimeManager(Node):
                 f"orphaned Nav2 process group {pgid} survived SIGKILL; retaining recovery record"
             )
 
-    def _wait_for_bt_navigator_active(self) -> None:
-        """Block until Nav2 has activated the action server used by Task 1/3.
+    def _wait_for_lifecycle_nodes_active(self, node_names: tuple[str, ...], label: str) -> None:
+        """Block until every named Nav2 lifecycle node is ACTIVE.
 
-        Discovering ``/navigate_through_poses`` is insufficient: bt_navigator
-        exposes its action endpoints before its lifecycle state is ACTIVE and
-        rejects goals in that interval.  Querying lifecycle through the ROS 2
-        CLI uses an independent DDS participant, so it remains safe while this
-        action server's execute callback is waiting.
+        Discovering an action endpoint is insufficient: Nav2 exposes endpoints
+        before the owning lifecycle node is ACTIVE. Querying lifecycle through
+        the ROS 2 CLI uses an independent DDS participant, so it remains safe
+        while this action server's execute callback is waiting.
         """
         timeout = float(self.get_parameter("nav2_ready_timeout_sec").value)
         poll = float(self.get_parameter("nav2_ready_poll_sec").value)
@@ -172,33 +171,61 @@ class RuntimeManager(Node):
         last_output = "lifecycle state is not available yet"
         while time.monotonic() < deadline:
             if self._process is None or self._process.poll() is not None:
-                raise RuntimeError("Nav2 runtime exited before bt_navigator became active")
-            try:
-                remaining = deadline - time.monotonic()
-                if remaining <= 0.0:
-                    break
-                result = subprocess.run(
-                    ["ros2", "lifecycle", "get", "/bt_navigator"],
-                    capture_output=True,
-                    text=True,
-                    # Starting a ROS CLI participant and discovering a service
-                    # regularly takes longer than the polling interval.
-                    timeout=min(query_timeout, remaining),
-                    check=False,
-                )
-                output = (result.stdout + result.stderr).strip()
-                if result.returncode == 0 and output.lower().startswith("active"):
-                    self.get_logger().info("bt_navigator lifecycle state is active")
-                    return
-                if output:
-                    last_output = output
-            except subprocess.TimeoutExpired:
-                last_output = "timed out querying /bt_navigator lifecycle state"
+                raise RuntimeError(f"Nav2 runtime exited before {label} became active")
+            inactive = []
+            outputs = []
+            for node_name in node_names:
+                try:
+                    remaining = deadline - time.monotonic()
+                    if remaining <= 0.0:
+                        inactive.extend(node_names)
+                        outputs.append("lifecycle readiness deadline reached")
+                        break
+                    result = subprocess.run(
+                        ["ros2", "lifecycle", "get", f"/{node_name}"],
+                        capture_output=True,
+                        text=True,
+                        # Starting a ROS CLI participant and discovering a service
+                        # regularly takes longer than the polling interval.
+                        timeout=min(query_timeout, remaining),
+                        check=False,
+                    )
+                    output = (result.stdout + result.stderr).strip()
+                    if result.returncode != 0 or not output.lower().startswith("active"):
+                        inactive.append(node_name)
+                        outputs.append(f"/{node_name}: {output or 'not available'}")
+                except subprocess.TimeoutExpired:
+                    inactive.append(node_name)
+                    outputs.append(f"/{node_name}: lifecycle query timed out")
+            if not inactive:
+                self.get_logger().info(f"{label} lifecycle state is active")
+                return
+            last_output = "; ".join(outputs)
             time.sleep(min(poll, max(0.0, deadline - time.monotonic())))
 
         raise RuntimeError(
-            f"timed out after {timeout:g}s waiting for /bt_navigator to become active: {last_output}"
+            f"timed out after {timeout:g}s waiting for {label} to become active: {last_output}"
         )
+
+    def _wait_for_service(self, service_name: str) -> None:
+        """Wait for the child sim's localization service before route projection."""
+        timeout = float(self.get_parameter("nav2_ready_timeout_sec").value)
+        poll = float(self.get_parameter("nav2_ready_poll_sec").value)
+        deadline = time.monotonic() + timeout
+        while time.monotonic() < deadline:
+            if self._process is None or self._process.poll() is not None:
+                raise RuntimeError(f"Nav2 runtime exited before {service_name} became available")
+            result = subprocess.run(
+                ["ros2", "service", "list"], capture_output=True, text=True, check=False
+            )
+            if result.returncode == 0 and service_name in result.stdout.splitlines():
+                return
+            time.sleep(min(poll, max(0.0, deadline - time.monotonic())))
+        raise RuntimeError(f"timed out after {timeout:g}s waiting for {service_name}")
+
+    def _wait_for_bt_navigator_active(self) -> None:
+        """Block until Nav2 has activated the Task 1/3 action server owner."""
+        self._wait_for_lifecycle_nodes_active(("bt_navigator",), "bt_navigator")
 
     def shutdown(self):
         """Stop the Nav2 process group before this manager exits.
@@ -238,6 +265,13 @@ class RuntimeManager(Node):
                     self._runtime_pgid_file.write_text(f"{self._process.pid}\n", encoding="utf-8")
                     if profile in {"task1", "task3"}:
                         self._wait_for_bt_navigator_active()
+                    elif mode == "task2_sim":
+                        self._wait_for_service("/fromLL")
+                    elif profile == "task2":
+                        self._wait_for_lifecycle_nodes_active(
+                            ("controller_server", "velocity_smoother"),
+                            "Task 2 controller stack",
+                        )
                 self._publish(Nav2RuntimeStatus.READY, "Nav2 runtime started")
                 result = ConfigureSystem.Result(success=True, message=f"active Nav2 profile: {profile}")
                 handle.succeed()

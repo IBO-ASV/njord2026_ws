@@ -2,7 +2,8 @@
   "mode": "peer",
   "listen": {
     "endpoints": [
-      "tcp/10.42.0.196:7447"
+      "tcp/10.42.0.196:7447",
+      "tcp/100.73.137.72:7447"
     ]
   },
   "scouting": {
@@ -69,9 +70,7 @@
           "/task1/safety_points_visual",
           "/agx/rosbag/recording_status"
         ],
-        "subscribers": [
-          "/runtime_parameter_updates"
-        ],
+        "subscribers": [],
         "service_servers": [
           "/mission/list_tasks",
           "/mission/get_status",

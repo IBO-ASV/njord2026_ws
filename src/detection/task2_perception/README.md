@@ -31,12 +31,12 @@ pcl_segmentation submodule (reused AS-IS, zero modification):
         -> /pcl/preprocessed
     ground_remover_node -> /pcl/nonground
     cluster_node -> /pcl/cluster_centroids (PoseArray)
-    ship_tracker_node (EKF, Hungarian association)
+    ship_tracker_node (stamped ego pose -> odom-frame detections -> EKF, Hungarian association)
         -> /tracked_objects
            (ship_perception_msgs/TrackedObjectArray,
             pose base_link-relative, twist RELATIVE and
             expressed in the object body frame — the
-            tracker's ego compensation is a no-op stub)
+            tracker keeps ego-compensated state internally and exports relative twist)
         -> TF base_link -> tracked_obj_{id}
     |
     v
@@ -61,7 +61,7 @@ MPPI planner (asv_trajectory_planner/planner_node.py,
 
 | Node (executable) | In | Out |
 |---|---|---|
-| `task2_cloud_filter` (`task2_cloud_filter_node`) | `/livox/lidar`, TF | `/task2/points_filtered`, `/task2/points_filtered_visual` (display only), `/task2/self_vessel_marker`, `/task2/debug/*` (opt.) |
+| `task2_cloud_filter` (`task2_cloud_filter_node`) | `/livox/lidar`, TF | `/task2/points_filtered`, `/task2/self_vessel_marker`, `/task2/debug/*` (opt.) |
 | `opponent_selector` (`opponent_selector_node`) | `/tracked_objects`, `/odometry/filtered/local`, TF map->base_link | `/other_ship/twist`, TF map->opponent_vessel |
 
 認識単体のデバッグでは、以下の2つを起動します。
@@ -76,7 +76,8 @@ ros2 launch ship_perception_bringup classical_pipeline.launch.py \
 実機の自動運転では両方とも `robot/task2_autonomy.launch.py` に含まれるため、別途起動しません。
 
 rosbagでこの一連の認識を確認する場合は、`robot/task2_bag_perception.launch.py` を使います。
-これはbag再生と必要なTFを補い、認識・追跡だけを起動するオフライン検証用です。
+これはbag再生と必要なLiDAR固定TFを補い、認識・追跡だけを起動するオフライン検証用です。
+実機用ではなく、`/tf_static` をbagから再生しないため固定TFが二重になりません。
 
 ## Design notes
 
@@ -90,7 +91,7 @@ rosbagでこの一連の認識を確認する場合は、`robot/task2_bag_percep
 - **Water removal** cannot eat walls or decks: the RANSAC plane is accepted
   only when its normal is near-vertical (`water_plane_normal_z_min`) AND its
   height is within `water_plane_max_height_error_m` of `waterline_z_m`.
-- **Velocities**: the tracker EKF already estimates velocity; nothing here
+- **Velocities**: the tracker first converts detections into odom using timestamp-aligned ego poses. It estimates fixed-frame velocity and exports base-relative body twist for compatibility. Nothing here
   numerically differentiates positions. The selector rotates the body-frame
   twist into base_link axes, adds the ego twist (`/odometry/filtered/local`,
   child frame base_link), rotates into map, then applies the same low-pass +
@@ -115,12 +116,8 @@ box, and the URDF LiDAR mount
 angles/position.
 
 `/task2/self_vessel_marker` is a visualization-only pentagonal outline of the
-configured `self_crop_*` footprint. Its pointed bow faces `+X` (forward).
-Add it as a Marker in Foxglove with `base_link` (or its parent frame) as the
-fixed frame to see the own-vessel reference against the point cloud. It is
-disabled by the real-vessel autonomy overlay.
-
-`/task2/points_filtered_visual` is another visualization-only topic: it keeps
-x/y (the horizontal azimuth) unchanged and mirrors only z. Use it in a
-Foxglove panel instead of `/task2/points_filtered` when inspecting the
-upside-down LiDAR; do not connect it to perception or planning.
+configured `self_crop_*` footprint. It is always published in `base_link`, and
+its pointed bow faces that frame's `+X` (forward). Add it as a Marker in
+Foxglove with `base_link` (or its parent frame) as the fixed frame to see the
+own-vessel reference against the point cloud. It is disabled by the real-vessel
+autonomy overlay.

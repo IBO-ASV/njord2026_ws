@@ -103,7 +103,7 @@ def main():
         rclpy.spin(node)
     finally:
         node.destroy_node()
-        rclpy.try_shutdown()
+        rclpy.shutdown()
 
 
 if __name__ == "__main__":

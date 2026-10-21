@@ -1,31 +1,5 @@
-# Ground-edited parameters received by the onboard AGX.
+# Edit on the Jetson ground station; changes publish over Zenoh immediately.
+# Only parameters declared by a running target node can be changed.
 groundpc: {}
-
-# These names refer to the onboard AGX receiver role (legacy name: minipc).
-# Initial live-tuning values from the original runtime-sync examples. FollowPath
-# parameters are handled by Nav2's Regulated Pure Pursuit controller when active.
-minipc:
-  /thruster_driver_node:
-    control.p.surge: 5.0
-    control.p.sway: 5.0
-    control.p.yaw: 5.0
-    control.max_surge_wrench: 40.0
-    control.max_sway_wrench: 40.0
-    control.max_yaw_wrench: 20.0
-    input_scaling.max_linear_x: 1.0
-    input_scaling.max_linear_y: 1.0
-    input_scaling.max_angular_z: 1.0
-    static_map.deadzone_pos: 0.0
-    static_map.deadzone_neg: 0.0
-    static_map.thrusters.forward_gain: [1.0, 1.0, 1.0, 1.0]
-    static_map.thrusters.reverse_gain: [1.0, 1.0, 1.0, 1.0]
-    static_map.thrusters.offset: [0.0, 0.0, 0.0, 0.0]
-  /controller_server:
-    FollowPath.desired_linear_vel: 0.5
-    FollowPath.lookahead_dist: 3.0
-    FollowPath.min_lookahead_dist: 1.5
-    FollowPath.max_lookahead_dist: 8.0
-    FollowPath.lookahead_time: 1.5
-
+minipc: {}
 jetson: {}
-

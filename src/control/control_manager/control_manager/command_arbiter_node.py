@@ -22,7 +22,7 @@ class CommandArbiter(Node):
 
     def __init__(self) -> None:
         super().__init__("command_arbiter")
-        self._command_timeout_sec = float(self.declare_parameter("command_timeout_sec", 0.5).value)
+        self._command_timeout_sec = float(self.declare_parameter("command_timeout_sec", 2.0).value)
         self._publish_period_sec = float(self.declare_parameter("publish_period_sec", 0.05).value)
         if self._command_timeout_sec <= 0 or self._publish_period_sec <= 0:
             raise ValueError("command_timeout_sec and publish_period_sec must be positive")

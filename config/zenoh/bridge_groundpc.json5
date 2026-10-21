@@ -10,7 +10,7 @@
   // スマートフォンInternet経路を使う場合も7447をInternetへ直接公開せず、
   // WireGuard等のVPN内アドレスをendpointにする。
   connect: {
-    endpoints: ["tcp/10.42.0.196:7447"],
+    endpoints: ["tcp/10.42.0.196:7447", "tcp/100.73.137.72:7447"],
   },
 
   scouting: {
@@ -27,6 +27,12 @@
         ],
         subscribers: [
           "/odom", "/tf", "/tf_static", "/mission/status", "/task/plan",
+          "/odometry/filtered/global", "/odometry/filtered/local", "/livox/imu",
+          "/task1/safety_points", "/task1/safety_points_visual", "/task2/safety_points",
+          "/docking/berth1_nominal", "/docking/berth2_nominal",
+          "/docking/berth1_corrected", "/docking/berth2_corrected",
+          "/autonomy/ready", "/heartbeat/autonomy", "/task2/buoy_pose_correction",
+          "/waypoint1_pose", "/waypoint2_pose",
           "/buoy_detections", "/buoy_detections_3d",
           "/other_ship/twist",
           "/task2/opponent_detected",
@@ -46,7 +52,7 @@
           "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/compass/raw",
           "/gui/ground_speed_mps",
           "/gui/battery_percent",
-          "/gui/livox/points",
+          "/gui/livox/points", "/agx/rosbag/recording_status",
         ],
         // The ground operator is a client of the miniPC-owned Mission Manager.
         // Task selection is carried in StartTask/RunTask requests, so no
@@ -58,6 +64,7 @@
           "/mission/start_task",
           "/mission/stop_task",
           "/control/set_mode",
+          "/agx/rosbag/set_recording",
         ],
         action_servers: [],
         action_clients: ["/mission/run_task"],

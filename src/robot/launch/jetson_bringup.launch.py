@@ -364,7 +364,7 @@ def generate_launch_description():
                 description="Use surveyed Task 1 buoy positions to publish /buoy_roi within 10 m.",
             ),
             DeclareLaunchArgument(
-                "enable_task2_autonomy", default_value="false",
+                "enable_task2_autonomy", default_value="true",
                 description="Run Task 2 LiDAR perception, tracking and MPPI on Jetson.",
             ),
             DeclareLaunchArgument("enable_livox_gui_telemetry", default_value="true", description="Publish bounded Livox GUI telemetry only."),
@@ -374,7 +374,7 @@ def generate_launch_description():
                 default_value="true",
                 description="Start the Jetson zenoh-bridge-ros2dds process.",
             ),
-            DeclareLaunchArgument("heartbeat_monitor_zed2i", default_value="true"),
+            DeclareLaunchArgument("heartbeat_monitor_zed2i", default_value="false"),
             DeclareLaunchArgument("heartbeat_monitor_lidar", default_value="true"),
             # Staged startup, carried over from manual_control.launch.py. On a
             # dedicated Jetson there is far less contention than in the old

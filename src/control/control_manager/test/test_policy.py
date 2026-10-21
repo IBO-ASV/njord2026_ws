@@ -30,7 +30,7 @@ def test_default_policy_is_complete_and_task_requirements_overlay_common():
     assert requirements["require_ground_station"] is True
     assert requirements["require_collision_monitor"] is False
     assert requirements["require_buoy_perception"] is False
-    assert policy.nav_command_timeout_sec == 0.5
+    assert policy.nav_command_timeout_sec == 2.0
 
 
 def test_return_home_does_not_require_ground_station_heartbeat():

@@ -166,17 +166,21 @@ def test_minipc_bringup_uses_canonical_control_manager_by_default():
     assert 'package="twist_mux"' not in source
 
 
-def test_task2_uses_fixed_odom_without_global_ekf():
+def test_task2_uses_fixed_odom_with_global_map_transform_available():
     minipc = _read_launch_source("minipc_bringup.launch.py")
     localization = _read_launch_source("localization.launch.py")
     jetson = _read_launch_source("jetson_bringup.launch.py")
+    jetson_task2 = _read_launch_source("task2_jetson_autonomy.launch.py")
     task2 = _read_launch_source("task2_mission_adapter.launch.py")
 
-    assert '"use_ekf_global",\n                default_value="false"' in minipc
+    assert '"use_ekf_global",\n                default_value="true"' in minipc
     assert '"world_frame": "odom"' in localization
     assert '("odometry/filtered", "odometry/filtered/local")' in localization
     assert '"frame_id": "odom"' in task2
-    assert '"own_odom_topic": "/odometry/filtered/local"' in jetson
+    assert '"task2_jetson_autonomy.launch.py"' in jetson
+    assert '"own_odom_topic": odom' in jetson_task2
+    assert '"/task2/safety_points"' not in jetson_task2
+    assert 'name="task2_safety_points"' not in jetson_task2
 
 
 def test_minipc_bringup_adds_sbus_without_replacing_the_ground_link_joy_path():
@@ -242,6 +246,9 @@ def test_task3_uses_its_relaxed_waypoint_behavior_tree():
 def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     minipc_source = _read_launch_source("minipc_bringup.launch.py")
     runtime_source = _read_launch_source("task_runtime.launch.py")
+    runtime_manager_source = (Path(_LAUNCH_DIR).parents[1] / "mission" /
+                              "mission_manager" / "mission_manager" /
+                              "runtime_manager_node.py").read_text()
     task2_nav_source = _read_launch_source("navigation_launch_task2.py")
     adapter_source = _read_launch_source("task2_mission_adapter.launch.py")
     supervisor_source = (Path(_LAUNCH_DIR).parents[1] / "diagnostics" /
@@ -252,6 +259,9 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     assert '"navigation_launch_task2.py"' in minipc_source
     assert '"task2_mission_adapter.launch.py"' not in minipc_source
     assert '"task2_mission_adapter.launch.py"' in runtime_source
+    assert 'elif profile == "task2"' in runtime_manager_source
+    assert '("controller_server", "velocity_smoother")' in runtime_manager_source
+    assert '"Task 2 controller stack"' in runtime_manager_source
     assert "' == 'task2'" in minipc_source
     assert "' != 'task2'" in minipc_source
     assert 'executable="autonomy_supervisor_node"' in minipc_source
@@ -261,16 +271,24 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     assert 'active_profile_ == "task2"' in supervisor_source
     assert 'active_profile_ != "task2" && !action_server_ready_' in supervisor_source
     assert '"/planned_path_pruned"' in supervisor_source
-    assert '"task2_readiness_adapter_node"' in adapter_source
+    assert '"task2_readiness_adapter_node"' not in adapter_source
     assert '"follow_path_client_node"' in adapter_source
     assert '"mission_gate_required": True' in adapter_source
     assert '"preprocessing.launch.py"' not in adapter_source
     assert '"planner_real.launch.py"' not in adapter_source
+    planner_real_source = (Path(_LAUNCH_DIR).parents[1] / "navigation" /
+                           "path_generator" / "mppi" / "launch" /
+                           "planner_real.launch.py").read_text()
+    assert 'executable="crm_costmap_node"' not in planner_real_source
+    assert '"/mppi/crm_costmap"' in (Path(_LAUNCH_DIR).parents[2] /
+                                       "config" / "zenoh" /
+                                       "bridge_jetson.json5").read_text()
     assert "nav2_controller" in task2_nav_source
     assert "nav2_velocity_smoother" in task2_nav_source
     assert "nav2_lifecycle_manager" in task2_nav_source
-    assert '"controller_server", "velocity_smoother", "collision_monitor"' in task2_nav_source
-    assert "/cmd_vel_nav" in task2_nav_source
+    assert '"controller_server", "velocity_smoother"' in task2_nav_source
+    assert '("cmd_vel", "/cmd_vel_controller")' in task2_nav_source
+    assert '("cmd_vel_smoothed", "/cmd_vel_nav")' in task2_nav_source
     assert "root_key=None" in task2_nav_source
     for forbidden in (
         "nav2_planner",
@@ -283,8 +301,9 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
         assert forbidden not in task2_nav_source
         assert forbidden not in task2_params
     assert "use_collision_detection: false" in task2_params
-    assert "nav2_collision_monitor" in task2_nav_source
-    assert '"/task2/safety_points"' in task2_params
+    assert "nav2_collision_monitor" not in task2_nav_source
+    assert "collision_monitor:" not in task2_params
+    assert "/task2/safety_points" not in task2_params
 
 
 def test_legacy_task2_launch_uses_the_follow_path_only_graph():
@@ -322,7 +341,9 @@ def test_operator_nodes_have_single_machine_owners():
     assert 'executable="foxglove_logger_node"' in minipc_source
 
     assert 'executable="joy_node"' in ground_source
-    assert 'foxglove_bridge_launch.xml' in ground_source
+    assert 'package="foxglove_bridge"' in ground_source
+    assert 'executable="foxglove_bridge"' in ground_source
+    assert '"services"' in ground_source
 
 
 def test_ground_pc_publishes_the_actual_route_marker_from_shared_tf():
@@ -793,7 +814,7 @@ def test_verified_wired_link_is_used_for_zenoh_and_critical_link():
     ground = (root / "src" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
     assert '"ops_lan|10.42.0.1|10.42.0.2|45100"' in ground
-    assert '"tailscale|100.123.47.2|100.82.157.125|45101"' in ground
+    assert '"tailscale|100.115.34.103|100.73.137.72|45101"' in ground
     assert '"ops_lan|10.42.0.2|45100"' in vessel
     assert '"tailscale|100.82.157.125|45101"' in vessel
 
@@ -892,6 +913,23 @@ def test_networking_launch_starts_bridge_and_the_correct_critical_link_roles():
     assert '"vessel_receiver.launch.py"' in source
     assert '_role_condition("groundpc")' in source
     assert '_role_condition("minipc")' in source
+
+
+def test_ground_pc_is_the_unified_agx_and_minipc_station():
+    root = Path(_LAUNCH_DIR).parents[2]
+    source = _read_launch_source("ground_pc.launch.py")
+    bridge = (root / "config" / "zenoh" / "bridge_groundpc.json5").read_text(
+        encoding="utf-8"
+    )
+    assert '"role": "groundpc"' in source
+    assert 'executable="runtime_parameter_sync.py"' in source
+    assert '"/runtime_parameter_updates"' in bridge
+    for endpoint in ("tcp/10.42.0.2:7447", "tcp/100.73.137.72:7447"):
+        assert endpoint in bridge
+    assert '"/agx/rosbag/set_recording"' in bridge
+    assert '"/agx/rosbag/recording_status"' in bridge
+    assert not (root / "src" / "robot" / "launch" / "ground_jetson.launch.py").exists()
+    assert not (root / "config" / "zenoh" / "bridge_ground_jetson.json5").exists()
 
 
 def test_foxglove_v3_telemetry_reaches_the_ground_pc():

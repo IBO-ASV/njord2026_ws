@@ -155,6 +155,31 @@ class TestStaleAndGates:
         assert not tracking_glue.is_left_of_oriented_line(
             np.array([20.0, 19.9]), start, end)
 
+    def test_velocity_bearing_clip_keeps_speed_on_right_to_left_sector(self):
+        velocity = np.array([10.0, 0.0, 0.2])
+        clipped = tracking_glue.clip_velocity_bearing(
+            velocity, 0.0, np.pi / 2.0, np.pi)
+        np.testing.assert_allclose(clipped, [0.0, 10.0, 0.2], atol=1e-12)
+        np.testing.assert_allclose(velocity, [10.0, 0.0, 0.2], atol=1e-12)
+
+    def test_velocity_bearing_clip_handles_zero_across_pi_wrap(self):
+        route_yaw = np.deg2rad(179.0)
+        velocity = 10.0 * np.array([
+            np.cos(np.deg2rad(-179.0)), np.sin(np.deg2rad(-179.0)), 0.0])
+        clipped = tracking_glue.clip_velocity_bearing(
+            velocity, route_yaw, np.pi / 2.0, np.pi)
+        np.testing.assert_allclose(
+            clipped[:2], 10.0 * np.array([
+                np.cos(route_yaw + np.pi / 2.0),
+                np.sin(route_yaw + np.pi / 2.0)]),
+            atol=1e-12)
+
+    def test_velocity_bearing_clip_leaves_zero_speed_unchanged(self):
+        velocity = np.array([0.0, 0.0, 0.2])
+        clipped = tracking_glue.clip_velocity_bearing(
+            velocity, 0.0, np.pi / 2.0, np.pi)
+        np.testing.assert_allclose(clipped, velocity, atol=1e-12)
+
     def test_straight_line_confidence_gate(self):
         short_history = make_track(
             object_id=1, hit_count=8, velocity_stddev_mps=0.10)

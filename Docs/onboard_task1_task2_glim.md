@@ -1,4 +1,4 @@
-# AGX onboard / Jetson ground: Task1 and Task2
+# AGX onboard / Ground PC: Task1 and Task2
 
 2026-10-14. AGX 100.73.137.72; ground Jetson 100.115.34.103.
 Both workspaces: /home/ibo/njord2026_ws, branch fix/agx-startup.
@@ -10,9 +10,9 @@ AGX: choose one task, never both concurrently:
     ros2 launch robot agx_task1.launch.py enable_mid360:=true
     ros2 launch robot agx_task2.launch.py enable_mid360:=true
 
-Ground Jetson, common to both:
+Ground PC, common to both:
 
-    ros2 launch robot ground_jetson.launch.py
+    ros2 launch robot ground_pc.launch.py
 
 Live Foxglove: ws://100.115.34.103:8765. Historical preview: port 8766.
 Nav2 is opt-in with enable_nav2:=true; no mission starts automatically.

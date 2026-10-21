@@ -5,7 +5,7 @@ that the opponent selector needs, and implements:
 
   * body-frame twist -> base_link axes rotation (the submodule tracker
     publishes state.twist in the OBJECT body frame per REP-103),
-  * ego compensation (the tracker's own ego compensation is a no-op stub, so
+  * ego compensation (the tracker exports relative body twist even when its internal state is ego-compensated, so
     TrackedObject velocities are RELATIVE to the moving base_link),
   * base_link -> map frame conversion,
   * CPA / TCPA computation,
@@ -30,8 +30,8 @@ class Track:
 
     position is relative to base_link. velocity_body is the tracker's twist
     (linear), expressed in the OBJECT body frame (rotated by `yaw`); it is a
-    RELATIVE velocity because the submodule tracker's ego compensation is a
-    no-op. dimensions = (length, width, height).
+    RELATIVE velocity by the tracker's published-message contract.
+    dimensions = (length, width, height).
     """
 
     object_id: int
@@ -70,8 +70,8 @@ def ego_compensate(
 ) -> np.ndarray:
     """Relative velocity (base_link axes) -> absolute ground velocity (base_link axes).
 
-    The upstream tracker estimates in the moving base_link frame with ego
-    compensation stubbed out, so its velocity contains the full apparent
+    The upstream tracker exports base-relative velocity even when its internal
+    estimates are in fixed odom coordinates, so its published velocity contains the full apparent
     motion: -v_ego - omega x r. Restoring ground velocity therefore needs
     both the ego linear velocity AND the rotation-induced term omega x r
     at the target position r (omitting it injects ~omega*range of phantom
@@ -221,6 +221,33 @@ def is_left_of_oriented_line(
     relative = point - start
     lateral = float(relative[0] * -forward[1] + relative[1] * forward[0])
     return lateral > float(margin_m)
+
+
+def clip_velocity_bearing(
+    velocity_map: np.ndarray,
+    reference_yaw_rad: float,
+    min_bearing_rad: float,
+    max_bearing_rad: float,
+) -> np.ndarray:
+    """Keep speed while limiting a map-frame velocity bearing to a route yaw.
+
+    Bearings use the normal counter-clockwise-positive convention, so the
+    right side of the GPS5->GPS6 route is negative.  ``atan2(sin, cos)``
+    normalizes across the +/-pi seam before clipping, including near 0 deg.
+    A zero-speed vector has no direction and is returned unchanged.
+    """
+    if min_bearing_rad > max_bearing_rad:
+        raise ValueError("min_bearing_rad must be <= max_bearing_rad")
+    velocity = np.asarray(velocity_map, dtype=float).copy()
+    speed = float(np.hypot(velocity[0], velocity[1]))
+    if speed <= 1e-6:
+        return velocity
+    bearing = np.arctan2(
+        np.sin(np.arctan2(velocity[1], velocity[0]) - reference_yaw_rad),
+        np.cos(np.arctan2(velocity[1], velocity[0]) - reference_yaw_rad))
+    yaw = reference_yaw_rad + np.clip(bearing, min_bearing_rad, max_bearing_rad)
+    velocity[:2] = speed * np.array([np.cos(yaw), np.sin(yaw)])
+    return velocity
 
 
 def select_opponent(

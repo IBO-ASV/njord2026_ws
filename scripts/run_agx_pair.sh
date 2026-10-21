@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# Start the AGX vessel or ground Jetson with matching DDS/service transport.
+# Start the AGX vessel or Ground PC with matching DDS/service transport.
 set -eo pipefail
 case "${1:-}" in
   vessel) launch_file=agx_bringup.launch.py; domain=5 ;;
-  ground) launch_file=ground_jetson.launch.py; domain=6 ;;
+  ground) launch_file=ground_pc.launch.py; domain=6 ;;
   *) echo 'Usage: run_agx_pair.sh <vessel|ground> [launch arguments...]' >&2; exit 64 ;;
 esac
 shift

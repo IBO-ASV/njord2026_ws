@@ -27,15 +27,11 @@ def generate_launch_description():
         'enable_zed2i': str(Path(camera).exists()).lower(),
         'enable_um982': str(Path(um982).exists()).lower(),
         'um982_port': um982,
-        # BMS master XIAO ESP32-C3 on this AGX.  Keep this explicit in the
-        # AGX profile rather than relying on the generic miniPC default.
         'bms_serial_port': ('/dev/serial/by-id/'
                             'usb-Espressif_USB_JTAG_serial_debug_unit_'
                             'E0:72:A1:1D:4B:14-if00'),
-        # This profile is used on the vessel: start the output and read-only
-        # BMS links after their stable USB paths have been verified.
         'enable_thruster': 'true',
-        'enable_bms': 'true', 'enable_alert_lamp': 'false',
+        'enable_bms': 'true', 'enable_alert_lamp': 'true',
         'enable_sbus': 'false',  # no SBUS XIAO is attached to this AGX
         'enable_back_cam': 'false', 'enable_nav2': 'false',
         'enable_critical_link': 'true',
@@ -52,17 +48,11 @@ def generate_launch_description():
                       'enable_autonomy_supervisor': 'false', 'active_nav2_profile': cfg('task'),
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
-    runtime_parameter_sync = Node(
-        package='robot', executable='runtime_parameter_sync.py',
-        name='runtime_parameter_sync', output='screen',
-        parameters=[{'role': 'minipc', 'publish_updates': False}],
-    )
     return LaunchDescription([
         SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
         SetEnvironmentVariable("CYCLONEDDS_URI", PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"])),
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '5'),
-        runtime_parameter_sync,
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
         include('robot', 'minipc_bringup.launch.py', core_args),
         Node(package='robot', executable='agx_rosbag_record_manager', name='agx_rosbag_record_manager', output='screen'),
@@ -80,7 +70,7 @@ def generate_launch_description():
         include('robot', 'heartbeat.launch.py', {'role':'jetson'}),
         Node(package='livox_gui_telemetry', executable='livox_gui_downsampler',
              name='livox_gui_downsampler', output='screen', condition=IfCondition(cfg('enable_mid360'))),
-        ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID',str(Path.home()/'.local/bin/zenoh-bridge-ros2dds'),'-c',
+        ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID','zenoh-bridge-ros2dds','-c',
             PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_agx.json5'])],output='screen'),
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),

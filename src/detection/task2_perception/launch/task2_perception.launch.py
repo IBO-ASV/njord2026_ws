@@ -52,6 +52,9 @@ def generate_launch_description():
             description="Publish the visualization-only self-vessel Marker"),
         DeclareLaunchArgument("use_sim_time", default_value="false"),
         DeclareLaunchArgument(
+            "corridor_enabled", default_value="true",
+            description="Require the configured GPS5-to-GPS6 recognition corridor"),
+        DeclareLaunchArgument(
             "ego_odom_topic", default_value="/odometry/filtered/local"),
         DeclareLaunchArgument("map_frame", default_value="map"),
         DeclareLaunchArgument("base_frame", default_value="base_link"),
@@ -102,6 +105,7 @@ def generate_launch_description():
                     "map_frame": LaunchConfiguration("map_frame"),
                     "base_frame": LaunchConfiguration("base_frame"),
                     "motion_filter_mode": LaunchConfiguration("motion_filter_mode"),
+                    "corridor_enabled": LaunchConfiguration("corridor_enabled"),
                 },
             ],
             condition=IfCondition(
