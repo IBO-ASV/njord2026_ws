@@ -36,6 +36,7 @@ def generate_launch_description():
         # BMS links after their stable USB paths have been verified.
         'enable_thruster': 'true',
         'enable_bms': 'true', 'enable_alert_lamp': 'false',
+        'enable_sbus': 'false',  # no SBUS XIAO is attached to this AGX
         'enable_back_cam': 'false', 'enable_nav2': 'false',
         'enable_critical_link': 'true',
         'ground_video_host': '100.115.34.103',
@@ -44,7 +45,7 @@ def generate_launch_description():
     }
     core_args = {key: cfg(key) for key in (
         'enable_um982', 'um982_port', 'bms_serial_port', 'enable_thruster', 'enable_bms',
-        'enable_alert_lamp', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
+        'enable_alert_lamp', 'enable_sbus', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
     core_args.update({'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
                       'enable_back_cam_ground_video': 'false',
                       'enable_back_cam_jpeg_ground_video': 'false',

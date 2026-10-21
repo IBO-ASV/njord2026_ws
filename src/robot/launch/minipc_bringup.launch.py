@@ -107,6 +107,7 @@ def generate_launch_description():
     active_nav2_profile = LaunchConfiguration("active_nav2_profile")
     sbus_serial_port = LaunchConfiguration("sbus_serial_port")
     sbus_zero_axes_on_startup = LaunchConfiguration("sbus_zero_axes_on_startup")
+    enable_sbus = LaunchConfiguration("enable_sbus")
     enable_control_manager = LaunchConfiguration("enable_control_manager")
     enable_mission_manager = LaunchConfiguration("enable_mission_manager")
     ground_link_return_monitor_log_level = LaunchConfiguration(
@@ -235,6 +236,7 @@ def generate_launch_description():
         output="screen",
         parameters=[{"device": sbus_serial_port}],
         remappings=[("joy", "/sbus/joy")],
+        condition=IfCondition(enable_sbus),
     )
 
     soft_emg_selector = Node(
@@ -251,6 +253,7 @@ def generate_launch_description():
         output="screen",
         parameters=[{"zero_axes_on_startup": sbus_zero_axes_on_startup}],
         remappings=[("joy", "/sbus/joy"), ("/soft_emg", "/soft_emg_sbus")],
+        condition=IfCondition(enable_sbus),
     )
 
     command_arbiter = Node(
@@ -578,6 +581,11 @@ def generate_launch_description():
                 "sbus_zero_axes_on_startup",
                 default_value="false",
                 description="Calibrate SBUS stick centers for two seconds at startup.",
+            ),
+            DeclareLaunchArgument(
+                "enable_sbus",
+                default_value="true",
+                description="Start the onboard SBUS receiver and converter.",
             ),
             DeclareLaunchArgument(
                 "um982_port",
