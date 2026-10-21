@@ -2,6 +2,7 @@
 #define THRUSTER_DRIVER_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include <rcl_interfaces/msg/set_parameters_result.hpp>
 
 #include <geometry_msgs/msg/twist.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -9,6 +10,7 @@
 #include <std_msgs/msg/float32_multi_array.hpp>
 
 #include <string>
+#include <mutex>
 #include <vector>
 
 namespace njord
@@ -41,6 +43,8 @@ private:
   void dutyArrayCallback(const std_msgs::msg::Int16MultiArray::SharedPtr msg);
   void odomCallback(const nav_msgs::msg::Odometry::SharedPtr msg);
   void controlTimerCallback();
+  rcl_interfaces::msg::SetParametersResult onSetParameters(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   void loadThrusterConfigs();
   void loadThrusterPosesFromUrdf(const std::string & robot_description);
@@ -70,6 +74,8 @@ private:
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_current_force_;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_dob_estimate_;
   rclcpp::TimerBase::SharedPtr control_timer_;
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr parameter_callback_handle_;
+  std::mutex parameter_mutex_;
 
   std::string input_mode_;
 
@@ -134,3 +140,4 @@ private:
 }  // namespace njord
 
 #endif  // THRUSTER_DRIVER_NODE_HPP_
+
