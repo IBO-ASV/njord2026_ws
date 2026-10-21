@@ -32,8 +32,10 @@ def generate_launch_description():
         'bms_serial_port': ('/dev/serial/by-id/'
                             'usb-Espressif_USB_JTAG_serial_debug_unit_'
                             'E0:72:A1:1D:4B:14-if00'),
-        'enable_thruster': 'false',  # hardware outputs require explicit opt in
-        'enable_bms': 'false', 'enable_alert_lamp': 'false',
+        # This profile is used on the vessel: start the output and read-only
+        # BMS links after their stable USB paths have been verified.
+        'enable_thruster': 'true',
+        'enable_bms': 'true', 'enable_alert_lamp': 'false',
         'enable_back_cam': 'false', 'enable_nav2': 'false',
         'enable_critical_link': 'true',
         'ground_video_host': '100.115.34.103',
@@ -81,7 +83,9 @@ def generate_launch_description():
             PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_agx.json5'])],output='screen'),
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),
-             parameters=[{'udp_paths':['tailscale|100.73.137.72|45101'],
+             parameters=[{'udp_paths':[
+                          'ops_lan|10.42.0.196|45100',
+                          'tailscale|100.73.137.72|45101'],
                           'serial_device':'', 'key_file':'/etc/njord/critical_link.key',
                           'max_frame_age_ms':2000, 'future_tolerance_ms':1000}]),
     ])

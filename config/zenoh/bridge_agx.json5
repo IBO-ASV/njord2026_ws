@@ -2,7 +2,7 @@
   "mode": "peer",
   "listen": {
     "endpoints": [
-      "tcp/10.42.0.2:7447"
+      "tcp/10.42.0.196:7447"
     ]
   },
   "scouting": {

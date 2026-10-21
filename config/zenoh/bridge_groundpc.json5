@@ -10,7 +10,7 @@
   // スマートフォンInternet経路を使う場合も7447をInternetへ直接公開せず、
   // WireGuard等のVPN内アドレスをendpointにする。
   connect: {
-    endpoints: ["tcp/10.42.0.2:7447"],
+    endpoints: ["tcp/10.42.0.196:7447"],
   },
 
   scouting: {

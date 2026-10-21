@@ -8,7 +8,7 @@ critical_link_sender:
     # The Ground PC is the 10.42.0.1 gateway for the BE25/X50 ops LAN.
     # Tailscale is an independent fallback through the phone uplink.
     udp_paths:
-      - "ops_lan|10.42.0.1|10.42.0.2|45100"
+      - "ops_lan|10.42.0.1|10.42.0.196|45100"
       - "tailscale|100.123.47.2|100.82.157.125|45101"
     # Use a stable /dev/serial/by-id path for the Ground ESP32.
     serial_device: ""
