@@ -1,5 +1,11 @@
 # AGX vessel + ground Jetson startup
 
+Current pair bringup defaults to direct ROS 2 communication with `rmw_fastrtps_cpp`:
+both sides use domain 5 and Fast DDS peer discovery over their Tailscale addresses.
+To use the previous Cyclone DDS + Zenoh bridge setup, pass
+`communication_backend:=zenoh` to the launcher on both machines. Do not mix the
+two settings across the pair.
+
 Verified on 2026-10-13 (JST). Both workspaces: `/home/ibo/njord2026_ws`.
 
 - Vessel AGX: `ibo@100.73.137.72`, ROS domain 5.
@@ -17,11 +23,11 @@ Start the receiver first, once per host:
 ./scripts/run_agx_pair.sh vessel
 ```
 
-This script must set CycloneDDS before invoking `ros2 launch`: the launch
-process itself creates component-loading service clients. Setting RMW only
-inside a launch description does not configure those clients.
-DDS uses loopback/unicast discovery with 120 participant slots. Zenoh connects
-between the Tailscale addresses, and raw camera/depth/LiDAR clouds remain local.
+The wrapper sets the selected RMW before invoking `ros2 launch`, because the
+launch process itself creates ROS clients. Fast DDS uses its checked-in profile
+to restrict traffic to the Tailscale interface and discover the peer by unicast.
+The `zenoh` option retains the previous split domains (AGX 5, ground 6) and
+bridge allowlists.
 Ground Foxglove listens on TCP 8765; front JPEG-RTP uses UDP 5600.
 
 The AGX launch combines the CPU vessel/control graph and SDK-backed ZED driver.
@@ -34,7 +40,7 @@ an assertion that the vessel is ready to navigate.
 
 AGX required `ros-jazzy-xacro`, `ros-jazzy-robot-localization`, and
 `gstreamer1.0-libav`; ground required `gstreamer1.0-libav`.
-Both have `rmw_cyclonedds_cpp`. The AGX was missing Zenoh; the existing
+The previous Zenoh setup used `rmw_cyclonedds_cpp`. The AGX was missing Zenoh; the existing
 ARM64 v1.10.1 executable from the ground Jetson was installed into
 `~/.local/bin/zenoh-bridge-ros2dds` on AGX.
 

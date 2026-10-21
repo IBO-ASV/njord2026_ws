@@ -40,7 +40,27 @@ task1-1.launch.py、task1-2.launch.py、task2-1.launch.py、task3-1.launch.py、
 task3-2.launch.py も同様に enable_legacy_graph:=true を指定した場合だけ旧実験
 グラフを起動する。
 
-端末別 bringup は既定で `zenoh-bridge-ros2dds` を起動する。bridgeは端末ごとの
+AGX と Ground Jetson の組み合わせでは、`run_agx_pair.sh` の既定通信方式は
+Fast DDS によるROS 2直接通信である。両機で同じdomain IDを使い、Fast DDSのpeer
+discoveryをTailscale interfaceに限定する。起動引数でTailscale IPを上書きできる。
+
+```bash
+# Ground Jetson側
+./scripts/run_agx_pair.sh ground
+
+# AGX側
+./scripts/run_agx_pair.sh vessel
+```
+
+従来のCyclone DDS + Zenoh bridge構成は両機で `communication_backend:=zenoh` を
+指定すると選択できる。これは別通信方式なので、片方だけ切り替えないこと。
+
+```bash
+./scripts/run_agx_pair.sh ground communication_backend:=zenoh
+./scripts/run_agx_pair.sh vessel communication_backend:=zenoh
+```
+
+その他の端末別 bringup は既定で `zenoh-bridge-ros2dds` を起動する。bridgeは端末ごとの
 JSON5設定でROS domainを選ぶため、親の`ROS_DOMAIN_ID`はbridgeプロセスへ引き継がない。
 Ground PCでは`critical_link_sender`、miniPCでは`critical_link_receiver`も既定で起動する。
 必要に応じて、それぞれ`enable_zenoh_bridge:=false`、`enable_critical_link:=false`で無効化できる。

@@ -4,7 +4,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -17,6 +17,7 @@ def include(package, filename, arguments=None, condition=None):
 
 def generate_launch_description():
     cfg = LaunchConfiguration
+    backend = cfg('communication_backend')
     um982 = '/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0'
     camera = '/dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_OV0001-video-index0'
     defaults = {
@@ -49,10 +50,25 @@ def generate_launch_description():
         name='runtime_parameter_sync', output='screen',
         parameters=[{'role': 'minipc', 'publish_updates': False}],
     )
+    use_zenoh = PythonExpression(["'", backend, "' == 'zenoh'"])
     return LaunchDescription([
-        SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
+        DeclareLaunchArgument('communication_backend', default_value=EnvironmentVariable(
+            'NJORD_AGX_TRANSPORT', default_value='fastrtps'),
+                               description='ROS transport: direct Fast DDS or legacy Zenoh bridge.'),
+        DeclareLaunchArgument('fastdds_local_ip', default_value='100.73.137.72'),
+        DeclareLaunchArgument('fastdds_peer_ip', default_value='100.115.34.103'),
+        SetEnvironmentVariable("RMW_IMPLEMENTATION", PythonExpression([
+            "'rmw_fastrtps_cpp' if '", backend, "' == 'fastrtps' else 'rmw_cyclonedds_cpp'"
+        ])),
         SetEnvironmentVariable("CYCLONEDDS_URI", PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"])),
-        SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
+        SetEnvironmentVariable("FASTRTPS_DEFAULT_PROFILES_FILE", PathJoinSubstitution([
+            FindPackageShare('robot'), 'config', 'dds', 'fastdds_agx_pair.xml'
+        ])),
+        SetEnvironmentVariable('NJORD_FASTDDS_LOCAL_IP', cfg('fastdds_local_ip')),
+        SetEnvironmentVariable('NJORD_FASTDDS_PEER_IP', cfg('fastdds_peer_ip')),
+        SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", PythonExpression([
+            "'SUBNET' if '", backend, "' == 'fastrtps' else 'LOCALHOST'"
+        ])),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '5'),
         runtime_parameter_sync,
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
@@ -73,7 +89,8 @@ def generate_launch_description():
         Node(package='livox_gui_telemetry', executable='livox_gui_downsampler',
              name='livox_gui_downsampler', output='screen', condition=IfCondition(cfg('enable_mid360'))),
         ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID',str(Path.home()/'.local/bin/zenoh-bridge-ros2dds'),'-c',
-            PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_agx.json5'])],output='screen'),
+            PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_agx.json5'])],
+            output='screen', condition=IfCondition(use_zenoh)),
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),
              parameters=[{'udp_paths':['tailscale|100.73.137.72|45101'],
