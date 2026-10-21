@@ -65,6 +65,14 @@ BlueRobotics T200 @16V の最大推力 **≈51.5N** です。
 
 ## config パラメータの意味
 
+### 陸上PCから実行中に調整する
+
+陸上PCの `ground_pc.launch.py` は `robot/runtime_params/runtime_parameters.yaml` を監視し、変更を `/runtime_parameter_updates` でAGXへ送ります。別の編集ファイルを使う場合は `runtime_parameters_file:=/絶対パス/params.yaml` を指定します。AGX側は `minipc` セクションを受け取り、ノードの `set_parameters` サービスへ適用します（`minipc` は既存のAGX受信ロール名です）。YAMLを保存すると約1秒以内に送信され、ログに適用または拒否が出ます。
+
+ライブ変更に対応するスラスター設定は `control.p.*`、`control.max_*_wrench`、`input_scaling.max_*`、`static_map.deadzone_*`、`static_map.thrusters.forward_gain/reverse_gain/offset` です。正負ゲイン配列とオフセット配列は4基分を指定します。制御周期、フィードバック有効化、スラスター形状・最大推力など、タイマーや配分行列の構築に使う値は再起動が必要です。配列長や値域が不正な更新は拒否されます。
+
+追従は同じ `minipc` セクションの `/controller_server` に `FollowPath.*` を設定します。実行中Nav2のRegulated Pure Pursuitが動的更新を受け付けます。実際の追従値はTask1/Task2の起動プロファイルで異なるため、変更する項目だけをYAMLに置いてください。経路そのものの読み直しには対応しません。
+
 `config/config.yaml` (`thruster_driver_node` 名前空間)。
 
 | パラメータ | 単位 | 意味 |
@@ -107,3 +115,4 @@ BlueRobotics T200 @16V の最大推力 **≈51.5N** です。
 > スラスタ関連の配列 (`ids`, `links`, `angle_rad`, `reverse`, `max_thrust`,
 > `static_map.thrusters.*`) は必ず `thrusters.ids` と同じ長さにしてください。
 > 長さが不一致だとノード起動時に例外で停止します。
+

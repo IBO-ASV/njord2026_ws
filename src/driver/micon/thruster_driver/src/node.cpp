@@ -9,6 +9,7 @@
 #include <limits>
 #include <regex>
 #include <stdexcept>
+#include <unordered_set>
 
 namespace njord
 {
@@ -110,6 +111,9 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
   deadzone_pos_ = this->declare_parameter<double>("static_map.deadzone_pos", 0.0);
   deadzone_neg_ = this->declare_parameter<double>("static_map.deadzone_neg", 0.0);
 
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&ThrusterDriverNode::onSetParameters, this, std::placeholders::_1));
+
   duty_resolution_ = this->declare_parameter<int>("duty_resolution", 1000);
 
   loadThrusterConfigs();
@@ -210,6 +214,7 @@ void ThrusterDriverNode::odomCallback(const nav_msgs::msg::Odometry::SharedPtr m
 
 void ThrusterDriverNode::controlTimerCallback()
 {
+  std::lock_guard<std::mutex> parameter_lock(parameter_mutex_);
   const auto now = this->now();
   const double dt = std::max(1e-4, (now - last_control_time_).seconds());
   last_control_time_ = now;
@@ -238,6 +243,96 @@ void ThrusterDriverNode::controlTimerCallback()
 
   publishCommands(commands);
   prev_wrench_ = wrench;
+}
+
+rcl_interfaces::msg::SetParametersResult ThrusterDriverNode::onSetParameters(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = false;
+  const std::unordered_set<std::string> scalar_parameters = {
+    "control.p.surge", "control.p.sway", "control.p.yaw",
+    "control.max_surge_wrench", "control.max_sway_wrench", "control.max_yaw_wrench",
+    "input_scaling.max_linear_x", "input_scaling.max_linear_y",
+    "input_scaling.max_angular_z", "static_map.deadzone_pos", "static_map.deadzone_neg"};
+  std::unordered_set<std::string> seen;
+  for (const auto & parameter : parameters) {
+    const auto & name = parameter.get_name();
+    if (name == "static_map.thrusters.forward_gain" ||
+      name == "static_map.thrusters.reverse_gain" || name == "static_map.thrusters.offset")
+    {
+      if (parameter.get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE_ARRAY ||
+        parameter.as_double_array().size() != thrusters_.size())
+      {
+        result.reason = name + " must be a double array matching thrusters.ids";
+        return result;
+      }
+      for (const double value : parameter.as_double_array()) {
+        if (!std::isfinite(value) ||
+          (name.find("gain") != std::string::npos && (value <= 0.0 || value > 10.0)) ||
+          (name == "static_map.thrusters.offset" && std::abs(value) > 1.0))
+        {
+          result.reason = name + " contains an out-of-range value";
+          return result;
+        }
+      }
+      seen.insert(name);
+      continue;
+    }
+    if (scalar_parameters.count(name) == 0U) {
+      result.reason = "parameter is startup-only or unsupported for live update: " + name;
+      return result;
+    }
+    if (parameter.get_type() != rclcpp::ParameterType::PARAMETER_DOUBLE) {
+      result.reason = name + " must be a double";
+      return result;
+    }
+    const double value = parameter.as_double();
+    if (!std::isfinite(value)) {
+      result.reason = name + " must be finite";
+      return result;
+    }
+    const bool deadzone = name.find("deadzone") != std::string::npos;
+    const bool is_gain = name.find("control.p.") == 0U;
+    if ((deadzone && (value < 0.0 || value >= 1.0)) ||
+      (!deadzone && (value <= 0.0 || value > (is_gain ? 1000.0 : 10000.0))))
+    {
+      result.reason = name + " is outside its safe range";
+      return result;
+    }
+    seen.insert(name);
+  }
+
+  std::lock_guard<std::mutex> lock(parameter_mutex_);
+  for (const auto & parameter : parameters) {
+    if (seen.count(parameter.get_name()) == 0U) {
+      continue;
+    }
+    const auto & name = parameter.get_name();
+    if (name == "control.p.surge") kp_surge_ = parameter.as_double();
+    else if (name == "control.p.sway") kp_sway_ = parameter.as_double();
+    else if (name == "control.p.yaw") kp_yaw_ = parameter.as_double();
+    else if (name == "control.max_surge_wrench") max_surge_wrench_ = parameter.as_double();
+    else if (name == "control.max_sway_wrench") max_sway_wrench_ = parameter.as_double();
+    else if (name == "control.max_yaw_wrench") max_yaw_wrench_ = parameter.as_double();
+    else if (name == "input_scaling.max_linear_x") max_linear_x_ = parameter.as_double();
+    else if (name == "input_scaling.max_linear_y") max_linear_y_ = parameter.as_double();
+    else if (name == "input_scaling.max_angular_z") max_angular_z_ = parameter.as_double();
+    else if (name == "static_map.deadzone_pos") deadzone_pos_ = parameter.as_double();
+    else if (name == "static_map.deadzone_neg") deadzone_neg_ = parameter.as_double();
+    else if (name == "static_map.thrusters.forward_gain" ||
+      name == "static_map.thrusters.reverse_gain" || name == "static_map.thrusters.offset")
+    {
+      const auto values = parameter.as_double_array();
+      for (std::size_t i = 0; i < thrusters_.size(); ++i) {
+        if (name == "static_map.thrusters.forward_gain") thrusters_[i].forward_gain = values[i];
+        else if (name == "static_map.thrusters.reverse_gain") thrusters_[i].reverse_gain = values[i];
+        else thrusters_[i].offset = values[i];
+      }
+    }
+  }
+  result.successful = true;
+  return result;
 }
 
 void ThrusterDriverNode::loadThrusterConfigs()
@@ -493,3 +588,4 @@ std::string ThrusterDriverNode::toLower(std::string value)
 
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(njord::thruster_driver::ThrusterDriverNode)
+

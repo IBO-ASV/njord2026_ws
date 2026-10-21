@@ -27,6 +27,19 @@ def generate_launch_description():
     enable_ntrip_caster = LaunchConfiguration("enable_ntrip_caster")
     enable_foxglove_bridge = LaunchConfiguration("enable_foxglove_bridge")
     enable_livox_gui_telemetry = LaunchConfiguration("enable_livox_gui_telemetry")
+    runtime_parameters_file = LaunchConfiguration("runtime_parameters_file")
+
+    runtime_parameter_sync = Node(
+        package="robot",
+        executable="runtime_parameter_sync.py",
+        name="runtime_parameter_sync",
+        output="screen",
+        parameters=[{
+            "role": "groundpc",
+            "publish_updates": True,
+            "config_file": runtime_parameters_file,
+        }],
+    )
 
     livox_splat_mapper = Node(
         package="livox_gui_telemetry", executable="livox_splat_mapper", name="livox_splat_mapper", output="screen",
@@ -183,6 +196,14 @@ def generate_launch_description():
                 description="Expose vessel telemetry and waypoint markers to the Ground PC Foxglove GUI.",
             ),
             DeclareLaunchArgument("enable_livox_gui_telemetry", default_value="true", description="Integrate bounded Livox GUI clouds into an odom map."),
+            DeclareLaunchArgument(
+                "runtime_parameters_file",
+                default_value=PathJoinSubstitution(
+                    [FindPackageShare("robot"), "runtime_params", "runtime_parameters.yaml"]
+                ),
+                description="Editable YAML file watched for live ROS parameter updates to the vessel.",
+            ),
+            runtime_parameter_sync,
             livox_splat_mapper,
             DeclareLaunchArgument(
                 "enable_zenoh_bridge",
@@ -214,3 +235,4 @@ def generate_launch_description():
             networking_launch,
         ]
     )
+

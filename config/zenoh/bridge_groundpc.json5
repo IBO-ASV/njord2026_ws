@@ -23,6 +23,7 @@
 
       allow: {
         publishers: [
+          "/runtime_parameter_updates",
         ],
         subscribers: [
           "/odom", "/tf", "/tf_static", "/mission/status", "/task/plan",
