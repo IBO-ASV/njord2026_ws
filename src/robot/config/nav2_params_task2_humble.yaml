@@ -33,7 +33,7 @@ controller_server:
       use_velocity_scaled_lookahead_dist: true
       use_rotate_to_heading: false
       allow_reversing: false
-      max_angular_accel: 1.0
+      max_angular_accel: 0.2
       use_regulated_linear_velocity_scaling: true
       regulated_linear_scaling_min_radius: 1.0
       regulated_linear_scaling_min_speed: 0.1

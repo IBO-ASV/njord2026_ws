@@ -33,10 +33,10 @@ controller_server:
     # --- Pure Pursuit Controllerの設定 (ASVに最適) ---
     FollowPath:
       plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
-      desired_linear_vel: 1.0     # 目標速度 [m/s]
-      lookahead_dist: 1.5         # 参照点までの距離 [m]
-      min_lookahead_dist: 0.5
-      max_lookahead_dist: 3.0
+      desired_linear_vel: 5.0     # 目標速度 [m/s]
+      lookahead_dist: 10.0         # 参照点までの距離 [m]
+      min_lookahead_dist: 5.0
+      max_lookahead_dist: 15.0
       lookahead_time: 1.5
       # A surface vessel should curve toward the path while it is moving, not
       # stop and turn back at a waypoint solely to satisfy its final yaw.
@@ -49,13 +49,13 @@ controller_server:
       min_approach_linear_velocity: 0.05
       approach_velocity_scaling_dist: 1.0
       # 船のサイズに合わせて調整
-      max_angular_accel: 2.0
-      max_linear_accel: 2.0
+      max_angular_accel: 0.2
+      max_linear_accel: 4.0
 
     general_goal_checker:
       plugin: "robot::PassThroughGoalChecker"
-      xy_goal_tolerance: 0.5   # ゴール判定の誤差許容範囲 [m] (船なので広めに)
-      yaw_goal_tolerance: 0.5  # 向きの許容範囲 [rad]
+      xy_goal_tolerance: 4.5   # ゴール判定の誤差許容範囲 [m] (船なので広めに)
+      yaw_goal_tolerance: 0.78  # 向きの許容範囲 [rad]
       exit_margin_m: 0.05      # 一度半径に入り、外へ抜けたら次WPへ
 
 planner_server:

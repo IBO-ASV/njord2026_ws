@@ -632,17 +632,17 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "enable_zed2i_cpu",
-                default_value="false",
+                default_value="true",
                 description="Start the miniPC CPU-only ZED 2i stereo driver.",
             ),
             DeclareLaunchArgument(
                 "enable_zed2i_h264_ground_video",
-                default_value="false",
+                default_value="true",
                 description="Send the CPU ZED 2i left image to the ground station as RTP/H.264.",
             ),
             DeclareLaunchArgument(
                 "zed2i_h264_ground_video_host",
-                default_value="192.168.180.107",
+                default_value="10.42.0.1",
                 description="Ground-station IPv4 address for the CPU ZED 2i H.264 stream.",
             ),
             DeclareLaunchArgument("zed2i_h264_ground_video_port", default_value="5600"),
@@ -751,7 +751,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "thruster_use_velocity_feedback",
-                default_value="false",
+                default_value="true",
                 description="Use measured local odometry velocity in thruster control.",
             ),
             localization_launch,
