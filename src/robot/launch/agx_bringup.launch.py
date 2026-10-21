@@ -27,6 +27,11 @@ def generate_launch_description():
         'enable_zed2i': str(Path(camera).exists()).lower(),
         'enable_um982': str(Path(um982).exists()).lower(),
         'um982_port': um982,
+        # BMS master XIAO ESP32-C3 on this AGX.  Keep this explicit in the
+        # AGX profile rather than relying on the generic miniPC default.
+        'bms_serial_port': ('/dev/serial/by-id/'
+                            'usb-Espressif_USB_JTAG_serial_debug_unit_'
+                            'E0:72:A1:1D:4B:14-if00'),
         'enable_thruster': 'false',  # hardware outputs require explicit opt in
         'enable_bms': 'false', 'enable_alert_lamp': 'false',
         'enable_back_cam': 'false', 'enable_nav2': 'false',
@@ -36,7 +41,7 @@ def generate_launch_description():
         'enable_gpu_perception': PythonExpression(["'true' if '",cfg('task'),"' == 'task1' else 'false'"]),
     }
     core_args = {key: cfg(key) for key in (
-        'enable_um982', 'um982_port', 'enable_thruster', 'enable_bms',
+        'enable_um982', 'um982_port', 'bms_serial_port', 'enable_thruster', 'enable_bms',
         'enable_alert_lamp', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
     core_args.update({'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
                       'enable_back_cam_ground_video': 'false',
