@@ -41,7 +41,7 @@ task3-2.launch.py も同様に enable_legacy_graph:=true を指定した場合�
 グラフを起動する。
 
 AGX と Ground Jetson の組み合わせでは、`run_agx_pair.sh` の既定通信方式は
-Fast DDS によるROS 2直接通信である。両機で同じdomain IDを使い、Fast DDSのpeer
+Fast DDS によるROS 2直接通信である。両機でdomain ID 126を使い、Fast DDSのpeer
 discoveryをTailscale interfaceに限定する。起動引数でTailscale IPを上書きできる。
 
 ```bash

@@ -69,7 +69,9 @@ def generate_launch_description():
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", PythonExpression([
             "'SUBNET' if '", backend, "' == 'fastrtps' else 'LOCALHOST'"
         ])),
-        SetEnvironmentVariable('ROS_DOMAIN_ID', '5'),
+        SetEnvironmentVariable('ROS_DOMAIN_ID', PythonExpression([
+            "'126' if '", backend, "' == 'fastrtps' else '5'"
+        ])),
         runtime_parameter_sync,
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
         include('robot', 'minipc_bringup.launch.py', core_args),

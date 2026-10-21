@@ -1,7 +1,7 @@
 # AGX vessel + ground Jetson startup
 
 Current pair bringup defaults to direct ROS 2 communication with `rmw_fastrtps_cpp`:
-both sides use domain 5 and Fast DDS peer discovery over their Tailscale addresses.
+both sides use domain 126 and Fast DDS peer discovery over their Tailscale addresses.
 To use the previous Cyclone DDS + Zenoh bridge setup, pass
 `communication_backend:=zenoh` to the launcher on both machines. Do not mix the
 two settings across the pair.

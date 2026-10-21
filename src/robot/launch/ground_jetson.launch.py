@@ -30,7 +30,7 @@ def generate_launch_description():
             "'SUBNET' if '", backend, "' == 'fastrtps' else 'LOCALHOST'"
         ])),
         SetEnvironmentVariable('ROS_DOMAIN_ID', PythonExpression([
-            "'5' if '", backend, "' == 'fastrtps' else '6'"
+            "'126' if '", backend, "' == 'fastrtps' else '6'"
         ])),
         DeclareLaunchArgument('enable_critical_link',default_value='true'),
         GroupAction(scoped=True,actions=[IncludeLaunchDescription(

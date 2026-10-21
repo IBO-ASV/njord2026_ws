@@ -31,7 +31,7 @@ case "${backend}" in
   fastrtps)
     export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
     export FASTRTPS_DEFAULT_PROFILES_FILE="${workspace}/src/robot/config/dds/fastdds_agx_pair.xml"
-    export ROS_DOMAIN_ID=5
+    export ROS_DOMAIN_ID=126
     export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
     export NJORD_FASTDDS_LOCAL_IP="${local_ip}"
     export NJORD_FASTDDS_PEER_IP="${peer_ip}"
