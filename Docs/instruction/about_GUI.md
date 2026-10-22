@@ -12,10 +12,10 @@
 `njord-task` CLIから行う。例:
 
 ```bash
-njord-task check task1
-njord-task start task1 --auto
-njord-task status
-njord-task stop
+ros2 run mission_manager njord-task check task1
+ros2 run mission_manager njord-task start task1 --auto
+ros2 run mission_manager njord-task status
+ros2 run mission_manager njord-task stop
 ```
 
 起動直後はMANUAL / IDLEで、自動目標は送信されない。

@@ -25,9 +25,9 @@ ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
 ./scripts/run_agx_pair.sh vessel
 ./scripts/run_agx_pair.sh ground
 
-# miniPC: task selection uses the persistent Mission Manager
-njord-task check task1
-njord-task start task1 --auto
+# Ground PC: task selection uses the persistent Mission Manager
+ros2 run mission_manager njord-task check task1
+ros2 run mission_manager njord-task start task1 --auto
 ```
 
 minipc_bringup.launch.py / jetson_bringup.launch.py は各端末で一度だけ起動する。

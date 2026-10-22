@@ -25,10 +25,11 @@ between the Tailscale addresses, and raw camera/depth/LiDAR clouds remain local.
 Ground Foxglove listens on TCP 8765; front JPEG-RTP uses UDP 5600.
 
 The AGX launch combines the CPU vessel/control graph and SDK-backed ZED driver.
-Thruster output, alert lamp output, BMS, back camera, Nav2, and MID360 are OFF
-by default. UM982 and ZED are enabled only if their known by-id paths exist.
-No mission is automatically started. These are startup-check defaults, not
-an assertion that the vessel is ready to navigate.
+The configured LiDAR is enabled by default (`enable_lidar:=true`,
+`lidar_model:=mid360s`). Back camera and Nav2 are OFF by default. UM982 and ZED
+are enabled only if their known by-id paths exist. No mission is automatically
+started. These are startup-check defaults, not an assertion that the vessel is
+ready to navigate.
 
 ## Installed dependencies and build
 
@@ -85,9 +86,10 @@ No UM982 by-id device, BMS, SBUS, or back camera was confirmed. The CP2102
 serial device was present, but motor actuation was not tested. Autonomous
 navigation and vehicle motion were not tested. No boot-time service was enabled.
 
-For a connected MID360, first establish its dedicated network/IP and build the
-Livox driver without overwriting existing submodule changes; then explicitly
-start `./scripts/run_agx_pair.sh vessel enable_mid360:=true`.
+MID360S data startup is still unverified. Confirm its dedicated network/IP and
+Livox driver before relying on the enabled-by-default sensor stream; use
+`./scripts/run_agx_pair.sh vessel enable_lidar:=false` to disable it when
+disconnected.
 
 ## Fixes
 

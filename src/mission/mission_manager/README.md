@@ -11,14 +11,15 @@ ros2 launch mission_manager mission.launch.py active_nav2_profile:=task1
 `njord-task` は `/mission/run_task`、`/mission/start_task`、`/mission/stop_task` を呼ぶ CLI です。
 
 ```bash
-njord-task list
-njord-task check task1_skip_1_1
-njord-task start task1_skip_1_1 --auto
-njord-task status
-njord-task stop
+ros2 run mission_manager njord-task list
+ros2 run mission_manager njord-task check task1_skip_1_1
+ros2 run mission_manager njord-task start task1_skip_1_1 --auto
+ros2 run mission_manager njord-task status
+ros2 run mission_manager njord-task stop
 ```
 
 `check` は経路と Nav2 プロファイルを検証する dry-run です。`start --auto` は `/control/set_mode` に AUTO を要求しますが、実際の開始は `control_manager` が `/control/state` で許可するまで待ちます。
+`njord-task`は`mission_manager`パッケージのconsole scriptです。単体コマンドとしてPATHに登録されていない環境では、上記のように`ros2 run mission_manager njord-task ...`で実行します。
 
 ## 主な入出力
 

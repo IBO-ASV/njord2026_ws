@@ -22,7 +22,7 @@ def generate_launch_description():
     defaults = {
         'task': 'task1', 'enable_glim': 'true', 'enable_task_perception': 'true',
         'use_sim_time': 'false', 'glim_acc_scale': '1.0',
-        'enable_mid360': 'false',  # opt in after checking the sensor network
+        'enable_lidar': 'true',  # uses the configured Livox model (MID360S by default)
         'lidar_model': 'mid360s',
         'enable_zed2i': str(Path(camera).exists()).lower(),
         'enable_um982': str(Path(um982).exists()).lower(),
@@ -58,7 +58,7 @@ def generate_launch_description():
         Node(package='robot', executable='agx_rosbag_record_manager', name='agx_rosbag_record_manager', output='screen'),
         include('robot','onboard_localization.launch.py',{'use_sim_time':cfg('use_sim_time'),'glim_acc_scale':cfg('glim_acc_scale'),'enable_gnss_map':cfg('enable_um982')},IfCondition(cfg('enable_glim'))),
         include('robot','onboard_perception.launch.py',{'task':cfg('task'),'use_sim_time':cfg('use_sim_time'),'start_planner':cfg('enable_nav2')},IfCondition(cfg('enable_task_perception'))),
-        include('robot', 'lidar.launch.py', {'lidar_model': cfg('lidar_model'), 'enable_glim': 'false'}, IfCondition(cfg('enable_mid360'))),
+        include('robot', 'lidar.launch.py', {'lidar_model': cfg('lidar_model'), 'enable_glim': 'false'}, IfCondition(cfg('enable_lidar'))),
         include('zed2i_driver', 'zed2i.launch.py', {
             'mode': 'sdk', 'enable_gpu_perception': cfg('enable_gpu_perception'),
             'params_file':PathJoinSubstitution([FindPackageShare('robot'),'config','zed2i_agx.yaml']),
@@ -69,7 +69,7 @@ def generate_launch_description():
         }, IfCondition(cfg('enable_zed2i'))),
         include('robot', 'heartbeat.launch.py', {'role':'jetson'}),
         Node(package='livox_gui_telemetry', executable='livox_gui_downsampler',
-             name='livox_gui_downsampler', output='screen', condition=IfCondition(cfg('enable_mid360'))),
+             name='livox_gui_downsampler', output='screen', condition=IfCondition(cfg('enable_lidar'))),
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),
              parameters=[{'udp_paths':[
