@@ -183,6 +183,13 @@ def test_task2_uses_fixed_odom_with_global_map_transform_available():
     assert 'name="task2_safety_points"' not in jetson_task2
 
 
+def test_odom_route_projector_can_initialize_without_gnss_heading():
+    source = _read_launch_source("onboard_localization.launch.py")
+
+    assert "route_projection={**common,'use_odometry_yaw':True}" in source
+    assert "name='navsat_routes_odom',parameters=[route_projection]" in source
+
+
 def test_minipc_bringup_adds_sbus_without_replacing_the_ground_link_joy_path():
     source = _read_launch_source("minipc_bringup.launch.py")
 
