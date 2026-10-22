@@ -64,7 +64,7 @@ planner_server:
     use_sim_time: false
     planner_plugins: ["GridBased"]
     GridBased:
-      plugin: "nav2_navfn_planner/NavfnPlanner" # 最もシンプルなA*プランナー
+      plugin: "nav2_navfn_planner::NavfnPlanner" # 最もシンプルなA*プランナー
       tolerance: 1.0
       use_astar: false
       allow_unknown: true
