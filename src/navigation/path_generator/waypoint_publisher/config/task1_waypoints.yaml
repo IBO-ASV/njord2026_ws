@@ -1,23 +1,15 @@
-# Task 1 surveyed route from "GPS points for tasks.xlsx", sheet
-# "Tuesday Maneuvering and path fi". Excel stores the intermediate point
-# labels as date serial numbers; they correspond to 1.1--1.4 and 3.1--3.3.
-# The surveyed point formerly labelled 3.4 is the Task 1 GPS 4 route goal.
+# Task 1 route using the four user-provided WGS84 points.
+# Yaw uses ROS ENU convention (radians, counter-clockwise from east), oriented
+# along the next route segment.  The final waypoint keeps the incoming heading.
 
 task1_config:
   frame_id: "odom"
   publish_rate_hz: 2.0
   waypoints: &task1_waypoints
-    - {id: 1, competition_id: "1", latitude: 63.4408000000, longitude: 10.4233194444, yaw: -2.7271, type: "start", name: "GPS 1", tolerance_m: 2.0}
-    - {id: 2, competition_id: "1.1", latitude: 63.4407666667, longitude: 10.4231500000, yaw: -1.2306, type: "waypoint", name: "GPS 1.1", tolerance_m: 2.0}
-    - {id: 3, competition_id: "1.2", latitude: 63.4407000000, longitude: 10.4232027778, yaw: -1.4718, type: "waypoint", name: "GPS 1.2", tolerance_m: 2.0}
-    - {id: 4, competition_id: "1.3", latitude: 63.4406250000, longitude: 10.4232194444, yaw: 3.1024, type: "waypoint", name: "GPS 1.3", tolerance_m: 2.0}
-    - {id: 5, competition_id: "1.4", latitude: 63.4406305556, longitude: 10.4229027778, yaw: -2.1021, type: "waypoint", name: "GPS 1.4", tolerance_m: 2.0}
-    - {id: 6, competition_id: "2", latitude: 63.4405333333, longitude: 10.4227750000, yaw: -0.3880, type: "transit", name: "GPS 2", tolerance_m: 2.0}
-    - {id: 7, competition_id: "3", latitude: 63.4404140000, longitude: 10.4234280000, yaw: 1.9055, type: "start", name: "GPS 3", tolerance_m: 2.0}
-    - {id: 8, competition_id: "3.1", latitude: 63.4405750000, longitude: 10.4233027778, yaw: -0.3237, type: "turn", name: "GPS 3.1", tolerance_m: 2.0}
-    - {id: 9, competition_id: "3.2", latitude: 63.4405416667, longitude: 10.4235250000, yaw: 0.9737, type: "turn", name: "GPS 3.2", tolerance_m: 2.0}
-    - {id: 10, competition_id: "3.3", latitude: 63.4406390000, longitude: 10.4236730000, yaw: 1.2092, type: "turn", name: "GPS 3.3", tolerance_m: 2.0}
-    - {id: 11, competition_id: "4", latitude: 63.4407694444, longitude: 10.4237833333, yaw: 1.2092, type: "goal", name: "GPS 4", tolerance_m: 2.0}
+    - {id: 1, competition_id: "1", latitude: 34.5456787, longitude: 135.5070830, yaw: 0.15663477, type: "start", name: "WP1", tolerance_m: 2.0}
+    - {id: 2, competition_id: "2", latitude: 34.5456883, longitude: 135.5071568, yaw: 1.25724773, type: "waypoint", name: "WP2", tolerance_m: 2.0}
+    - {id: 3, competition_id: "3", latitude: 34.5457419, longitude: 135.5071779, yaw: 0.23405336, type: "waypoint", name: "WP3", tolerance_m: 2.0}
+    - {id: 4, competition_id: "4", latitude: 34.5457571, longitude: 135.5072553, yaw: 0.23405336, type: "goal", name: "WP4", tolerance_m: 2.0}
   constraints:
     follow_test: false
     route_pattern: "surveyed_maneuvering_and_path_finding"
@@ -32,3 +24,4 @@ task1_follow_config:
   waypoints: *task1_waypoints
   constraints:
     follow_test: true
+
