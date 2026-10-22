@@ -99,8 +99,7 @@ def generate_launch_description():
         name="joy_node",
         output="screen",
         emulate_tty=True,
-        # The canonical /joy is vessel-owned.  Feeding it here would let the
-        # Zenoh bridge bypass critical_link and contend with the receiver.
+        # The canonical /joy is vessel-owned; critical_link_receiver publishes it.
         remappings=[("/joy", "/critical_link/input/joy")],
     )
 
@@ -109,8 +108,7 @@ def generate_launch_description():
         executable="ground_station_heartbeat_node",
         name="ground_station_heartbeat",
         output="screen",
-        # As with joystick input, only critical_link_receiver may publish the
-        # canonical vessel heartbeat.
+        # Only critical_link_receiver publishes the canonical vessel heartbeat.
         parameters=[
             {"topic": "/critical_link/input/heartbeat", "period_sec": 1.0}
         ],
@@ -181,8 +179,8 @@ def generate_launch_description():
                     FindPackageShare("robot"), "config", "cyclonedds_agx.xml"
                 ]),
             ),
-            SetEnvironmentVariable("ROS_DOMAIN_ID", "6"),
-            SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
+            SetEnvironmentVariable("ROS_DOMAIN_ID", "126"),
+            SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
             # The two receivers ingest different RTP streams and must keep
             # separate UDP ports and ROS topics.
             DeclareLaunchArgument("front_video_port", default_value="5600"),
@@ -214,8 +212,8 @@ def generate_launch_description():
             runtime_parameter_sync,
             DeclareLaunchArgument(
                 "enable_zenoh_bridge",
-                default_value="true",
-                description="Start the Ground PC zenoh-bridge-ros2dds process.",
+                default_value="false",
+                description="Start the optional Ground PC zenoh-bridge-ros2dds process.",
             ),
             DeclareLaunchArgument(
                 "enable_critical_link",

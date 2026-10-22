@@ -1,7 +1,7 @@
 """AGX vessel bringup for one onboard PC and a separate ground Jetson."""
 from pathlib import Path
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
@@ -51,8 +51,8 @@ def generate_launch_description():
     return LaunchDescription([
         SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
         SetEnvironmentVariable("CYCLONEDDS_URI", PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"])),
-        SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "LOCALHOST"),
-        SetEnvironmentVariable('ROS_DOMAIN_ID', '5'),
+        SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
+        SetEnvironmentVariable('ROS_DOMAIN_ID', '126'),
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
         include('robot', 'minipc_bringup.launch.py', core_args),
         Node(package='robot', executable='agx_rosbag_record_manager', name='agx_rosbag_record_manager', output='screen'),
@@ -70,8 +70,6 @@ def generate_launch_description():
         include('robot', 'heartbeat.launch.py', {'role':'jetson'}),
         Node(package='livox_gui_telemetry', executable='livox_gui_downsampler',
              name='livox_gui_downsampler', output='screen', condition=IfCondition(cfg('enable_mid360'))),
-        ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID','zenoh-bridge-ros2dds','-c',
-            PathJoinSubstitution([FindPackageShare('robot'),'config','zenoh','bridge_agx.json5'])],output='screen'),
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),
              parameters=[{'udp_paths':[
