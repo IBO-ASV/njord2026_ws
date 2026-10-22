@@ -45,7 +45,7 @@ def generate_launch_description():
     core_args.update({'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
                       'enable_back_cam_ground_video': 'false',
                       'enable_back_cam_jpeg_ground_video': 'false',
-                      'enable_autonomy_supervisor': 'false', 'active_nav2_profile': cfg('task'),
+                      'enable_autonomy_supervisor': 'true', 'active_nav2_profile': cfg('task'),
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
     return LaunchDescription([

@@ -7,18 +7,13 @@ own diagnostics.
 
 `HeartbeatAggregator` converts real topic freshness into a heartbeat. It emits
 `std_msgs/msg/Empty` only while every configured input has a publisher and a
-fresh message. Its output can feed another aggregator, forming the vessel tree:
+fresh message. The component remains available for aggregates that provide
+distinct downstream value; the active miniPC health inventory monitors GNSS,
+Micon, localization, and link signals individually and does not publish the
+redundant `/heartbeat/driver` aggregate.
 
-```text
-/heartbeat/driver/camera/front + back -> /heartbeat/driver/camera
-camera + lidar + gnss + micon         -> /heartbeat/driver
-local + global odometry               -> /heartbeat/localization
-```
-
-The Jetson owns the front-camera and LiDAR leaves. The miniPC owns the rear
-camera, GNSS, Micon, localization leaves, and aggregate heartbeats. Therefore a
-process that is alive but no longer receiving hardware data cannot keep its
-branch healthy by publishing an unconditional timer heartbeat.
+The component does not publish unconditional timer heartbeats: every aggregate
+must be configured with the source topics whose freshness it represents.
 
 ## TopicHeartbeatMonitor
 
