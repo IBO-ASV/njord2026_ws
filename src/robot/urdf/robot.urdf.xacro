@@ -13,12 +13,12 @@
   <xacro:property name="imu_y" value="0.0" />
   <xacro:property name="imu_z" value="0.2" />
 
-  <xacro:property name="gnss1_x" value="-0.5" />
-  <xacro:property name="gnss1_y" value="0.4" />
+  <xacro:property name="gnss1_x" value="0.3" />
+  <xacro:property name="gnss1_y" value="0.2" />
   <xacro:property name="gnss1_z" value="1.0" />
 
-  <xacro:property name="gnss2_x" value="0.5" />
-  <xacro:property name="gnss2_y" value="-0.4" />
+  <xacro:property name="gnss2_x" value="-0.3" />
+  <xacro:property name="gnss2_y" value="0.0" />
   <xacro:property name="gnss2_z" value="1.0" />
 
   <xacro:property name="thruster_front_x" value="0.1803" />
