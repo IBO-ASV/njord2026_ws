@@ -35,7 +35,7 @@ def generate_launch_description():
         'enable_sbus': 'false',  # no SBUS XIAO is attached to this AGX
         'enable_back_cam': 'false', 'enable_nav2': 'false',
         'enable_critical_link': 'true',
-        'ground_video_host': '100.115.34.103',
+        'ground_video_host': '192.168.1.72',
         'camera_resolution':'VGA', 'camera_fps':'15',
         'enable_gpu_perception': PythonExpression(["'true' if '",cfg('task'),"' == 'task1' else 'false'"]),
     }
@@ -73,8 +73,7 @@ def generate_launch_description():
         Node(package='critical_link', executable='critical_link_receiver', name='critical_link_receiver',
              output='screen', condition=IfCondition(cfg('enable_critical_link')),
              parameters=[{'udp_paths':[
-                          'ops_lan|10.42.0.196|45100',
-                          'tailscale|100.73.137.72|45101'],
+                          'sensor_lan|192.168.1.5|45100'],
                           'serial_device':'', 'key_file':'/etc/njord/critical_link.key',
                           'max_frame_age_ms':2000, 'future_tolerance_ms':1000}]),
     ])

@@ -800,7 +800,7 @@ def test_critical_link_topics_are_excluded_from_all_zenoh_bridges():
             assert topic not in allow_lists
 
 
-def test_verified_wired_link_is_used_for_zenoh_and_critical_link():
+def test_zenoh_defaults_and_agx_critical_link_use_their_configured_networks():
     root = Path(_THIS_DIR).parents[2]
     ground_bridge = (root / "config" / "zenoh" / "bridge_groundpc.json5").read_text(
         encoding="utf-8"
@@ -813,10 +813,13 @@ def test_verified_wired_link_is_used_for_zenoh_and_critical_link():
 
     ground = (root / "src" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
-    assert '"ops_lan|10.42.0.1|10.42.0.2|45100"' in ground
-    assert '"tailscale|100.115.34.103|100.73.137.72|45101"' in ground
+    assert '"sensor_lan|192.168.1.72|192.168.1.5|45100"' in ground
     assert '"ops_lan|10.42.0.2|45100"' in vessel
     assert '"tailscale|100.82.157.125|45101"' in vessel
+
+    agx = (root / "src" / "robot" / "launch" / "agx_bringup.launch.py").read_text()
+    assert "'sensor_lan|192.168.1.5|45100'" in agx
+    assert "'ground_video_host': '192.168.1.72'" in agx
 
 
 def test_ground_zenoh_bridge_can_request_mission_manager_tasks():
