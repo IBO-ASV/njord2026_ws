@@ -14,4 +14,8 @@ install(DIRECTORY
   DESTINATION share/${PROJECT_NAME}
 )
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/../../config/zenoh
+  DESTINATION share/${PROJECT_NAME}/config
+)
+
 ament_package()

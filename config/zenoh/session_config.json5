@@ -1,0 +1,49 @@
+// session_config.json5
+//
+// rmw_zenoh session config for the Jetson / miniPC split (NJORD_RMW=zenoh,
+// opt-in only; fastrtps is the default -- see config/dds/fastdds_profile.xml).
+//
+// !! IMPORTANT - READ BEFORE USING !!
+// rmw_zenoh is mainline (binary-installable) from ROS 2 Jazzy onward; on
+// Humble (this miniPC) it currently requires building rmw_zenoh_cpp and its
+// zenoh-c/zenoh-pico dependencies from source. In addition, the two
+// machines MUST run matching rmw_zenoh_cpp revisions and a compatible
+// zenoh wire protocol version, or they will simply fail to discover each
+// other with no obvious error. Validate the whole bringup with FastRTPS
+// (the default) first, and only attempt a Zenoh switchover as a deliberate,
+// isolated experiment before it is ever relied on for a real run.
+//
+// Usage: every ROS 2 node process on both the Jetson and the miniPC uses
+// this file as its rmw_zenoh session config (via ZENOH_SESSION_CONFIG_URI,
+// exported automatically by scripts/njord_env.sh when NJORD_RMW=zenoh).
+// It connects out to the single router started with router_config.json5
+// (see that file for the "run exactly one router, on the miniPC" note).
+//
+// This is a minimal diff on top of rmw_zenoh_cpp's default session config
+// (DEFAULT_CONFIG.json5) -- only the keys below are overridden; everything
+// else keeps the upstream default.
+{
+  // "client" mode: connect out to a router rather than acting as a peer
+  // that relies on multicast scouting to find other nodes.
+  mode: "client",
+
+  // Explicit unicast connect endpoint(s) for the router started via
+  // router_config.json5. Do not hardcode a real IP address in version
+  // control -- replace the placeholder host with the miniPC's actual
+  // wired-NIC address (or a resolvable hostname) at deploy time, on both
+  // the Jetson and the miniPC.
+  connect: {
+    endpoints: [
+      "tcp/REPLACE_WITH_MINIPC_WIRED_NIC_ADDRESS:7447",
+    ],
+  },
+
+  // Disable scouting/multicast discovery: this session only ever talks to
+  // the router configured above, so it doesn't depend on multicast being
+  // routable over the wired link between the two machines.
+  scouting: {
+    multicast: {
+      enabled: false,
+    },
+  },
+}

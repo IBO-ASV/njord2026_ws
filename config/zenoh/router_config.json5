@@ -1,0 +1,54 @@
+// router_config.json5
+//
+// rmw_zenoh router config for the Jetson / miniPC split (NJORD_RMW=zenoh,
+// opt-in only; fastrtps is the default -- see config/dds/fastdds_profile.xml).
+//
+// !! IMPORTANT - READ BEFORE USING !!
+// rmw_zenoh is mainline (binary-installable) from ROS 2 Jazzy onward; on
+// Humble (this miniPC) it currently requires building rmw_zenoh_cpp and its
+// zenoh-c/zenoh-pico dependencies from source. In addition, the two
+// machines MUST run matching rmw_zenoh_cpp revisions and a compatible
+// zenoh wire protocol version, or they will simply fail to discover each
+// other with no obvious error. Validate the whole bringup with FastRTPS
+// (the default) first, and only attempt a Zenoh switchover as a deliberate,
+// isolated experiment before it is ever relied on for a real run.
+//
+// Usage: run exactly ONE router for the whole 2-machine system, on the
+// miniPC:
+//   ros2 run rmw_zenoh_cpp rmw_zenohd
+// with ZENOH_ROUTER_CONFIG_URI pointing at this file (done automatically by
+// scripts/njord_env.sh when NJORD_RMW=zenoh). Both Jetson and miniPC nodes
+// then run as sessions (see session_config.json5) that connect to it.
+//
+// This is a minimal diff on top of rmw_zenoh_cpp's default router config
+// (DEFAULT_CONFIG.json5) -- only the keys below are overridden; everything
+// else keeps the upstream default.
+{
+  // "router" mode: this process is the one-and-only broker that client
+  // sessions on both machines connect to. Do not run more than one.
+  mode: "router",
+
+  // Open a TCP listener so client sessions on the Jetson (over the wired
+  // Ethernet link) can reach this router by address:port instead of
+  // relying on multicast/scouting, which is not assumed to work reliably
+  // across the two machines. 7447 is zenoh's conventional default port.
+  //
+  // "0.0.0.0" listens on all local interfaces; restrict this to the wired
+  // NIC's address if the miniPC has multiple NICs and traffic should be
+  // confined to the wired link (do not hardcode a real IP in version
+  // control -- edit this locally at deploy time if you narrow it down).
+  listen: {
+    endpoints: [
+      "tcp/0.0.0.0:7447",
+    ],
+  },
+
+  // Disable scouting/multicast discovery: sessions connect explicitly via
+  // session_config.json5's "connect.endpoints" instead, so the two
+  // machines don't depend on multicast being routable over the wired link.
+  scouting: {
+    multicast: {
+      enabled: false,
+    },
+  },
+}

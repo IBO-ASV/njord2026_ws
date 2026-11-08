@@ -1,0 +1,74 @@
+{
+  // zenoh-bridge-ros2dds : Ground PC (Jazzy / ROS_DOMAIN_ID=6) 側
+  //   操縦入力とGround heartbeatはcritical_link専用であり、このbridgeでは
+  //   一切転送しない。表示に必要な軽量telemetryだけを受け取る。映像は
+  //   従来どおりRTP/UDP専用経路を使う。
+  mode: "peer",
+
+  // Ground PC と miniPC は 10.42.0.0/24 の直結リンクで接続する。
+  // mDNS の解決待ち／誤解決により bridge 接続が遅延することを避ける。
+  // スマートフォンInternet経路を使う場合も7447をInternetへ直接公開せず、
+  // WireGuard等のVPN内アドレスをendpointにする。
+  connect: {
+    endpoints: ["tcp/10.42.0.196:7447", "tcp/100.73.137.72:7447"],
+  },
+
+  scouting: {
+    multicast: { enabled: false },
+  },
+
+  plugins: {
+    ros2dds: {
+      domain: 6,
+
+      allow: {
+        publishers: [
+          "/runtime_parameter_updates",
+        ],
+        subscribers: [
+          "/odom", "/tf", "/tf_static", "/mission/status", "/task/plan",
+          "/odometry/filtered/global", "/odometry/filtered/local", "/livox/imu",
+          "/task1/safety_points", "/task1/safety_points_visual", "/task2/safety_points",
+          "/docking/berth1_nominal", "/docking/berth2_nominal",
+          "/docking/berth1_corrected", "/docking/berth2_corrected",
+          "/autonomy/ready", "/heartbeat/autonomy", "/task2/buoy_pose_correction",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/other_ship/twist",
+          "/task2/opponent_detected",
+          "/task2/selected_opponent_marker", "/task2/selected_opponent_velocity_marker",
+          "/task2/points_filtered_visual", "/task2/self_vessel_marker",
+          "/tracked_objects/markers", "/mppi/crm_costmap",
+          "/planned_path_pruned", "/actual_path_marker",
+          "/local_costmap/costmap",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/zed2i/left/preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/joy/set_feedback", "/foxglove_log", "/mission/waypoint_markers", "/cmd_vel_markers",
+          "/joy/set_feedback", "/foxglove_log", "/mission/waypoint_markers",
+          "/planned_path_pruned",
+          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/compass/raw",
+          "/gui/ground_speed_mps",
+          "/gui/battery_percent",
+          "/gui/livox/points", "/agx/rosbag/recording_status",
+        ],
+        // The ground operator is a client of the miniPC-owned Mission Manager.
+        // Task selection is carried in StartTask/RunTask requests, so no
+        // task-specific Zenoh topic is needed for task3_1 or task3_2.
+        service_servers: [],
+        service_clients: [
+          "/mission/list_tasks",
+          "/mission/get_status",
+          "/mission/start_task",
+          "/mission/stop_task",
+          "/control/set_mode",
+          "/agx/rosbag/set_recording",
+        ],
+        action_servers: [],
+        action_clients: ["/mission/run_task"],
+      },
+    },
+  },
+}
