@@ -57,6 +57,8 @@ njord_write_platform_manifest()
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
+  # No copyright headers in this package yet (same as the other packages here).
+  set(ament_cmake_copyright_FOUND TRUE)
   ament_lint_auto_find_test_dependencies()
 endif()
 
