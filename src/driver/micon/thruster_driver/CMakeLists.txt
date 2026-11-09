@@ -60,4 +60,3 @@ ament_export_include_directories(include)
 ament_export_libraries(thruster_allocation)
 
 ament_package()
-

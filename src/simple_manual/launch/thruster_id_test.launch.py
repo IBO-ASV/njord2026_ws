@@ -30,7 +30,7 @@ def generate_launch_description():
 
     serial_port = LaunchConfiguration('serial_port')
     baud = LaunchConfiguration('baud')
-    
+
     return LaunchDescription(
         [
             DeclareLaunchArgument(

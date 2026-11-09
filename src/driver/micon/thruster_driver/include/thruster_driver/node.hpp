@@ -140,4 +140,3 @@ private:
 }  // namespace njord
 
 #endif  // THRUSTER_DRIVER_NODE_HPP_
-

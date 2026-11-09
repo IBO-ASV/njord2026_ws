@@ -23,7 +23,7 @@ class YOLOv10DetectionPredictor(DetectionPredictor):
         mask = preds[..., 4] > self.args.conf
         if self.args.classes is not None:
             mask = mask & (preds[..., 5:6] == torch.tensor(self.args.classes, device=preds.device).unsqueeze(0)).any(2)
-        
+
         preds = [p[mask[idx]] for idx, p in enumerate(preds)]
 
         if not isinstance(orig_imgs, list):  # input images are a torch.Tensor, not a list

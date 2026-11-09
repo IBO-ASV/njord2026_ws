@@ -9,7 +9,7 @@ from .card import card_template_text
 
 class YOLOv10(Model, PyTorchModelHubMixin, model_card_template=card_template_text):
 
-    def __init__(self, model="yolov10n.pt", task=None, verbose=False, 
+    def __init__(self, model="yolov10n.pt", task=None, verbose=False,
                  names=None):
         super().__init__(model=model, task=task, verbose=verbose)
         if names is not None:

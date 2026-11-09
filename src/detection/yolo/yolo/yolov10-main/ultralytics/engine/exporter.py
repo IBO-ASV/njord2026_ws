@@ -396,7 +396,7 @@ class Exporter:
 
                 LOGGER.info(f"{prefix} simplifying with onnxslim {onnxslim.__version__}...")
                 model_onnx = onnxslim.slim(model_onnx)
-                
+
                 # ONNX Simplifier (deprecated as must be compiled with 'cmake' in aarch64 and Conda CI environments)
                 # import onnxsim
                 # model_onnx, check = onnxsim.simplify(model_onnx)

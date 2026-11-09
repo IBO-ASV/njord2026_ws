@@ -79,7 +79,7 @@ class YoloDetectorNode(Node):
         self.declare_parameter('roi_range_half', 2.0)
         self.declare_parameter('camera_fov_deg', 90.0)
         self.declare_parameter('roi_theta_min_deg', 2.0)
-        
+
         # 4. パラメータ取得
         model_path = self.get_parameter('model_path').get_parameter_value().string_value
         if not model_path:
@@ -121,16 +121,16 @@ class YoloDetectorNode(Node):
         except Exception as e:
             self.get_logger().error(f'Failed to load model from {model_path}: {e}')
             # フォールバック (必要なら)
-            # self.model = YOLO("yolov8n.pt") 
+            # self.model = YOLO("yolov8n.pt")
             raise e # 起動失敗させる
 
         # ROS通信設定
         self.sub_img = self.create_subscription(
             Image, cam_topic, self.image_callback, self.subscription_queue_size)
-        
+
         # デバッグ用画像出力
         self.pub_debug_img = self.create_publisher(Image, 'yolo/debug_image', 10)
-        
+
         # Step 3: Nav2のCostmapに反映させるための仮想障害物（点群）
         self.pub_virtual_wall = self.create_publisher(PointCloud2, '/virtual_obstacles', 10)
 
@@ -211,7 +211,7 @@ class YoloDetectorNode(Node):
         # 検出 bbox は後で元画像座標へ戻して /yolo/detections に publish する。
         results = self.model.predict(roi_image, verbose=False)
         result = results[0]
-        
+
         virtual_obstacles = [] # 生成する点のリスト [[x, y, z], ...]
         best_roi = None
         best_conf = 0.0
@@ -232,7 +232,7 @@ class YoloDetectorNode(Node):
             if self.publish_detections:
                 detection_array.detections.append(
                     self.create_detection_msg(msg.header, xyxy, label, conf, color_name))
-            
+
             # 中心座標
             cx = int((xyxy[0] + xyxy[2]) / 2)
             cy = int((xyxy[1] + xyxy[3]) / 2)
@@ -465,7 +465,7 @@ class YoloDetectorNode(Node):
                 px = bx
                 py = by - (i * 0.5) # 右(yマイナス)へ伸ばす
                 points.append([px, py, 0.0])
-        
+
         # ... 他の緑ブイ、南標識なども同様に追加
 
         return points
@@ -480,7 +480,7 @@ class YoloDetectorNode(Node):
 
         msg.height = 1
         msg.width = len(points)
-        
+
         msg.fields = [
             PointField(name='x', offset=0, datatype=PointField.FLOAT32, count=1),
             PointField(name='y', offset=4, datatype=PointField.FLOAT32, count=1),
@@ -494,7 +494,7 @@ class YoloDetectorNode(Node):
         buffer = []
         for p in points:
             buffer.append(struct.pack('fff', p[0], p[1], p[2]))
-        
+
         msg.data = b''.join(buffer)
         return msg
 

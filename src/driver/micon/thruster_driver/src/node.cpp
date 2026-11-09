@@ -588,4 +588,3 @@ std::string ThrusterDriverNode::toLower(std::string value)
 
 #include "rclcpp_components/register_node_macro.hpp"
 RCLCPP_COMPONENTS_REGISTER_NODE(njord::thruster_driver::ThrusterDriverNode)
-

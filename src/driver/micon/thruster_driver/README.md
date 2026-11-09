@@ -115,4 +115,3 @@ BlueRobotics T200 @16V の最大推力 **≈51.5N** です。
 > スラスタ関連の配列 (`ids`, `links`, `angle_rad`, `reverse`, `max_thrust`,
 > `static_map.thrusters.*`) は必ず `thrusters.ids` と同じ長さにしてください。
 > 長さが不一致だとノード起動時に例外で停止します。
-

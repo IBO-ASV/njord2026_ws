@@ -706,10 +706,10 @@ class RepVGGDW(torch.nn.Module):
         self.conv1 = Conv(ed, ed, 3, 1, 1, g=ed, act=False)
         self.dim = ed
         self.act = nn.SiLU()
-    
+
     def forward(self, x):
         return self.act(self.conv(x) + self.conv1(x))
-    
+
     def forward_fuse(self, x):
         return self.act(self.conv(x))
 
@@ -717,12 +717,12 @@ class RepVGGDW(torch.nn.Module):
     def fuse(self):
         conv = fuse_conv_and_bn(self.conv.conv, self.conv.bn)
         conv1 = fuse_conv_and_bn(self.conv1.conv, self.conv1.bn)
-        
+
         conv_w = conv.weight
         conv_b = conv.bias
         conv1_w = conv1.weight
         conv1_b = conv1.bias
-        
+
         conv1_w = torch.nn.functional.pad(conv1_w, [2,2,2,2])
 
         final_conv_w = conv_w + conv1_w
@@ -804,13 +804,13 @@ class PSA(nn.Module):
         self.c = int(c1 * e)
         self.cv1 = Conv(c1, 2 * self.c, 1, 1)
         self.cv2 = Conv(2 * self.c, c1, 1)
-        
+
         self.attn = Attention(self.c, attn_ratio=0.5, num_heads=self.c // 64)
         self.ffn = nn.Sequential(
             Conv(self.c, self.c*2, 1),
             Conv(self.c*2, self.c, 1, act=False)
         )
-        
+
     def forward(self, x):
         a, b = self.cv1(x).split((self.c, self.c), dim=1)
         b = b + self.attn(b)

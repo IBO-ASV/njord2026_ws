@@ -79,7 +79,7 @@ class Detect(nn.Module):
     def forward(self, x):
         """Concatenates and returns predicted bounding boxes and class probabilities."""
         y = self.forward_feat(x, self.cv2, self.cv3)
-        
+
         if self.training:
             return y
 
@@ -507,7 +507,7 @@ class v10Detect(Detect):
 
         self.one2one_cv2 = copy.deepcopy(self.cv2)
         self.one2one_cv3 = copy.deepcopy(self.cv3)
-    
+
     def forward(self, x):
         one2one = self.forward_feat([xi.detach() for xi in x], self.one2one_cv2, self.one2one_cv3)
         if not self.export:

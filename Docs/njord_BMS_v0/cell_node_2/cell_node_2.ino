@@ -7,4 +7,3 @@
 #define ESPNOW_CHANNEL 1
 
 #include "../common/cell_node_impl.h"
-

@@ -44,6 +44,26 @@ jobs:
     runs-on: ubuntu-22.04
     container:
       image: ros:humble-ros-base-jammy
+    env:
+      # colcon must not discover robot's SDK/hardware exec_depends (e.g. zed2i_driver): it requires discovered deps to be built.
+      CORE_PACKAGE_PATHS: >-
+        src/njord_platform
+        src/njord_interfaces
+        src/detection/pcl_det
+        src/detection/yolo
+        src/navigation/path_generator/natural_cubic_spline
+        src/navigation/path_generator/waypoint_publisher
+        src/navigation/path_generator/catmull_rom
+        src/navigation/buoy_obstacle_publisher
+        src/diagnostics/diagnostic_monitors
+        src/driver/micon/thruster_driver
+        src/robot
+        src/sim/dutyed_tf_pub_with_disturbance
+        src/sim/sensor_sim_with_noise
+        src/sim/operation_validator
+        src/sim/task1_sim
+        src/sim/task2_sim
+        src/sim/task3_sim
     defaults:
       run:
         shell: bash
@@ -59,54 +79,20 @@ jobs:
             python3-colcon-common-extensions \
             python3-rosdep
           rosdep update
-          rosdep install --from-paths \
-            src/njord_platform \
-            src/njord_interfaces \
-            src/detection/pcl_det \
-            src/detection/yolo \
-            src/navigation/path_generator/natural_cubic_spline \
-            src/navigation/path_generator/waypoint_publisher \
-            src/navigation/path_generator/catmull_rom \
-            src/navigation/buoy_obstacle_publisher \
-            src/diagnostics/diagnostic_monitors \
-            src/driver/micon/thruster_driver \
-            src/robot \
-            src/sim/dutyed_tf_pub_with_disturbance \
-            src/sim/sensor_sim_with_noise \
-            src/sim/operation_validator \
-            src/sim/task1_sim \
-            src/sim/task2_sim \
-            src/sim/task3_sim \
+          rosdep install --from-paths $CORE_PACKAGE_PATHS \
             --ignore-src --rosdistro humble -r -y
 
       - name: Build core simulation packages
         run: |
           source /opt/ros/humble/setup.bash
           source scripts/njord_env.sh
-          colcon build --event-handlers console_direct+ --packages-select \
-            njord_platform \
-            njord_interfaces \
-            pcl_det \
-            yolo \
-            natural_cubic_spline \
-            waypoint_publisher \
-            catmull_rom_path_smoother \
-            buoy_obstacle_publisher \
-            diagnostic_monitors \
-            thruster_driver \
-            robot \
-            dutyed_tf_pub_with_disturbance \
-            sensor_sim_with_noise \
-            operation_validator \
-            task1_sim \
-            task2_sim \
-            task3_sim
+          colcon build --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS
 
       - name: Test core simulation packages
         run: |
           source /opt/ros/humble/setup.bash
           source install/setup.bash
-          colcon test --event-handlers console_direct+ --packages-select \
+          colcon test --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS --packages-select \
             njord_platform \
             dutyed_tf_pub_with_disturbance \
             operation_validator \
