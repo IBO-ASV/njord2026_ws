@@ -34,10 +34,21 @@ ament_target_dependencies(imu_noise_simulator
   tf2
 )
 
+add_executable(um982_odometry_simulator src/um982_odometry_simulator.cpp)
+target_compile_features(um982_odometry_simulator PRIVATE cxx_std_17)
+ament_target_dependencies(um982_odometry_simulator
+  rclcpp
+  nav_msgs
+  geometry_msgs
+  tf2
+  tf2_ros
+)
+
 install(
   TARGETS
     gnss_noise_simulator
     imu_noise_simulator
+    um982_odometry_simulator
   DESTINATION lib/${PROJECT_NAME}
 )
 

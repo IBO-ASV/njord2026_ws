@@ -1,0 +1,7 @@
+# Request
+string execution_id
+bool return_to_manual
+---
+# Response
+bool accepted
+string message

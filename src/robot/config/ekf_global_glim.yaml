@@ -1,0 +1,48 @@
+### Global EKF (map -> odom), with optional Jetson GLIM feedback ###
+ekf_filter_node_global:
+  ros__parameters:
+    frequency: 30.0
+    two_d_mode: true
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: map
+    print_diagnostics: true
+
+    # UM982 GPS odometry from navsat_transform_node.
+    odom0: /odometry/gps/um982
+    odom0_config: [true,  true,  false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+
+    # GLIM odometry arrives from the Jetson as /odom. Fuse planar pose and
+    # velocity while leaving map -> odom and odom -> base_link TF ownership
+    # with the global and local EKFs respectively.
+    odom1: /odom/validated
+    odom1_config: [true,  true,  false,
+                   false, false, true,
+                   true,  true,  false,
+                   false, false, true,
+                   false, false, false]
+    odom1_differential: false
+    odom1_relative: false
+
+    # Continue observing yaw rate and planar acceleration if both GNSS and
+    # Jetson GLIM updates are temporarily delayed.
+    imu0: /livox/imu/validated
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  true,  true,  false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_remove_gravitational_acceleration: false
+
+    # Advanced Navigation Spatial inputs remain disabled until the installed
+    # unit's axes and covariances have been validated.

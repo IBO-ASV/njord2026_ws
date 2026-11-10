@@ -1,0 +1,5 @@
+# Keep the exporter contract reproducible. Install the CUDA/TensorRT-specific
+# runtime separately on the target Jetson image.
+ultralytics==8.3.0
+onnx==1.17.0
+onnxsim==0.4.36

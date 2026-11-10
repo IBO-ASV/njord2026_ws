@@ -12,19 +12,31 @@ from launch_ros.actions import Node
 def generate_launch_description():
     pkg_task2 = get_package_share_directory("task2_sim")
     pkg_robot = get_package_share_directory("robot")
-    pkg_dutyed = get_package_share_directory("dutyed_tf_pub_with_disturbance")
     pkg_sensor_noise = get_package_share_directory("sensor_sim_with_noise")
-    pkg_waypoint = get_package_share_directory("waypoint_publisher")
-    pkg_thruster = get_package_share_directory("thruster_driver")
+    pkg_mppi = get_package_share_directory("asv_trajectory_planner")
 
     config = os.path.join(pkg_task2, "config", "task2_params.yaml")
     opponent_config = os.path.join(pkg_task2, "config", "task2_opponent_sim.yaml")
     robot_description_file = os.path.join(pkg_robot, "urdf", "robot.urdf_modified.urdf")
     robot_description = open(robot_description_file, "r").read()
 
-    use_dynamics = DeclareLaunchArgument("use_dynamics", default_value="true")
+    use_cmd_vel_kinematics = DeclareLaunchArgument(
+        "use_cmd_vel_kinematics", default_value="true"
+    )
     use_nav2 = DeclareLaunchArgument("use_nav2", default_value="true")
-    use_waypoints = DeclareLaunchArgument("use_waypoints", default_value="true")
+    use_mppi = DeclareLaunchArgument(
+        "use_mppi", default_value="true",
+        description="Run the MPPI to FollowPath chain",
+    )
+    mission_managed = DeclareLaunchArgument(
+        "mission_managed", default_value="false",
+        description="Wait for Mission Manager to enable Task 2 FollowPath.",
+    )
+    use_sim_time = DeclareLaunchArgument(
+        "use_sim_time",
+        default_value="false",
+        description="Use the /clock topic when an external simulator provides it.",
+    )
     params_arg = DeclareLaunchArgument("params", default_value=config)
     opponent_params_arg = DeclareLaunchArgument("opponent_params", default_value=opponent_config)
     driver_delay_arg = DeclareLaunchArgument(
@@ -40,23 +52,20 @@ def generate_launch_description():
     goal_delay_arg = DeclareLaunchArgument(
         "goal_delay",
         default_value="8.0",
-        description="Delay before launching waypoint_publisher",
+        description="Delay before launching the MPPI / FollowPath chain",
     )
 
     driver_delay = LaunchConfiguration("driver_delay")
     nav2_delay = LaunchConfiguration("nav2_delay")
     goal_delay = LaunchConfiguration("goal_delay")
 
-    dynamics = Node(
-        package="dutyed_tf_pub_with_disturbance",
-        executable="dutyed_tf_pub_with_disturbance_node",
-        name="dutyed_tf_pub_with_disturbance_node",
-        parameters=[
-            os.path.join(pkg_dutyed, "config", "node_config.yaml"),
-            {"publish_tf": True},
-        ],
+    kinematic_plant = Node(
+        package="task2_sim",
+        executable="cmd_vel_kinematic_sim",
+        name="cmd_vel_kinematic_sim",
         output="screen",
-        condition=IfCondition(LaunchConfiguration("use_dynamics")),
+        parameters=[{"cmd_vel_topic": "/cmd_vel_nav"}],
+        condition=IfCondition(LaunchConfiguration("use_cmd_vel_kinematics")),
     )
 
     sensor_noise_launch = IncludeLaunchDescription(
@@ -73,34 +82,29 @@ def generate_launch_description():
         output="screen",
     )
 
+    heading_arrow = Node(
+        package="tf_frame_arrow_publisher",
+        executable="arrow_publisher",
+        name="nav_arrow_publisher",
+        output="screen",
+    )
+    actual_route = Node(
+        package="tf_frame_arrow_publisher",
+        executable="full_path_publisher",
+        name="actual_route_publisher",
+        output="screen",
+        parameters=[{
+            "marker_topic": "/actual_path_marker",
+            "parent_frame": "odom",
+            "child_frame": "base_link",
+        }],
+    )
+
     opponent_vessel = Node(
         package="task2_sim",
         executable="opponent_vessel_node",
         name="opponent_vessel_node",
         parameters=[LaunchConfiguration("opponent_params")],
-        output="screen",
-    )
-
-    ideal_lidar = Node(
-        package="task2_sim",
-        executable="ideal_lidar_pointcloud_node",
-        name="ideal_lidar_pointcloud_node",
-        parameters=[LaunchConfiguration("opponent_params")],
-        output="screen",
-    )
-
-    thruster_driver_node = Node(
-        package="thruster_driver",
-        executable="thruster_driver_node",
-        name="thruster_driver_node",
-        parameters=[
-            os.path.join(pkg_thruster, "config", "config.yaml"),
-            {
-                "robot_description": robot_description,
-                "transport_mode": "sim",
-                "control.dob.enable": False,
-            },
-        ],
         output="screen",
     )
 
@@ -164,12 +168,10 @@ def generate_launch_description():
     sensor_layer_timer = TimerAction(
         period=driver_delay,
         actions=[
-            dynamics,
+            kinematic_plant,
             sensor_noise_launch,
             task2_orchestrator,
             opponent_vessel,
-            ideal_lidar,
-            thruster_driver_node,
             robot_state_pub_node,
             local_ekf_node,
             global_ekf_node,
@@ -178,35 +180,43 @@ def generate_launch_description():
     )
 
     nav2_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(os.path.join(pkg_robot, "launch", "nav2.launch.py")),
+        PythonLaunchDescriptionSource(
+            os.path.join(pkg_robot, "launch", "navigation_launch_task2.py")
+        ),
         launch_arguments={
-            "params_file": os.path.join(pkg_robot, "config", "nav2_params_task2.yaml"),
-            "enable_diagnostics": "false",
+            "params_file": os.path.join(pkg_robot, "config", "nav2_params_task2_humble.yaml"),
+            "use_sim_time": "false",
+            "autostart": "true",
         }.items(),
         condition=IfCondition(LaunchConfiguration("use_nav2")),
     )
 
     nav2_layer_timer = TimerAction(period=nav2_delay, actions=[nav2_launch])
 
-    waypoint_publisher = IncludeLaunchDescription(
+    mppi_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(pkg_waypoint, "launch", "waypoint_publisher.launch.py")
+            os.path.join(pkg_mppi, "launch", "planner_with_follow_path.launch.py")
         ),
         launch_arguments={
-            "task_type": "task2",
-            "frame_id": "map",
-            "publish_rate_hz": "2.0",
+            "mission_gate_required": LaunchConfiguration("mission_managed"),
         }.items(),
-        condition=IfCondition(LaunchConfiguration("use_waypoints")),
     )
 
-    goal_layer_timer = TimerAction(period=goal_delay, actions=[waypoint_publisher])
+    goal_layer_timer = TimerAction(
+        period=goal_delay,
+        actions=[LogInfo(msg="Starting Task2 MPPI -> FollowPath chain"), mppi_launch],
+        condition=IfCondition(LaunchConfiguration("use_mppi")),
+    )
 
     return LaunchDescription([
         LogInfo(msg="========== Task2 Collision Avoidance Sim Bringup Started =========="),
-        use_dynamics,
+        heading_arrow,
+        actual_route,
+        use_cmd_vel_kinematics,
         use_nav2,
-        use_waypoints,
+        use_mppi,
+        mission_managed,
+        use_sim_time,
         params_arg,
         opponent_params_arg,
         driver_delay_arg,

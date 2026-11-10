@@ -1,0 +1,17 @@
+# Test configuration for this PC's built-in Front Camera.
+# `/dev/video0` is the normal-color camera; /dev/video2 is its IR camera.
+/back_cam/back_cam:
+  ros__parameters:
+    video_device: /dev/video0
+    image_width: 1920
+    image_height: 1080
+    framerate: 30.0
+    pixel_format: mjpeg2rgb
+    camera_name: back_cam
+    frame_id: back_cam_link
+    # This camera supports values from 0 through 100 (default: 50).
+    contrast: 50
+    # Set false and reduce exposure if highlights are clipped. This PC camera
+    # supports an exposure range of 10 through 2500.
+    autoexposure: false
+    exposure: 100

@@ -1,0 +1,26 @@
+[Unit]
+Description=Njord @ROLE@ base ROS 2 bringup
+Wants=network-online.target time-sync.target
+After=network-online.target time-sync.target
+ConditionPathExists=@WORKSPACE@/install/setup.bash
+StartLimitIntervalSec=120
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=@USER@
+WorkingDirectory=@WORKSPACE@
+Environment=ROS_DOMAIN_ID=@ROS_DOMAIN_ID@
+Environment=NJORD_RMW=@NJORD_RMW@
+Environment=NJORD_PROFILE=@ROLE@
+Environment=NJORD_ROLE=@ROLE@
+Environment=ROS_LOCALHOST_ONLY=0
+Environment=PYTHONUNBUFFERED=1
+ExecStart=@WORKSPACE@/scripts/run_bringup_service.sh @ROLE@ @ROS_DISTRO@
+KillSignal=SIGINT
+TimeoutStopSec=30
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

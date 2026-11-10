@@ -14,11 +14,20 @@
         "/path": {
           "visible": false
         },
+        "/mission/waypoint_markers": {
+          "visible": true
+        },
         "/livox/lidar": {
           "visible": true,
           "colorField": "intensity",
           "colorMode": "colormap",
           "colorMap": "turbo"
+        },
+        "/planned_path_marker": {
+          "visible": true
+        },
+        "/actual_path_marker": {
+          "visible": true
         },
         "/initialpose": {
           "visible": false
@@ -129,12 +138,37 @@
       "sidebarDimension": 240
     },
     "RawMessages!339jhik": {
-      "topicPath": "/goal_pose",
+      "topicPath": "/task2/opponent_detected",
       "diffEnabled": false,
       "diffMethod": "custom",
       "diffTopicPath": "",
       "showFullMessageForDiff": false,
       "fontSize": 12
+    },
+    "Indicator!opponent-detected": {
+      "path": "/task2/opponent_detected.data",
+      "style": "bulb",
+      "fontSize": 32,
+      "fallbackColor": "#a0a0a0",
+      "fallbackLabel": "WAITING FOR TASK 2",
+      "rules": [
+        {
+          "operator": "=",
+          "rawValue": "true",
+          "color": "#f01a1a",
+          "label": "OTHER SHIP DETECTED"
+        },
+        {
+          "operator": "=",
+          "rawValue": "false",
+          "color": "#51e358",
+          "label": "CLEAR"
+        }
+      ],
+      "foxglovePanelTitle": "Task 2 Opponent"
+    },
+    "KeioRoboticsAssociation.gnss-map-telemetry.lidar-mission-splat!livox-splat": {
+      "foxglovePanelTitle": "LiDAR Mission Splat"
     },
     "Tab!w8e7ra": {
       "activeTabIdx": 0,
@@ -152,7 +186,7 @@
               },
               "direction": "row"
             },
-            "second": "RawMessages!339jhik",
+            "second": "Indicator!opponent-detected",
             "splitPercentage": 80
           }
         }

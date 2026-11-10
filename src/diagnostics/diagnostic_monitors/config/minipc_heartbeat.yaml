@@ -1,0 +1,98 @@
+# Compatibility heartbeat tree for the legacy heartbeat.launch.py. The
+# canonical named signal inventory is config/heartbeat/minipc.yaml; this file
+# remains a single, unambiguous list while the legacy tree is migrated.
+# Each entry is a HeartbeatAggregator node.
+# Comment out a complete entry to stop monitoring it. Uncomment optional
+# entries (and add their output to the aggregate inputs) to monitor them.
+minipc_heartbeat:
+  # Rear USB camera
+  # - name: heartbeat_driver_camera_back
+  #   inputs:
+  #     - topic: /back_cam/image_raw
+  #       topic_type: sensor_msgs/msg/Image
+  #   output_topic: /heartbeat/driver/camera/back
+  #   timeout: 1.0
+
+  # UM982 GNSS fix
+  - name: heartbeat_driver_gnss
+    inputs:
+      - topic: /sensor/vehicle_gnss/fix/raw
+        topic_type: sensor_msgs/msg/NavSatFix
+    output_topic: /heartbeat/driver/gnss
+    timeout: 1.0
+
+  # BMS telemetry from the Micon serial driver
+  - name: heartbeat_driver_micon
+    inputs:
+      - topic: /micon/bms_cells
+        topic_type: std_msgs/msg/Float32MultiArray
+    output_topic: /heartbeat/driver/micon
+    timeout: 3.0
+
+  # miniPC camera health
+  - name: heartbeat_driver_camera
+    inputs:
+      - topic: /heartbeat/driver/camera/back
+        topic_type: std_msgs/msg/Empty
+    output_topic: /heartbeat/driver/camera
+    timeout: 1.5
+
+  # All miniPC driver health
+  - name: heartbeat_driver
+    inputs:
+      # - topic: /heartbeat/driver/camera
+      #   topic_type: std_msgs/msg/Empty
+      - topic: /heartbeat/driver/gnss
+        topic_type: std_msgs/msg/Empty
+      - topic: /heartbeat/driver/micon
+        topic_type: std_msgs/msg/Empty
+    output_topic: /heartbeat/driver
+    timeout: 1.5
+
+  # Optional Jetson front-camera branch. Also add its heartbeat output to
+  # heartbeat_driver_camera when enabling it.
+  # - name: heartbeat_driver_camera_front
+  #   inputs:
+  #     - topic: /zed2i/left/image_rect
+  #       topic_type: sensor_msgs/msg/Image
+  #   output_topic: /heartbeat/driver/camera/front
+  #   timeout: 1.0
+
+  # Optional Jetson LiDAR branch. Also add its heartbeat output to
+  # heartbeat_driver when enabling it.
+  # - name: heartbeat_driver_lidar
+  #   inputs:
+  #     - topic: /livox/lidar
+  #       topic_type: sensor_msgs/msg/PointCloud2
+  #     - topic: /livox/imu
+  #       topic_type: sensor_msgs/msg/Imu
+  #   output_topic: /heartbeat/driver/lidar
+  #   timeout: 1.0
+
+  # Optional local EKF branch. Uncomment this and heartbeat_localization to
+  # monitor /odometry/filtered/local.
+  # - name: heartbeat_localization_local
+  #   inputs:
+  #     - topic: /odometry/filtered/local
+  #       topic_type: nav_msgs/msg/Odometry
+  #   output_topic: /heartbeat/localization/local
+  #   timeout: 1.0
+
+  # Optional global EKF branch. Uncomment this and heartbeat_localization to
+  # monitor /odometry/filtered/global.
+  # - name: heartbeat_localization_global
+  #   inputs:
+  #     - topic: /odometry/filtered/global
+  #       topic_type: nav_msgs/msg/Odometry
+  #   output_topic: /heartbeat/localization/global
+  #   timeout: 1.0
+
+  # Uncomment after enabling one or both localization leaves above.
+  # - name: heartbeat_localization
+  #   inputs:
+  #     - topic: /heartbeat/localization/local
+  #       topic_type: std_msgs/msg/Empty
+  #     - topic: /heartbeat/localization/global
+  #       topic_type: std_msgs/msg/Empty
+  #   output_topic: /heartbeat/localization
+  #   timeout: 1.5

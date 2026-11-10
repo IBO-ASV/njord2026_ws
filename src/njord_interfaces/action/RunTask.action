@@ -1,0 +1,42 @@
+# Goal
+string task_id
+bool request_auto_mode
+bool dry_run
+string request_id
+---
+# Result
+uint8 SUCCEEDED=0
+uint8 CANCELED=1
+uint8 REJECTED=2
+uint8 NOT_IMPLEMENTED=3
+uint8 NOT_READY=4
+uint8 SAFETY_INHIBITED=5
+uint8 NAVIGATION_FAILED=6
+uint8 CONFIGURATION_FAILED=7
+uint8 INTERNAL_ERROR=255
+
+uint8 result_code
+string message
+string execution_id
+string[] final_inhibit_reasons
+---
+# Feedback
+uint8 STATE_IDLE=0
+uint8 STATE_VALIDATING=1
+uint8 STATE_CONFIGURING=2
+uint8 STATE_WAITING_FOR_READINESS=3
+uint8 STATE_WAITING_FOR_AUTO_PERMISSION=4
+uint8 STATE_RUNNING=5
+uint8 STATE_PAUSED=6
+uint8 STATE_CANCELING=7
+uint8 STATE_SUCCEEDED=8
+uint8 STATE_FAILED=9
+uint8 STATE_REJECTED=10
+
+uint8 state
+string task_id
+string execution_id
+string stage
+float32 progress
+string message
+string[] inhibit_reasons

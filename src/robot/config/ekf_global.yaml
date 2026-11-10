@@ -1,45 +1,79 @@
 ### Global EKF (map -> odom) ###
-# The local EKF estimate and GPS odometry are fused into a globally corrected
-# odometry topic. GLIM remains the TF authority on the real robot.
+# UM982 GPS odometry is fused into a globally corrected odometry topic. The
+# global EKF is the sole map -> odom TF authority while GLIM is disabled.
 ekf_filter_node_global:
   ros__parameters:
     frequency: 30.0
     two_d_mode: true
-    publish_tf: false
+    publish_tf: true
     map_frame: map
     odom_frame: odom
     base_link_frame: base_link
     world_frame: map
     print_diagnostics: true
 
-    # Local EKF output. Differential mode avoids treating an odom-frame pose
-    # as an absolute map-frame pose.
-    odom0: odometry/filtered/local
-    odom0_config: [true,  true,  true,
-                   true,  true,  true,
+    # Do not fuse /odometry/filtered/local here: when UM982 feedback is
+    # enabled it is derived from this same GNSS receiver.  Combining it with
+    # the navsat_transform result below double-counts GNSS motion and can make
+    # map -> odom jump.  The UM982 feedback EKF remains the sole publisher of
+    # odom -> base_link; this EKF publishes only map -> odom.
+    #
+    # UM982 GPS odometry from navsat_transform_node
+    odom0: /odometry/gps/um982
+    odom0_config: [true,  true,  false,
+                   false, false, false,
                    false, false, false,
                    false, false, false,
                    false, false, false]
-    odom0_differential: true
+    odom0_differential: false
     odom0_relative: false
 
-    # WIT Motion IMU: retain absolute heading in the global filter
-    imu0: /wit/imu
-    imu0_config: [false, false, false,
-                  true,  true,  true,
-                  false, false, false,
-                  true,  true,  true,
-                  true,  true,  true]
-    imu0_differential: false
-    imu0_relative: false
-    imu0_remove_gravitational_acceleration: true
-
-    # GPS odometry from navsat_transform_node
-    odom1: /odometry/gps
-    odom1_config: [true,  true,  false,
-                   false, false, false,
+    # The UM982 dual-antenna heading is an absolute ENU yaw measurement.  The
+    # global filter must observe yaw (or yaw rate); otherwise robot_localization
+    # correctly reports unbounded yaw error and the map -> odom transform can
+    # behave erratically.  Fuse only yaw here, so the local UM982 feedback
+    # odometry position is still not double-counted with GPS odometry above.
+    pose0: /sensor/vehicle_gnss/compass/validated
+    pose0_config: [false, false, false,
+                   false, false, true,
                    false, false, false,
                    false, false, false,
                    false, false, false]
-    odom1_differential: false
-    odom1_relative: false
+    pose0_differential: false
+    pose0_relative: false
+
+    # GNSS-independent continuous observations. The Livox driver deliberately
+    # marks orientation unavailable, so fuse only planar acceleration and yaw
+    # rate. This keeps propagation observed between GNSS updates.
+    imu0: /livox/imu/validated
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  true,  true,  false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_remove_gravitational_acceleration: false
+
+    # Advanced Navigation Spatial: fuse only its absolute yaw initially.
+    # Angular velocity and acceleration remain disabled until the body/ROS
+    # axis convention has been validated on the installed unit.
+    # imu0: /adnav_driver/imu
+    # imu0_config: [false, false, false,
+    #               false, false, true,
+    #               false, false, false,
+    #               false, false, false,
+    #               false, false, false]
+    # imu0_differential: false
+    # imu0_relative: false
+    # imu0_remove_gravitational_acceleration: true
+
+    # Spatial GNSS odometry from its dedicated navsat_transform_node
+    # odom1: /odometry/gps/spatial
+    # odom1_config: [true,  true,  false,
+    #                false, false, false,
+    #                false, false, false,
+    #                false, false, false,
+    #                false, false, false]
+    # odom1_differential: false
+    # odom1_relative: false

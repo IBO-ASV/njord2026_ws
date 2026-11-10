@@ -1,0 +1,12 @@
+{
+  "name": "gnss-map-telemetry",
+  "displayName": "GNSS Map Telemetry",
+  "description": "Interactive GNSS map with a base_link heading marker and vessel telemetry legend.",
+  "publisher": "KeioRoboticsAssociation",
+  "version": "0.2.2",
+  "license": "Apache-2.0",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "package": "./scripts/package.sh"
+  }
+}

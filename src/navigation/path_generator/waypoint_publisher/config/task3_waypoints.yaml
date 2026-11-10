@@ -1,178 +1,49 @@
-# Task 3: Docking Scenarios
-# Waypoint configuration for NJORD competition Task 3
-# Supports both normal docking (3.1) and parallel docking (3.2)
-#
-# Full competition sequence (task3_1 → task3_2):
-#   gps7(start) → gps8(gate) → berth1(normal dock) → gps8(exit) → gps9(gate2) → berth2(parallel dock) → gps10(finish)
-#
-# Field geometry (point-symmetric about origin):
-#   Normal dock (3.1):   x=14~16, y=±2.0  (boat enters from west, heading=0)
-#   Parallel dock (3.2): x=-14~-16, y=±2.0 (boat enters from east, heading=π)
-#   Gate buoys 3.1:      x≈12, y=±4  (red/green)
-#   Gate buoys 3.2:      x≈-12, y=±4  (red/green)
+# Task 3 docking route surveyed in "GPS points for tasks.xlsx".
+# Task 3.1: GPS7 -> GPS8 -> berth 1 -> GPS8 -> GPS9 (final goal)
+# Task 3.2: GPS10 -> GPS11 -> berth 2 -> GPS11 -> GPS12 (final goal)
 
 task3_1_config:
-  frame_id: "map"
+  frame_id: "odom"
   publish_rate_hz: 2.0
-  scenario: "normal_docking_full"
-
+  scenario: "normal_docking_surveyed"
   waypoints:
-    # GPS 7: start (origin)
-    - id: 7
-      x: 0.0
-      y: 0.0
-      yaw: 0.0
-      type: "start"
-      name: "GPS 7 - Start"
-      tolerance_m: 2.0
-
-    # GPS 8: gate approach to normal dock field, come from south heading north
-    - id: 8
-      x: 13.0
-      y: 11.0
-      yaw: 1.5708        # heading north (π/2)
-      type: "gate"
-      name: "GPS 8 - Normal Dock Gate"
-      tolerance_m: 1.5
-
-    # Berth 1: normal docking (center berth, heading east into dock)
-    - id: "berth1"
-      x: 15.0
-      y: 1.065
-      yaw: 0.0           # heading east (into normal dock)
-      type: "dock"
-      name: "Berth 1 - Normal Dock"
-      tolerance_m: 0.8
-      dock_type: "normal"
-
-    # GPS 8 again: undock and return to gate
-    - id: "8_exit"
-      x: 13.0
-      y: 11.0
-      yaw: -1.5708       # heading south (back out)
-      type: "undock_exit"
-      name: "GPS 8 - Exit Normal Dock"
-      tolerance_m: 1.5
-
-    # GPS 9: gate approach to parallel dock field (point-symmetric side)
-    - id: 9
-      x: -13.0
-      y: 11.0
-      yaw: -1.5708       # heading south toward parallel dock gate
-      type: "gate"
-      name: "GPS 9 - Parallel Dock Gate"
-      tolerance_m: 1.5
-
-    # Berth 2: parallel docking (heading west into parallel dock)
-    - id: "berth2"
-      x: -15.0
-      y: 0.0
-      yaw: 3.14159       # heading west (into parallel dock, π)
-      type: "dock"
-      name: "Berth 2 - Parallel Dock"
-      tolerance_m: 0.8
-      dock_type: "parallel"
-
-    # GPS 10: finish point (exit parallel dock, go south)
-    - id: 10
-      x: -13.0
-      y: -11.0
-      yaw: -1.5708       # heading south
-      type: "goal"
-      name: "GPS 10 - Finish"
-      tolerance_m: 2.0
-
+    - {id: 7, latitude: 63.4409750000, longitude: 10.4237833333, yaw: -0.3216, type: "start", name: "GPS 7 - Task 3.1 Start", tolerance_m: 1.5}
+    # GPS7 -> GPS8 heading.
+    - {id: 8, latitude: 63.4409333333, longitude: 10.4240611111, yaw: -0.3216, type: "dock_approach", name: "GPS 8 - Berth 1 Approach", tolerance_m: 0.8}
+    - {id: "berth1", latitude: 63.4409400000, longitude: 10.4240929000, yaw: -0.3216, type: "dock", name: "Berth 1 - Inside Dock", tolerance_m: 0.8, dock_type: "normal"}
+    # GPS8 -> GPS9 heading; GPS9 is the Task 3.1 final goal.
+    - {id: 9, latitude: 63.4408472222, longitude: 10.4240444444, yaw: -1.6577, type: "goal", name: "GPS 9 - Final Goal", tolerance_m: 1.5}
   constraints:
-    dock_identification: "ar_tag_detection"
     impact_minimization: true
-    wait_time_s: 10           # wait at berth before undocking
+    wait_time_s: 10
     wait_condition: "after_docking_stationary"
-    reversal_requirement: true
     attempts: 2
-    goal_tolerance: 1.0
+  stages:
+    stage_1_gate: [7]
+    stage_1: [8]
+    stage_2: ["berth1"]
+    stage_3: [8]
+    stage_4: [9]
 
-
-# Task 3.2 only config (standalone point-symmetric run, robot starts from rest)
 task3_2_config:
-  frame_id: "map"
+  frame_id: "odom"
   publish_rate_hz: 2.0
-  scenario: "parallel_docking_standalone"
-
+  scenario: "parallel_docking_surveyed"
   waypoints:
-    # Start at origin
-    - id: 9
-      x: 0.0
-      y: 0.0
-      yaw: 3.14159       # heading west
-      type: "start"
-      name: "GPS 9 - Start (standalone)"
-      tolerance_m: 2.0
-
-    # Gate for parallel dock
-    - id: "9_gate"
-      x: -13.0
-      y: 11.0
-      yaw: -1.5708
-      type: "gate"
-      name: "GPS 9 - Parallel Dock Gate"
-      tolerance_m: 1.5
-
-    # Berth 2: parallel docking
-    - id: "berth2"
-      x: -15.0
-      y: 0.0
-      yaw: 3.14159
-      type: "dock"
-      name: "Berth 2 - Parallel Dock"
-      tolerance_m: 0.8
-      dock_type: "parallel"
-
-    # GPS 10: finish
-    - id: 10
-      x: -13.0
-      y: -11.0
-      yaw: -1.5708
-      type: "goal"
-      name: "GPS 10 - Finish"
-      tolerance_m: 2.0
-
+    - {id: 10, latitude: 63.4411333333, longitude: 10.4242305556, yaw: -1.8732, type: "start", name: "GPS 10 - Task 3.2 Start", tolerance_m: 1.5}
+    # GPS11 -> GPS12 heading.
+    - {id: 11, latitude: 63.4410138889, longitude: 10.4241472222, yaw: 2.9119, type: "dock_approach", name: "GPS 11 - Berth 2 Approach", tolerance_m: 0.8}
+    - {id: "berth2", latitude: 63.4409890500, longitude: 10.4241208500, yaw: 2.9119, type: "dock", name: "Berth 2 - Inside Dock", tolerance_m: 0.8, dock_type: "parallel"}
+    # GPS12 is the Task 3.2 final goal.
+    - {id: 12, latitude: 63.4410361111, longitude: 10.4239361111, yaw: 2.9119, type: "goal", name: "GPS 12 - Final Goal", tolerance_m: 1.5}
   constraints:
-    dock_type: "barge"
     impact_minimization: true
     wait_time_s: 5
-    wait_condition: "after_parallel_docking_stationary"
-    exit_movement: "forward_not_reverse"
+    wait_condition: "after_docking_stationary"
     attempts: 2
-    goal_tolerance: 1.0
-
-
-# Multi-stage async flow for task3 (handled by waypoint_publisher_node.py state machine)
-# Stage 1: 7 → 8 → berth1       (approach + normal dock)
-# Wait:    stationary at berth1 for wait_time_s
-# Stage 2: 8_exit → 9 → berth2  (undock + gate + parallel dock)
-# Wait:    stationary at berth2 for wait_time_s
-# Stage 3: 10                    (exit + finish)
-async_flow:
-  stage_1:
-    name: "Approach Normal Dock"
-    waypoints: [7, 8, "berth1"]
-    next_trigger: "goal_reached"
-
-  stage_2:
-    name: "Stationary Wait at Berth 1"
-    duration_s: 10
-    next_trigger: "timer_complete"
-
-  stage_3:
-    name: "Undock and Approach Parallel Dock"
-    waypoints: ["8_exit", 9, "berth2"]
-    next_trigger: "goal_reached"
-
-  stage_4:
-    name: "Stationary Wait at Berth 2"
-    duration_s: 5
-    next_trigger: "timer_complete"
-
-  stage_5:
-    name: "Exit to Finish"
-    waypoints: [10]
+  stages:
+    stage_1_gate: [10]
+    stage_1: [11]
+    stage_2: ["berth2"]
+    stage_3: [11]
+    stage_4: [12]

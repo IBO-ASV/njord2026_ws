@@ -1,0 +1,28 @@
+# Task 1 smoke test: navigate directly from GPS point 1 to GPS point 2.
+#
+# Enter each endpoint as WGS84 latitude/longitude. `/fromLL` converts the
+# values to the current map frame at runtime.
+
+task1_skip_1_1_config:
+  frame_id: "odom"
+  publish_rate_hz: 2.0
+  waypoints:
+    - id: 1
+      latitude: 63.44228538325694
+      longitude: 10.42402403234536
+      yaw: 0.0000
+      type: "start"
+      name: "GPS 1 - Start"
+      tolerance_m: 2.0
+    - id: 2
+      latitude: 63.44228538325694
+      longitude: 10.42495583338823
+      yaw: 0.0000
+      type: "goal"
+      name: "GPS 2 - Goal"
+      tolerance_m: 2.0
+  constraints:
+    follow_test: false
+    route_pattern: "gps_1_to_gps_2_straight"
+    cardinal_marker_detection: false
+    vision_halfway: false

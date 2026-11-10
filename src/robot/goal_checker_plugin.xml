@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<library path="pass_through_goal_checker">
+  <class type="robot::PassThroughGoalChecker" base_class_type="nav2_core::GoalChecker">
+    <description>Completes a waypoint after heading alignment or one radius crossing.</description>
+  </class>
+  <class type="robot::SelectiveHeadingGoalChecker" base_class_type="nav2_core::GoalChecker">
+    <description>Requires goal heading only at configured docking approach and berth goals.</description>
+  </class>
+</library>

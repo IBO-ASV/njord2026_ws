@@ -1,0 +1,237 @@
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: map
+    robot_base_frame: base_link
+    odom_topic: /odometry/filtered/global
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    # Rewritten by task1_navigation.launch.py to repository-installed BT XML.
+    default_nav_to_pose_bt_xml: ""
+    # Rewritten by task1_navigation.launch.py to the package-local BT that
+    # runs ComputePathThroughPoses -> SmoothPath -> FollowPath.
+    default_nav_through_poses_bt_xml: ""
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    controller_plugins: ["FollowPath"]
+    goal_checker_plugins: ["general_goal_checker"]
+    general_goal_checker:
+      plugin: "robot::PassThroughGoalChecker"
+      xy_goal_tolerance: 2.0
+      yaw_goal_tolerance: 0.785
+      exit_margin_m: 0.05
+    FollowPath:
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 0.80
+      lookahead_dist: 2.5
+      min_lookahead_dist: 1.5
+      max_lookahead_dist: 4.0
+      lookahead_time: 2.0
+      rotate_to_heading_at_start: false
+      # Keep moving through a waypoint.  Its yaw remains a preferred goal
+      # checker condition, but must not trigger a turn-back maneuver.
+      use_rotate_to_heading: false
+      # Costmaps and collision_monitor handle the simulator's virtual walls.
+      # Keep RPP from aborting FollowPath into a recovery loop.
+      use_collision_detection: false
+      # Surface-vessel yaw has substantial inertia.  Limit the controller's
+      # angular acceleration to prevent repeated over-corrections.
+      max_angular_accel: 0.35
+      transform_tolerance: 0.1
+      use_velocity_scaled_lookahead_dist: true
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 1.0
+      cost_scaling_dist: 3.0
+      inflation_radius: 1.5
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 5.0
+    use_sim_time: false
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_theta_star_planner::ThetaStarPlanner"
+      how_many_corners: 8
+      w_euc_cost: 1.0
+      w_traversal_cost: 2.0
+      w_heuristic_cost: 1.0
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+      rolling_window: true
+      width: 10
+      height: 10
+      resolution: 0.05
+      robot_radius: 0.8
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: sim_obstacles virtual_wall
+        sim_obstacles:
+          topic: /sim_obstacles
+          max_obstacle_height: 2.0
+          clearing: false
+          marking: true
+          data_type: "PointCloud2"
+          obstacle_max_range: 20.0
+          raytrace_max_range: 20.0
+        virtual_wall:
+          topic: /virtual_obstacles
+          max_obstacle_height: 2.0
+          clearing: false
+          marking: true
+          data_type: "PointCloud2"
+          obstacle_max_range: 20.0
+          raytrace_max_range: 20.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.5
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: map
+      robot_base_frame: base_link
+      use_sim_time: false
+      rolling_window: false
+      width: 60
+      # Covers the default competition slalom route (x:[0,50], y:[-35,-15],
+      # task_type=task1) and the spawn-to-course transit from (0,0), as well
+      # as the task1_follow lawnmower-survey route (x:[0,35.66], y:[0,27.83],
+      # task_type=task1_follow), all with margin.
+      height: 75
+      resolution: 0.1
+      origin_x: -5.0
+      origin_y: -40.0
+      track_unknown_space: false
+      robot_radius: 0.8
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+        observation_sources: sim_obstacles virtual_wall
+        sim_obstacles:
+          topic: /sim_obstacles
+          max_obstacle_height: 2.0
+          clearing: false
+          marking: true
+          data_type: "PointCloud2"
+          obstacle_max_range: 80.0
+          raytrace_max_range: 80.0
+        virtual_wall:
+          topic: /virtual_obstacles
+          max_obstacle_height: 2.0
+          clearing: false
+          marking: true
+          data_type: "PointCloud2"
+          obstacle_max_range: 80.0
+          raytrace_max_range: 80.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.5
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: false
+    autostart: true
+    node_names:
+      - controller_server
+      - smoother_server
+      - planner_server
+      - behavior_server
+      - bt_navigator
+      - waypoint_follower
+      - velocity_smoother
+      - collision_monitor
+
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel_smoothed"
+    cmd_vel_out_topic: "/cmd_vel_nav"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    # An empty sequence is discarded by rclcpp's YAML loader and makes the
+    # collision monitor abort during startup.  Task1 uses the local costmap
+    # footprint for its approach projection.
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 1.2
+      simulation_time_step: 0.1
+      min_points: 6
+      # The collision-monitor build used by this workspace also declares this
+      # upper bound for the dynamic footprint.  Leaving it unset causes a
+      # periodic parameter lookup warning while the monitor is active.
+      max_points: 6
+      visualize: false
+      enabled: true
+    observation_sources: ["sim_obstacles", "virtual_wall"]
+    sim_obstacles:
+      type: "pointcloud"
+      topic: "/sim_obstacles"
+      min_height: -0.5
+      max_height: 2.0
+      use_global_height: false
+      enabled: true
+    virtual_wall:
+      type: "pointcloud"
+      topic: "/virtual_obstacles"
+      min_height: -0.5
+      max_height: 2.0
+      use_global_height: false
+      enabled: true
+
+behavior_server:
+  ros__parameters:
+    use_sim_time: false
+
+waypoint_follower:
+  ros__parameters:
+    use_sim_time: false
+
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: false
+    smoothing_frequency: 20.0
+    feedback: "OPEN_LOOP"
+    odom_topic: "/odom"
+    odom_duration: 0.1
+    max_velocity: [0.85, 0.0, 0.55]
+    min_velocity: [-0.25, 0.0, -0.55]
+    max_accel: [0.80, 0.0, 0.40]
+    max_decel: [-0.80, 0.0, -0.40]
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: false
+    smoother_plugins: ["natural_cubic_spline"]
+    natural_cubic_spline:
+      plugin: "natural_cubic_spline::NaturalCubicSplineSmoother"
+      path_point_spacing: 0.05
+      control_point_spacing: 0.5

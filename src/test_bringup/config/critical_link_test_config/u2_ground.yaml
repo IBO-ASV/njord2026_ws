@@ -1,0 +1,9 @@
+# U2: built-in Wi-Fi sender template. Fill both IPs before use.
+critical_link_sender:
+  ros__parameters:
+    joy_input_topic: /critical_link/input/joy
+    heartbeat_input_topic: /critical_link/input/heartbeat
+    # - "u2_builtin_wifi|<GROUND_BUILTIN_WIFI_IP>|<MINIPC_BUILTIN_WIFI_IP>|45101"
+    udp_paths: []
+    serial_device: ""
+    serial_baud: 921600

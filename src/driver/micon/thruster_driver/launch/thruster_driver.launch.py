@@ -17,11 +17,13 @@ def generate_launch_description():
     default_robot_description = os.path.join(
         get_package_share_directory("robot"),
         "urdf",
-        "robot.urdf_modified.urdf",
+        "robot.urdf.xacro",
     )
 
     config_file = LaunchConfiguration("config_file")
     robot_description_file = LaunchConfiguration("robot_description_file")
+    use_velocity_feedback = LaunchConfiguration("use_velocity_feedback")
+    stop_on_feedback_timeout = LaunchConfiguration("stop_on_feedback_timeout")
 
     return LaunchDescription(
         [
@@ -33,7 +35,19 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "robot_description_file",
                 default_value=default_robot_description,
-                description="Path to robot URDF containing fixed thruster poses",
+                description="Path to robot xacro/URDF containing fixed thruster poses",
+            ),
+            DeclareLaunchArgument(
+                "use_velocity_feedback",
+                default_value="true",
+                description="Subscribe to feedback odometry and use measured velocity in control.",
+            ),
+            DeclareLaunchArgument(
+                "stop_on_feedback_timeout",
+                default_value="true",
+                description="Force zero thruster output when /odometry/filtered/local "
+                "is missing/stale. Set false for manual/bench testing without "
+                "localization running.",
             ),
             Node(
                 package="thruster_driver",
@@ -44,8 +58,16 @@ def generate_launch_description():
                     config_file,
                     {
                         "robot_description": ParameterValue(
-                            Command(["cat ", robot_description_file]),
+                            Command(["xacro ", robot_description_file]),
                             value_type=str,
+                        ),
+                        "control.stop_on_feedback_timeout": ParameterValue(
+                            stop_on_feedback_timeout,
+                            value_type=bool,
+                        ),
+                        "control.use_velocity_feedback": ParameterValue(
+                            use_velocity_feedback,
+                            value_type=bool,
                         ),
                     },
                 ],

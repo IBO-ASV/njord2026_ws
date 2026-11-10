@@ -2,8 +2,13 @@
   /*** Preprocessing parameters ***
   // distance_(near|far)_thresh  : Points out of this range will be filtered out
   // use_random_grid_downsampling: If false, use the conventional voxelgrid downsampling
-  //                             : Otherwise, use voxel-based random sampling (recommended)
-  // downsample_resolution       : Voxel grid resolution for downsampling
+  //                             : Otherwise, use voxel-based random sampling (recommended).
+  //                             : Keep this true for MID-360S: random selection within each
+  //                             : spatial voxel avoids a deterministic "first point wins" bias.
+  //                             : This is spatial, not per-laser-line sampling.
+  // downsample_resolution       : Voxel grid resolution for downsampling.  A voxel may retain
+  //                             : only one point, so do not make it comparable to the 1 m-scale
+  //                             : harbor features when using sparse far-range returns.
   // random_downsample_target    : Target number of points for voxel-based random sampling (Enabled when > 0)
   // random_downsample_rate      : Sampling rate for voxel-based random sampling (Enabled when target <= 0)
   // enable_outlier_removal      : If true, enable statistical outlier removal
@@ -18,10 +23,25 @@
   */
   "preprocess": {
     "distance_near_thresh": 0.5,
-    "distance_far_thresh": 100.0,
+    // Task 3 / 港湾の標準値: 桟橋・護岸を十分残しつつ、100 m付近の疎で不安定な
+    // 反射を登録の主成分にしない。対岸を積極的に使うログでのみ 100.0 を試す。
+    "distance_far_thresh": 80.0,
+    // 候補（同時に有効化しない）:
+    // "distance_far_thresh": 60.0,   // 軽量・近傍のdocking専用。遠方の疎点を除く
+    // "distance_far_thresh": 100.0,  // 対岸/奥の固定構造も使う。点数と外れ値が増える
     "use_random_grid_downsampling": true,
-    "downsample_resolution": 1.0,
-    "random_downsample_target": 10000,
+    "downsample_resolution": 0.30,
+    "random_downsample_target": 20000,
+    // 候補（同時に有効化しない）:
+    // "downsample_resolution": 0.15, "random_downsample_target": 40000,
+    //   // 精度優先: docking直前・低速時。GPU負荷と遅延が大きい
+    // "downsample_resolution": 0.25, "random_downsample_target": 30000,
+    //   // 高精度の港湾走行。まずこの候補と標準値を比較する
+    // "downsample_resolution": 0.50, "random_downsample_target": 12000,
+    //   // 軽量: 移動中の初期地図作成/CPU余裕がない場合。細い係留設備は失いやすい
+    // conventional voxelgridを比較する場合だけ false にする。線状の点を保証して
+    // 残す方式ではないため、MID-360Sでは上記random gridを基本とする。
+    // "use_random_grid_downsampling": false,
     "random_downsample_rate": 0.1,
     "enable_outlier_removal": false,
     "outlier_removal_k": 10,

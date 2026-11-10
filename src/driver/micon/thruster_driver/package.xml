@@ -3,22 +3,22 @@
 <package format="3">
   <name>thruster_driver</name>
   <version>0.1.0</version>
-  <description>Thruster command bridge for ESP32 (mROS USB and CAN).</description>
+  <description>Thruster command allocator publishing four Newton commands.</description>
   <maintainer email="oswystk15662@keio.jp">osw</maintainer>
   <license>Apache-2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>rcl_interfaces</depend>
   <depend>rclcpp_components</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>can_msgs</depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
-  <exec_depend>robot</exec_depend>
+  <exec_depend>xacro</exec_depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

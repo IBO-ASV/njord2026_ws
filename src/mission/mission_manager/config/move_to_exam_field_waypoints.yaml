@@ -1,0 +1,41 @@
+# Route from the launch inlet to the exam field.
+# All points are converted through /fromLL.
+move_to_exam_field_config:
+  frame_id: odom
+  waypoints:
+    - id: gps_0_1
+      latitude: 63.44117969569515
+      longitude: 10.423737156091436
+      yaw: 0.0
+      type: start
+      name: GPS point 0-2-1 (exam field)
+    - id: waypoint_1
+      latitude: 63.44142150866022
+      longitude: 10.424041231388264
+      yaw: 0.0
+      type: waypoint
+      name: Transit waypoint 1
+    - id: waypoint_2
+      latitude: 63.44162298182356
+      longitude: 10.424199481706125
+      yaw: 0.0
+      type: waypoint
+      name: Transit waypoint 2
+    - id: gps_0_2_1
+      latitude: 63.442096626145
+      longitude: 10.424757352535376
+      yaw: 0.0
+      type: goal
+      name: GPS point 0-1 (launch inlet)
+  stages:
+    move_to_exam_field: [gps_0_1, waypoint_1, waypoint_2, gps_0_2_1]
+
+back_to_birth_point_config:
+  frame_id: odom
+  waypoints:
+    - {id: gps_0_2_1, latitude: 63.442096626145, longitude: 10.424757352535376, yaw: 0.0, type: start, name: "GPS point 0-1 (launch inlet)"}
+    - {id: waypoint_2, latitude: 63.44162298182356, longitude: 10.424199481706125, yaw: 0.0, type: waypoint, name: "Transit waypoint 2"}
+    - {id: waypoint_1, latitude: 63.44142150866022, longitude: 10.424041231388264, yaw: 0.0, type: waypoint, name: "Transit waypoint 1"}
+    - {id: gps_0_1, latitude: 63.44117969569515, longitude: 10.423737156091436, yaw: 0.0, type: goal, name: "GPS point 0-2-1 (exam field)"}
+  stages:
+    back_to_birth_point: [gps_0_2_1, waypoint_2, waypoint_1, gps_0_1]

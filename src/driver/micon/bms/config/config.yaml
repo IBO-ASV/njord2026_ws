@@ -1,14 +1,17 @@
 bms_node:
   ros__parameters:
-    transport_mode: "both"   # mros_usb or can or both
-    can_rx_id: 1025           # 0x401
-
     topics:
-      # mROS payload: Float32MultiArray with 4 elements [cell1, cell2, cell3, cell4] [V]
-      mros_rx: "bms/raw_cells"
-
-      # CAN payload: can_msgs/Frame, 8byte, little-endian uint16[mV] x 4
-      can_rx: "bms/can_rx"
-
-      # Normalized output for upper layer
+      # Decoded by micon_driver_fd/bms_serial. Float32MultiArray[4], unit V.
+      input: "micon/bms_cells"
       output: "bms/cell_voltages"
+      temperature_input: "/micon/bms_temperature_c"
+      temperature_output: "/bms/temperature_c"
+      diagnostics: "/diagnostics"
+
+    low_voltage:
+      warning: 3.5
+      error: 3.3
+
+    battery:
+      # Used only for the GUI's remaining-charge estimate. Tune for the pack chemistry.
+      full_cell_voltage: 4.2

@@ -1,18 +1,19 @@
-zed2i:
+/**:
   ros__parameters:
-    left_device: /dev/video0
-    right_device: /dev/video1
+    left_device: /dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_OV0001-video-index0
+    # ZED 2i exposes its stereo pair as one side-by-side UVC stream on index0.
+    right_device: /dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_OV0001-video-index0
     left_frame_id: zed2i_left_camera_frame
     right_frame_id: zed2i_right_camera_frame
     depth_frame_id: zed2i_left_camera_frame
-    image_width: 1280
-    image_height: 720
+    image_width: 672
+    image_height: 376
     framerate: 15
     baseline_m: 0.12
-    fx: 1280.0
-    fy: 1280.0
-    cx: 640.0
-    cy: 360.0
+    fx: 672.0
+    fy: 672.0
+    cx: 336.0
+    cy: 188.0
     depth_min_m: 0.3
     depth_max_m: 20.0
     publish_pointcloud: true

@@ -1,0 +1,22 @@
+# Request
+string task_id
+bool request_auto_mode
+bool dry_run
+string request_id
+---
+# Response
+uint8 ACCEPTED=0
+uint8 INVALID_REQUEST=1
+uint8 UNKNOWN_TASK=2
+uint8 TASK_UNAVAILABLE=3
+uint8 MISSION_BUSY=4
+uint8 DUPLICATE_REQUEST=5
+uint8 NOT_READY=6
+uint8 SAFETY_INHIBITED=7
+uint8 CONFIGURATION_FAILED=8
+uint8 INTERNAL_ERROR=255
+
+bool accepted
+uint8 reason_code
+string message
+string execution_id

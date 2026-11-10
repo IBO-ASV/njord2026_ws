@@ -1,0 +1,40 @@
+uint8 STATE_BOOTING=0
+uint8 STATE_MANUAL=1
+uint8 STATE_AUTO_REQUESTED=2
+uint8 STATE_AUTO_ARMED=3
+uint8 STATE_AUTO_RUNNING=4
+uint8 STATE_AUTO_INHIBITED=5
+uint8 STATE_EMERGENCY_STOP=6
+
+uint8 MODE_MANUAL=0
+uint8 MODE_AUTO=1
+
+uint8 SOURCE_ZERO=0
+uint8 SOURCE_MANUAL=1
+uint8 SOURCE_AUTO=2
+uint8 SOURCE_SBUS=3
+
+uint16 INHIBIT_NONE=0
+uint16 INHIBIT_EMERGENCY_STOP=1
+uint16 INHIBIT_NAV2_NOT_READY=2
+uint16 INHIBIT_TASK_NOT_READY=3
+uint16 INHIBIT_NAV_COMMAND_STALE=4
+uint16 INHIBIT_GROUND_STATION_UNAVAILABLE=5
+uint16 INHIBIT_DRIVER_HEARTBEAT=6
+uint16 INHIBIT_LOCALIZATION_HEARTBEAT=7
+uint16 INHIBIT_RTK_FIX=8
+uint16 INHIBIT_CRITICAL_HEALTH_FAULT=9
+uint16 INHIBIT_TASK_REQUIREMENT=10
+uint16 INHIBIT_CONFIGURATION_ERROR=11
+
+builtin_interfaces/Time stamp
+uint8 state
+uint8 requested_mode
+uint8 effective_source
+bool emergency_stop
+bool auto_permitted
+bool manual_command_fresh
+bool nav_command_fresh
+bool sbus_command_fresh
+uint16[] inhibit_reason_codes
+string[] inhibit_reasons

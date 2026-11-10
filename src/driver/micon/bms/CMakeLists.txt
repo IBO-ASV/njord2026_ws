@@ -14,15 +14,15 @@ endif()
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
+find_package(diagnostic_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(can_msgs REQUIRED)
 
 add_library(bms_component SHARED src/node.cpp)
 target_include_directories(bms_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(bms_component
-  rclcpp rclcpp_components std_msgs can_msgs)
+  rclcpp rclcpp_components diagnostic_msgs std_msgs)
 
 add_executable(bms_node src/main.cpp)
 target_link_libraries(bms_node bms_component)

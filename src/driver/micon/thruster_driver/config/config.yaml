@@ -1,29 +1,38 @@
 thruster_driver_node:
   ros__parameters:
     input_mode: "cmd_vel"       # cmd_vel or duty_array
-    transport_mode: "sim"       # sim, mros_usb, can, both, sim_and_mros_usb, sim_and_can, sim_and_both
 
     duty_resolution: 1000
 
     input_scaling:
-      max_linear_x: 1.5
-      max_linear_y: 1.5
-      max_angular_z: 2.0
+      # Task 2 MPPI targets 2.0 kn (1.0289 m/s).  Keep a small margin so
+      # the final velocity-input clamp does not reduce that command.
+      max_linear_x: 1.1
+      max_linear_y: 1.0
+      max_angular_z: 1.0
 
     control:
       rate_hz: 50.0
+      use_velocity_feedback: true
       feedback_timeout_sec: 0.5
       stop_on_feedback_timeout: true
       p:
-        surge: 0.8
-        sway: 0.8
-        yaw: 0.5
+        surge: 28.29
+        sway: 28.29
+        yaw: 12.17
+      # Wrench is clamped to +/-max_{surge,sway,yaw}_wrench instead of +/-1 so
+      # stick/button-driven manual commands can reach a usable thrust; tuned so
+      # manual_control.launch.py's default full-scale stick/button input
+      # yields ~2N per thruster. See simple_manual/README.md.
+      max_surge_wrench: 145.7
+      max_sway_wrench: 145.7
+      max_yaw_wrench: 206.0
       dob:
         enable: false
         observer_gain: 1.0
         filter_tau_sec: 0.1
       nominal:
-        mass: 10.0
+        mass: 24.0
         iz: 1.5
         damping:
           linear:
@@ -37,6 +46,10 @@ thruster_driver_node:
 
     allocation:
       regularization_lambda: 1.0e-4
+      # With the verified output order, allocated surge already matches the
+      # ROS base_link +x convention. Keep sway and yaw positive too.
+      # Order: [surge, sway, yaw].
+      wrench_sign: [1.0, 1.0, 1.0]
 
     safety:
       watchdog_timeout_sec: 0.5
@@ -44,39 +57,25 @@ thruster_driver_node:
     static_map:
       deadzone_pos: 0.0
       deadzone_neg: 0.0
-      wheels:
+      thrusters:
         forward_gain: [1.0, 1.0, 1.0, 1.0]
         reverse_gain: [1.0, 1.0, 1.0, 1.0]
         offset: [0.0, 0.0, 0.0, 0.0]
 
     # URDF stores only the fixed pose for these links. Direction, reverse and
     # output mapping stay here so wiring and prop orientation can be changed
-    # without changing the robot model.
+    # without changing the robot model. The ESP32 command channel order was
+    # verified with thruster_id_test as [RR, RL, FR, FL].
     thrusters:
-      ids: ["FR", "FL", "RR", "RL"]
-      links: ["thruster_FR", "thruster_FL", "thruster_RR", "thruster_RL"]
-      angle_rad: [0.785398, -0.785398, 2.356194, -2.356194]
-      reverse: [false, false, false, false]
-      force_per_duty: [1.0, 1.0, 1.0, 1.0]
-      can_ids: [769, 770, 771, 772]
-
-    # ESP32 expects one UInt16 command per ESC.
-    # command = u16_neutral + normalized[-1,1] * u16_span
-    u16_neutral: 1000
-    u16_span: 1000
+      ids: ["RR", "RL", "FR", "FL"]
+      links: ["thruster_RR", "thruster_RL", "thruster_FR", "thruster_FL"]
+      angle_rad: [2.356194, -2.356194, 0.785398, -0.785398]
+      reverse: [true, false, false, true]
+      # BlueRobotics T200 @16V max thrust ~51.5N
+      max_thrust: [100.0, 100.0, 100.0, 100.0]
 
     topics:
       cmd_vel: "cmd_vel"
       duty_array: "thruster_command"
       feedback_odometry: "/odometry/filtered/local"
       sim_thruster_command: "/thruster_command"
-      mros_cmd:
-        - "FR_esp32/cmd_duty_u16"
-        - "FL_esp32/cmd_duty_u16"
-        - "RR_esp32/cmd_duty_u16"
-        - "RL_esp32/cmd_duty_u16"
-      can_tx:
-        - "FR_esp32/can_tx"
-        - "FL_esp32/can_tx"
-        - "RR_esp32/can_tx"
-        - "RL_esp32/can_tx"

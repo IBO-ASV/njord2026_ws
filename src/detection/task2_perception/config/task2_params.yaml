@@ -1,0 +1,256 @@
+# Task 2 parameter file
+# =====================
+# This is the single source of Task 2-specific tuning.  It is supplied to
+# every Task 2 perception node launched by task2_autonomy.launch.py and the
+# rosbag-only task2_bag_perception.launch.py.
+# Generic package defaults remain in their own packages; do not put general
+# platform settings here.
+#
+# Values marked HUMAN must be checked on the physical vessel.
+
+# ---------------------------------------------------------------------------
+# LiDAR cloud preparation: /livox/lidar -> /task2/points_filtered
+# ---------------------------------------------------------------------------
+task2_cloud_filter:
+  ros__parameters:
+    input_topic: "/livox/lidar"             # Raw Livox PointCloud2 input
+    output_topic: "/task2/points_filtered"  # Input for Task 2 PCL pipeline
+    output_frame: "base_link"
+    min_range_m: 1.5                         # [m] remove own-hull near field
+    max_range_m: 40.0                        # [m] required encounter range
+    voxel_leaf_size_m: 0.0                   # Downsampling is below (0.15 m)
+    accumulation_frames: 1                   # Never merge raw frame history
+    process_rate_hz: 5.0                     # [Hz] latest frame only; 0=all
+    # Emergency-only pre-rotation.  The URDF TF is normally authoritative.
+    lidar_inverted: false
+    lidar_roll_deg: 0.0
+    lidar_pitch_deg: 0.0
+    lidar_yaw_deg: 0.0
+    # HUMAN: water surface height relative to base_link.
+    waterline_z_m: 0.0                       # [m]
+    water_remove_min_z_m: -0.3               # [m] water-band lower edge
+    water_remove_max_z_m: 0.15               # [m] water-band upper edge
+    water_plane_distance_threshold_m: 0.05   # [m] used only if RANSAC=true
+    water_plane_normal_z_min: 0.9
+    water_plane_max_height_error_m: 0.3      # [m]
+    use_water_plane_ransac: false            # fixed water band is cheaper
+    # HUMAN: own-vessel bounding box; points inside are removed.
+    self_crop_min_x: -1.2
+    self_crop_max_x: 1.2
+    self_crop_min_y: -0.8
+    self_crop_max_y: 0.8
+    self_crop_min_z: -0.5
+    self_crop_max_z: 1.5
+    # Visualization parameters only; they do not enter recognition.
+    publish_self_marker: true
+    self_marker_topic: "/task2/self_vessel_marker"
+    self_marker_publish_rate_hz: 1.0
+    self_marker_yaw_deg: 0.0
+    object_min_z_m: -0.2                     # [m] retained object height
+    object_max_z_m: 4.0                       # [m] retained object height
+    publish_debug: false                      # debug clouds stay disabled
+
+# ---------------------------------------------------------------------------
+# Candidate selection and absolute target velocity output
+# ---------------------------------------------------------------------------
+task2_waypoint_map_frame_relay:
+  ros__parameters:
+    # Keep the odom-frame source topics for navigation.  These map-frame
+    # copies are exclusively for Task 2 perception and global EKF geometry.
+    waypoint1_input_topic: "/waypoint1_pose"
+    waypoint2_input_topic: "/waypoint2_pose"
+    waypoint1_output_topic: "/task2/waypoint1_pose_map"
+    waypoint2_output_topic: "/task2/waypoint2_pose_map"
+    target_frame: "map"
+    transform_timeout_sec: 0.2
+
+opponent_selector:
+  ros__parameters:
+    tracked_objects_topic: "/tracked_objects"
+    # ship_tracker publishes object poses relative to base_link. Convert them
+    # through map<-base_link before corridor and speed gating.
+    tracked_objects_in_map_frame: false
+    ego_odom_topic: "/odometry/filtered/local"
+    twist_topic: "/other_ship/twist"         # map-frame, absolute [m/s]
+    selected_marker_topic: "/task2/selected_opponent_marker" # Foxglove: green selected ship
+    velocity_marker_topic: "/task2/selected_opponent_velocity_marker" # Foxglove: cyan velocity arrow
+    map_frame: "map"
+    base_frame: "base_link"
+    opponent_frame: "opponent_vessel"
+    confirmed_only: true
+    max_distance_m: 60.0                      # [m] track selection distance
+    selection_policy: "nearest"               # nearest|min_tcpa|track_id
+    target_track_id: -1
+    # Catamaran horizontal dimensions. Height is intentionally not gated.
+    # At the end of the recorded run, the same vessel spans about 1.17--2.57 m
+    # between scans.  Keep the gate vessel-sized while allowing that LiDAR
+    # measurement variation.
+    min_length_m: 0.5                          # [m]
+    max_length_m: 3.5                          # [m]
+    min_width_m: 0.3                           # [m]
+    max_width_m: 2.2                           # [m], includes measurement error
+    min_point_count: 0                         # 0 disables this optional gate
+    stale_timeout_sec: 4.0                     # [s], retain a confirmed target through short LiDAR gaps
+    publish_rate_hz: 10.0                      # [Hz] output update rate
+    twist_lowpass_alpha: 0.3
+    # Task 2 launch selects straight_line; standard remains available.
+    motion_filter_mode: "standard"            # standard|straight_line
+    straight_min_hit_count: 5                  # 5 Hz -> roughly 1 s history
+    straight_max_velocity_stddev_mps: 0.60     # [m/s] largest horizontal std-dev
+    # When LiDAR briefly loses a confirmed vessel, keep publishing this
+    # constant-velocity prediction.  0 disables coasting; expiry is silent.
+    straight_coast_timeout_sec: 3.0            # [s]
+    # Operator-facing speed gate. Twist output remains SI m/s.
+    min_absolute_speed_knots: 1.5              # [kn]
+    max_absolute_speed_knots: 3.5              # [kn]
+    # Recognition rectangle fixed in the map frame to GPS point 5 -> 6.
+    # It begins 5 m after GPS5, ends 5 m past GPS6, and is 40 m wide.
+    # task2_waypoint_pose_publisher resolves the GPS points through /fromLL.
+    corridor_enabled: true
+    corridor_start_topic: "/task2/waypoint1_pose_map" # GPS 5, map frame
+    corridor_end_topic: "/task2/waypoint2_pose_map"   # GPS 6, map frame
+    corridor_start_offset_m: 5.0
+    corridor_end_margin_m: 5.0
+    corridor_half_width_m: 20.0
+    # In the GPS5->6 direction, retain a 5 m centre/left safety band for a
+    # vessel arriving from ahead; ignore only the outer left-side area. This
+    # remains fixed even if the vessel changes heading.
+    corridor_ignore_left_side: true
+    corridor_left_side_margin_m: 5.0
+    # Relative to GPS5->6, 0 deg is forward. A target may only approach from
+    # ahead (180 deg) or cross from right to left (+90 deg); keep its observed
+    # position and speed, and clamp only its velocity direction to this sector.
+    clip_opponent_bearing_to_corridor: true
+    opponent_bearing_min_deg: 90.0
+    opponent_bearing_max_deg: 180.0
+
+# ---------------------------------------------------------------------------
+# Route-side buoy selector: shared tracker -> coloured stationary buoys
+# ---------------------------------------------------------------------------
+task2_buoy_selector:
+  ros__parameters:
+    tracked_objects_topic: "/tracked_objects"
+    # Same base_link-relative tracker contract as opponent_selector.
+    tracked_objects_in_map_frame: false
+    ego_odom_topic: "/task2/ego_odom"
+    output_topic: "/task2/buoy_detections"  # njord_interfaces/BuoyDetectionArray
+    legacy_point_topic: "/buoy_detections"  # PointStamped compatibility feed
+    map_frame: "map"
+    base_frame: "base_link"
+    waypoint_start_topic: "/task2/waypoint1_pose_map" # GPS 5
+    waypoint_end_topic: "/task2/waypoint2_pose_map"   # GPS 6
+    # GPS5->6 only: 3 m-wide bands centred 2.5 m from the route: red is
+    # left 1.0..4.0 m and green is right 1.0..4.0 m.
+    expected_lateral_offset_m: 2.5
+    lateral_tolerance_m: 1.5
+    start_margin_m: 0.0
+    end_margin_m: 0.0
+    confirmed_only: true
+    min_hit_count: 5
+    max_distance_m: 40.0
+    # Matches the former camera + LiDAR fusion PCL detector's minimum
+    # cluster population. That detector used no 3-D bounding-box gate.
+    min_point_count: 5
+    # The former buoy costmap used physical radius 0.45 m (diameter 0.9 m).
+    # Permit 0.3 m of LiDAR clustering error, while rejecting vessel-sized
+    # stationary tracks. Use the same vertical extent gate as other ships.
+    min_length_m: 0.0
+    max_length_m: 1.2
+    min_width_m: 0.0
+    max_width_m: 1.2
+    min_height_m: 0.15
+    max_height_m: 1.5
+    stale_timeout_sec: 2.0
+    stationary_speed_max_mps: 0.35
+    # After tracker confirmation, require enough stationary observations in
+    # this rolling window; they do not need to be consecutive.
+    stationary_confirmation_window_sec: 3.0
+    stationary_confirmation_min_observations: 5
+    publish_rate_hz: 5.0
+
+task2_buoy_pose_correction:
+  ros__parameters:
+    buoy_topic: "/task2/buoy_detections"
+    odom_topic: "/odometry/filtered/global"
+    output_topic: "/task2/buoy_pose_correction"
+    waypoint_start_topic: "/task2/waypoint1_pose_map"
+    waypoint_end_topic: "/task2/waypoint2_pose_map"
+    frame_id: "map"
+    pair_separation_m: 5.0
+    pair_separation_tolerance_m: 2.0
+    max_pair_along_error_m: 2.0
+    max_cross_track_correction_m: 2.0
+    max_yaw_correction_rad: 0.35
+    stable_samples_required: 5
+    position_stddev_m: 0.5
+    along_track_stddev_m: 20.0
+    yaw_stddev_rad: 0.12
+
+# ---------------------------------------------------------------------------
+# PCL preprocessing: compact, current-frame cloud for Task 2 only
+# ---------------------------------------------------------------------------
+preprocessing_node:
+  ros__parameters:
+    voxel_leaf_x: 0.15                         # [m] voxel downsampling
+    voxel_leaf_y: 0.15
+    voxel_leaf_z: 0.15
+    roi_min_x: -10.0                           # [m] retain short rear sector
+    roi_max_x: 40.0                            # [m] forward encounter sector
+    roi_min_y: -25.0                           # [m] port/starboard sector
+    roi_max_y: 25.0
+    roi_min_z: -1.0                            # [m]
+    roi_max_z: 4.0                             # [m]
+    min_range: 1.5                             # [m]
+    max_range: 40.0                            # [m]
+    accumulate_frames: false                   # avoids KD-tree inflation
+    num_accumulate_frames: 1
+    input_queue_depth: 1                       # drop stale clouds
+    base_frame: "base_link"
+
+# ---------------------------------------------------------------------------
+# Water/ground removal: lower RANSAC cost after water-band removal above
+# ---------------------------------------------------------------------------
+ground_remover_node:
+  ros__parameters:
+    method: "ransac"
+    ransac_distance_threshold: 0.2             # [m]
+    ransac_max_iterations: 80                  # generic default is 150
+    min_z_ground: -1.0                         # [m]
+    max_z_ground: 0.5                          # [m]
+    sensor_height: 1.5                         # [m], HUMAN: LiDAR height
+    publish_ground_cloud: false
+    input_queue_depth: 1                       # drop stale clouds
+
+# ---------------------------------------------------------------------------
+# Euclidean clustering: reject sea clutter and oversized structures early
+# ---------------------------------------------------------------------------
+cluster_node:
+  ros__parameters:
+    cluster_tolerance: 1.0                     # [m] neighbouring-point link
+    min_cluster_size: 20                       # [points] near-range clutter gate
+    min_cluster_size_far: 3                    # [points] sparse returns at 40 m
+    far_cluster_distance_m: 40.0               # [m] linear transition endpoint
+    max_cluster_size: 10000                    # [points] reject large structures
+    min_cluster_height: 0.2                    # [m]
+    max_cluster_height: 4.0                    # [m]
+    max_cluster_horizontal_size: 5.0           # [m]
+    publish_each_cluster: false
+    input_queue_depth: 1                       # drop stale clouds
+
+# ---------------------------------------------------------------------------
+# EKF tracker: Task 2 straight-line confirmation window
+# ---------------------------------------------------------------------------
+ship_tracker_node:
+  ros__parameters:
+    # Track cluster centroids in odom at the LiDAR measurement time, then
+    # publish the result back in base_link so self motion is not target motion.
+    ego_pose_compensation: true
+    ego_odom_max_age_sec: 0.15
+    publish_tentative: true                    # Foxglove: show early candidates in yellow
+    min_marker_speed_knots: 0.0                # candidate display only; does not affect selection
+    max_marker_speed_knots: 10000.0
+    # Standard mode still needs 3 hits to confirm, but tolerates brief gaps
+    # while the track is tentative (each missed scan decrements hits by one).
+    max_misses_tentative: 4                    # 5 Hz -> retain a tentative candidate for about 0.8 s
+    straight_hits_to_confirm: 10               # 5 Hz -> roughly 2 s to confirm
+    max_misses_confirmed: 20                    # 5 Hz -> retain confirmed tracks for about 4 s

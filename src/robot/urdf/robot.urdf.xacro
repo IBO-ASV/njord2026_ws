@@ -17,7 +17,7 @@
   <xacro:property name="gnss1_y" value="0.4" />
   <xacro:property name="gnss1_z" value="1.0" />
 
-  <xacro:property name="gnss2_x" value="-0.5" />
+  <xacro:property name="gnss2_x" value="0.5" />
   <xacro:property name="gnss2_y" value="-0.4" />
   <xacro:property name="gnss2_z" value="1.0" />
 
@@ -44,14 +44,6 @@
   </xacro:macro>
 
 
-  <link name="base_footprint"/>
-
-  <joint name="base_joint" type="fixed">
-    <parent link="base_footprint"/>
-    <child link="base_link"/>
-    <origin xyz="0 0 ${base_height/2}" rpy="0 0 0"/>
-  </joint>
-
   <link name="base_link">
     <visual>
       <geometry>
@@ -68,6 +60,34 @@
     </collision>
   </link>
 
+  <!-- ZED2i left camera optical-origin frame, rigidly mounted at the bow. -->
+  <link name="zed2i_left_camera_frame"/>
+
+  <joint name="zed2i_left_camera_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="zed2i_left_camera_frame"/>
+    <origin xyz="0.48 0 0.47" rpy="0 0 0"/>
+  </joint>
+
+  <!-- The right imager is 15 cm to starboard of the left imager. -->
+  <link name="zed2i_right_camera_frame"/>
+
+  <joint name="zed2i_right_camera_joint" type="fixed">
+    <parent link="zed2i_left_camera_frame"/>
+    <child link="zed2i_right_camera_frame"/>
+    <origin xyz="0 -0.15 0" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Rear camera: 60 cm aft of the ZED2i stereo centre, facing aft.
+       Relative to the left imager, the stereo centre is 7.5 cm starboard. -->
+  <link name="back_cam_link"/>
+
+  <joint name="back_cam_joint" type="fixed">
+    <parent link="zed2i_left_camera_frame"/>
+    <child link="back_cam_link"/>
+    <origin xyz="-0.60 -0.075 0" rpy="0 0 3.141592653589793"/>
+  </joint>
+
   <link name="livox_frame">
     <visual>
       <geometry>
@@ -82,7 +102,9 @@
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="livox_frame"/>
-    <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="0 0 0"/>
+    <!-- The MID-360 is mounted upside down: preserve its origin while
+         rotating its frame 180 degrees around the vehicle X axis. -->
+    <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="3.141592653589793 0 0"/>
   </joint>
 
   <link name="imu_link">
@@ -100,6 +122,15 @@
     <parent link="base_link"/>
     <child link="imu_link"/>
     <origin xyz="${imu_x} ${imu_y} ${imu_z}" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Placeholder Spatial extrinsics. Measure and replace before tuning fusion. -->
+  <link name="spatial_link"/>
+
+  <joint name="spatial_joint" type="fixed">
+    <parent link="base_link"/>
+    <child link="spatial_link"/>
+    <origin xyz="0 0 0" rpy="0 0 0"/>
   </joint>
 
   <link name="gnss_link">

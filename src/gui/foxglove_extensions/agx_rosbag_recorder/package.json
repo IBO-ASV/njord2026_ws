@@ -1,0 +1,10 @@
+{
+  "name": "agx-rosbag-recorder",
+  "displayName": "AGX Rosbag Recorder",
+  "description": "One-click start and stop for sensor rosbag recording on the AGX.",
+  "publisher": "KeioRoboticsAssociation",
+  "version": "0.1.0",
+  "license": "Apache-2.0",
+  "main": "./dist/extension.js",
+  "scripts": { "package": "./scripts/package.sh" }
+}

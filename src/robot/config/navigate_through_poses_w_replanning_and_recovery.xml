@@ -2,7 +2,7 @@
   <BehaviorTree ID="MainTree">
     <RecoveryNode number_of_retries="6" name="NavigateRecovery">
       <PipelineSequence name="NavigateWithReplanning">
-        <RateController hz="0.333">
+        <RateController hz="__REPLANNING_FREQUENCY__">
           <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
             <Sequence name="ComputeAndSmoothPath">
               <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.7"/>

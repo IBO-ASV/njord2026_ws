@@ -5,7 +5,7 @@
         <RateController hz="0.333">
           <RecoveryNode number_of_retries="1" name="ComputePathThroughPoses">
             <Sequence name="ComputeAndSmoothPath">
-              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="0.7"/>
+              <RemovePassedGoals input_goals="{goals}" output_goals="{goals}" radius="2.0"/>
               <ComputePathThroughPoses goals="{goals}" path="{path}" planner_id="GridBased"/>
               <SmoothPath unsmoothed_path="{path}" smoothed_path="{path}" smoother_id="natural_cubic_spline"/>
             </Sequence>

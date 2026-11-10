@@ -1,33 +1,35 @@
 ### Local EKF (odom -> base_link estimate) ###
-# GLIM odometry and the WIT Motion IMU are fused into a filtered odometry
-# topic. GLIM remains the TF authority on the real robot.
+# Optional Livox-IMU local EKF (odom -> base_link estimate). It replaces the
+# UM982 feedback EKF when minipc_bringup use_ekf_local:=true.
 ekf_filter_node_local:
   ros__parameters:
     frequency: 30.0
     two_d_mode: true
-    publish_tf: false
+    publish_tf: true
     map_frame: map
     odom_frame: odom
     base_link_frame: base_link
     world_frame: odom
     print_diagnostics: true
 
-    # GLIM LiDAR odometry
-    odom0: /odom
-    odom0_config: [true,  true,  true,
-                   true,  true,  true,
-                   false, false, false,
-                   false, false, false,
-                   false, false, false]
-    odom0_differential: false
+    # GLIM is disabled for this EKF-only fallback. Do not subscribe to /odom:
+    # an absent or stale GLIM source must not become a delayed measurement.
 
-    # WIT Motion IMU: use relative orientation changes in the local filter
-    imu0: /wit/imu
+    imu0: /livox/imu
+    # MID-360 has no attitude estimate; fuse angular velocity and linear
+    # acceleration instead. With two_d_mode, robot_localization uses the planar
+    # components (yaw rate and X/Y acceleration) and ignores roll/pitch/Z.
+    # livox_ros_driver2's LivoxImuScaler converts the sensor's native g values
+    # to the sensor_msgs/Imu-required m/s^2 before publishing /livox/imu.
     imu0_config: [false, false, false,
-                  true,  true,  true,
+                  false, false, false,
                   false, false, false,
                   true,  true,  true,
                   true,  true,  true]
-    imu0_differential: false
-    imu0_relative: true
-    imu0_remove_gravitational_acceleration: true
+
+    # imu1: /imu/data
+    # imu1_config: [false, false, false,
+    #               false, false, false,
+    #               true,  true,  true,
+    #               false, false, false,
+    #               true,  true,  true]

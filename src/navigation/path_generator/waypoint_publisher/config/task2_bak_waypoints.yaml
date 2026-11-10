@@ -1,0 +1,16 @@
+# Task 2 fallback route.  Waypoints 1 and 4 remain on GPS 5 -> GPS 6;
+# waypoints 2 and 3 are 10 m to its right when travelling toward GPS 6.
+task2_bak_config:
+  frame_id: "odom"
+  publish_rate_hz: 2.0
+  waypoints:
+    - {id: 5, latitude: 63.4407340000, longitude: 10.4233660000, yaw: -1.9634954085, type: "start", name: "GPS 5 - Start", tolerance_m: 2.0}
+    - {id: waypoint1, latitude: 63.4406792000, longitude: 10.4232888000, yaw: -1.9634954085, type: "waypoint", name: "Waypoint 1", tolerance_m: 2.0}
+    - {id: waypoint2, latitude: 63.4406723313, longitude: 10.4230414139, yaw: -1.9634954085, type: "waypoint", name: "Waypoint 2 - Right 10 m", tolerance_m: 2.0}
+    - {id: waypoint3, latitude: 63.4406175313, longitude: 10.4229642139, yaw: -1.9634954085, type: "waypoint", name: "Waypoint 3 - Right 10 m", tolerance_m: 2.0}
+    - {id: waypoint4, latitude: 63.4405148000, longitude: 10.4230572000, yaw: -1.9634954085, type: "waypoint", name: "Waypoint 4", tolerance_m: 2.0}
+    - {id: 6, latitude: 63.4404600000, longitude: 10.4229800000, yaw: -1.9634954085, type: "goal", name: "GPS 6 - Goal", tolerance_m: 2.0}
+
+  constraints:
+    speed_knots: 2.0
+    obstacle_avoidance: false

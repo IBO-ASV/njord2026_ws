@@ -60,12 +60,18 @@
       1.0
     ],
     "intensity_field": "intensity",
-    "ring_field": "",
+    // MID-360SのPointCloud2（xfer_format=0）は"line"を出力する。GLIMはこれを
+    // 読み取れるが、現行preprocessにはline別ダウンサンプリングは実装されていない。
+    "ring_field": "line",
     // LiDAR per-point time settings
-    "autoconf_perpoint_times": true,
+    // livox_ros_driver2 publishes the PointCloud2 "timestamp" field as an
+    // absolute nanosecond timestamp (not a frame-relative time).  Do not let
+    // GLIM infer this from an individual scan: the values can look plausible
+    // in another unit, while placing a scan roughly 1e9 times away from IMU.
+    "autoconf_perpoint_times": false,
     "autoconf_prefer_frame_time": false,
-    "perpoint_relative_time": true,
-    "perpoint_time_scale": 1.0,
+    "perpoint_relative_time": false,
+    "perpoint_time_scale": 1e-9,
     // Camera config (required for only extension modules)
     "global_shutter_camera": true,
     "image_size": [

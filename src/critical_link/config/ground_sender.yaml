@@ -1,0 +1,13 @@
+critical_link_sender:
+  ros__parameters:
+    joy_input_topic: /critical_link/input/joy
+    heartbeat_input_topic: /critical_link/input/heartbeat
+    operator_command_input_topic: /critical_link/input/operator_command
+    operator_response_output_topic: /critical_link/output/operator_response
+    # Format: name|Ground-PC bind IPv4|vessel destination IPv4|UDP port
+    udp_paths:
+      - "sensor_lan|192.168.1.72|192.168.1.5|45100"
+    # Use a stable /dev/serial/by-id path for the Ground ESP32.
+    serial_device: ""
+    serial_baud: 921600
+    key_file: /etc/njord/critical_link.key

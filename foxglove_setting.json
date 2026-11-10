@@ -1,0 +1,406 @@
+{
+  "configById": {
+    "3D!2kxxs4d": {
+      "topics": {
+        "/map_points": {
+          "visible": true,
+          "colorField": "z",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/livox/lidar": {
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/task2/points_filtered_visual": {
+          "visible": true,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo",
+          "pointSize": 3
+        },
+        "/tracked_objects/markers": {
+          "visible": true
+        },
+        "/task2/self_vessel_marker": {
+          "visible": true
+        },
+        "/mppi/crm_costmap": {
+          "visible": true
+        },
+        "/planned_path_pruned": {
+          "visible": true
+        },
+        "/glim_rosnode/points": {
+          "visible": false
+        },
+        "/glim_rosnode/aligned_points": {
+          "visible": false,
+          "colorField": "intensity",
+          "colorMode": "colormap",
+          "colorMap": "turbo",
+          "decayTime": 2
+        },
+        "/com/markers": {
+          "visible": true
+        },
+        "/robot_description": {
+          "visible": false
+        },
+        "/sim/markers": {
+          "visible": true
+        },
+        "/global_costmap/costmap": {
+          "visible": true
+        },
+        "/cardinal_virtual_obstacles": {
+          "visible": true,
+          "colorField": "z",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/global_costmap/obstacle_layer": {
+          "visible": true
+        },
+        "/route_graph": {
+          "visible": false
+        },
+        "/local_costmap/costmap": {
+          "visible": true
+        },
+        "/local_costmap/obstacle_layer": {
+          "visible": true
+        },
+        "/sim/boundary_markers": {
+          "visible": true
+        },
+        "/sim/buoy_markers": {
+          "visible": true
+        },
+        "/sim/cardinal_mark_markers": {
+          "visible": true
+        },
+        "/task_waypoint_markers": {
+          "visible": true
+        },
+        "/task_waypoint_path": {
+          "visible": true
+        },
+        "/task_waypoints": {
+          "visible": true
+        },
+        "/virtual_obstacles": {
+          "visible": true,
+          "colorField": "z",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        },
+        "/waypoint_markers": {
+          "visible": true
+        },
+        "/collision_monitor/collision_points_marker": {
+          "visible": true
+        },
+        "/plan": {
+          "visible": false
+        },
+        "/plan_smoothed": {
+          "visible": false
+        },
+        "/robot_marker": {
+          "visible": true
+        },
+        "/planned_path_marker": {
+          "visible": true
+        },
+        "/actual_path_marker": {
+          "visible": true
+        },
+        "/received_global_plan": {
+          "visible": true
+        },
+        "/staging_pose": {
+          "visible": false
+        },
+        "/docking_trajectory": {
+          "visible": false
+        },
+        "/global_costmap/published_footprint": {
+          "visible": true
+        },
+        "/local_costmap/published_footprint": {
+          "visible": true
+        },
+        "/initialpose": {
+          "visible": true
+        },
+        "/move_base_simple/goal": {
+          "visible": true
+        },
+        "/lookahead_collision_arc": {
+          "visible": false
+        },
+        "/sensor/vehicle_gnss/compass/raw": {
+          "visible": true
+        },
+        "/set_pose": {
+          "visible": true
+        },
+        "/sim_obstacles": {
+          "visible": true,
+          "colorField": "z",
+          "colorMode": "colormap",
+          "colorMap": "turbo"
+        }
+      },
+      "layers": {
+        "2aa88f27-33ce-45df-87d5-6b75a5bb4093": {
+          "layerId": "foxglove.Grid",
+          "instanceId": "2aa88f27-33ce-45df-87d5-6b75a5bb4093"
+        }
+      },
+      "cameraState": {
+        "perspective": true,
+        "distance": 12.604988194437238,
+        "phi": 0.000057336478528441645,
+        "thetaOffset": 89.80765480602999,
+        "targetOffset": [
+          9.375001732763673,
+          -0.3814916706584952,
+          0.40146180651393326
+        ],
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000,
+        "logDepth": false
+      },
+      "followMode": "follow-pose",
+      "followTf": "map",
+      "scene": {},
+      "transforms": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "imageMode": {},
+      "synchronize": false,
+      "fixedFrame": "map"
+    },
+    "KeioRoboticsAssociation.gnss-map-telemetry.gnss-map-telemetry!3qrb5wg": {
+      "foxglovePanelTitle": "GNSS Course (Map)"
+    },
+    "KeioRoboticsAssociation.gnss-map-telemetry.lidar-mission-splat!livox-splat": {
+      "foxglovePanelTitle": "LiDAR Mission Splat"
+    },
+    "Image!3umscrg": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 60,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "synchronize": false,
+      "imageMode": {
+        "imageTopic": "/zed2i/left/image_rect",
+        "calibrationTopic": "/zed2i/left/camera_info"
+      }
+    },
+    "KeioRoboticsAssociation.gnss-map-telemetry.battery-status!battery": {
+      "foxglovePanelTitle": "Battery Remaining (%)"
+    },
+    "Indicator!35h1ahn": {
+      "path": "/system/control_status.data",
+      "style": "bulb",
+      "fontSize": 36,
+      "fallbackColor": "#a0a0a0",
+      "fallbackLabel": "No control status",
+      "rules": [
+        {
+          "operator": "=",
+          "rawValue": "auto",
+          "color": "#51e358",
+          "label": "AUTONOMOUS"
+        },
+        {
+          "operator": "=",
+          "rawValue": "manual",
+          "color": "#f7d13d",
+          "label": "REMOTE CONTROL"
+        },
+        {
+          "operator": "=",
+          "rawValue": "emergency_stop",
+          "color": "#f01a1a",
+          "label": "EMERGENCY STOP"
+        }
+      ],
+      "foxglovePanelTitle": "CTRL Mode"
+    },
+    "Indicator!control-state": {
+      "path": "/control/state.state",
+      "style": "bulb",
+      "fontSize": 28,
+      "fallbackColor": "#a0a0a0",
+      "fallbackLabel": "No control state",
+      "rules": [
+        {"operator": "=", "rawValue": "1", "color": "#f7d13d", "label": "MANUAL"},
+        {"operator": "=", "rawValue": "2", "color": "#f7d13d", "label": "AUTO REQUESTED"},
+        {"operator": "=", "rawValue": "3", "color": "#f7a13d", "label": "AUTO ARMED"},
+        {"operator": "=", "rawValue": "4", "color": "#51e358", "label": "AUTO RUNNING"},
+        {"operator": "=", "rawValue": "5", "color": "#f7a13d", "label": "AUTO INHIBITED"},
+        {"operator": "=", "rawValue": "6", "color": "#f01a1a", "label": "EMERGENCY STOP"}
+      ],
+      "foxglovePanelTitle": "CTRL State"
+    },
+    "Tab!uld7tu": {
+      "activeTabIdx": 0,
+      "tabs": [
+        {
+          "title": "Overview",
+          "layout": {
+            "first": {
+              "first": "3D!2kxxs4d",
+              "second": {
+                "first": "KeioRoboticsAssociation.gnss-map-telemetry.gnss-map-telemetry!3qrb5wg",
+                "second": "KeioRoboticsAssociation.gnss-map-telemetry.lidar-mission-splat!livox-splat",
+                "direction": "row"
+              },
+              "direction": "column"
+            },
+            "second": {
+              "first": {
+                "first": "Image!3umscrg",
+                "second": "KeioRoboticsAssociation.gnss-map-telemetry.battery-status!battery",
+                "direction": "row"
+              },
+              "second": {
+                "first": "Image!47e2xka",
+                "second": {
+                  "first": "Indicator!35h1ahn",
+                  "second": "Indicator!control-state",
+                  "direction": "column"
+                },
+                "direction": "row"
+              },
+              "direction": "column"
+            },
+            "direction": "row"
+          }
+        }
+      ]
+    },
+    "DiagnosticSummary!1sf34y9": {
+      "minLevel": 0,
+      "pinnedIds": [],
+      "hardwareIdFilter": "",
+      "topicToRender": "/diagnostics",
+      "sortByLevel": true,
+      "secondsUntilStale": 5
+    },
+    "Image!47e2xka": {
+      "cameraState": {
+        "distance": 20,
+        "perspective": true,
+        "phi": 60,
+        "target": [
+          0,
+          0,
+          0
+        ],
+        "targetOffset": [
+          0,
+          0,
+          0
+        ],
+        "targetOrientation": [
+          0,
+          0,
+          0,
+          1
+        ],
+        "thetaOffset": 60,
+        "fovy": 45,
+        "near": 0.5,
+        "far": 5000
+      },
+      "followMode": "follow-pose",
+      "scene": {},
+      "transforms": {},
+      "topics": {},
+      "layers": {},
+      "publish": {
+        "type": "point",
+        "poseTopic": "/move_base_simple/goal",
+        "pointTopic": "/clicked_point",
+        "poseEstimateTopic": "/initialpose",
+        "poseEstimateXDeviation": 0.5,
+        "poseEstimateYDeviation": 0.5,
+        "poseEstimateThetaDeviation": 0.26179939
+      },
+      "synchronize": false,
+      "imageMode": {}
+    }
+  },
+  "layout": {
+    "first": "Tab!uld7tu",
+    "second": "DiagnosticSummary!1sf34y9",
+    "direction": "column",
+    "splitPercentage": 65.78212290502793
+  },
+  "globalVariables": {},
+  "playbackConfig": {
+    "speed": 1
+  },
+  "userNodes": {}
+}

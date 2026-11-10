@@ -1,0 +1,79 @@
+/**:
+  ros__parameters:
+    # ─── Model / Input（モデルと入力画像）────────────────────────
+    # model_path（YOLO 重みファイルのパス）。
+    # 空文字 "" の場合は、この yolo パッケージ内の config/best.pt を使う。札場君が学習した最新のもの。
+    model_path: ""
+
+    # device（推論デバイス）。
+    # CPU で試すなら "cpu"、CUDA を使うなら "cuda:0"。
+    device: "cuda:0"
+    # device: "cpu"
+
+    # camera_topic（入力カメラ画像 topic）。
+    # ZED の左画像だけを使うなら /zed/zed_node/left/image_rect_color などにする。
+    camera_topic: "/zed/zed_node/rgb/image_rect_color"
+
+    # ─── Image ROI（画像内の監視領域）───────────────────────────
+    # use_image_roi=true のとき、画像全体ではなく指定した範囲だけ YOLO 推論する。
+    # 上空・船体・近すぎる水面などを除外して、推論を軽くし誤検出を減らす。
+    use_image_roi: true
+
+    # ROI は画像サイズに対する比率 [0.0-1.0] で指定する。
+    # x は左→右、y は上→下。
+    # 例: roi_y_min_ratio=0.25 は「画像の上 25% を見ない」という意味。基本空は見なくていいと思うけど、船体の上の方にブイがある場合は見えなくなるので注意。
+    # 例: roi_y_max_ratio=1.0 は「画像の下端まで見る」という意味。近づいたとき用。
+    # 例: roi_x_min_ratio=0.0 は「画像の左端から見る」という意味。ブイは左右どちらにあるかわからないので、0.0 でいいと思う。
+    # 例: roi_x_max_ratio=1.0 は「画像の右端まで見る」という意味。ブイは左右どちらにあるかわからないので、1.0 でいいと思う。
+    roi_x_min_ratio: 0.0
+    roi_x_max_ratio: 1.0
+    roi_y_min_ratio: 0.0
+    roi_y_max_ratio: 1.0
+
+    # draw_image_roi（debug_image に ROI 枠を描くか）。
+    # true にすると /yolo/debug_image 上で監視領域を確認できる。
+    draw_image_roi: true
+
+    # ─── Rate Limit（処理周期を落として軽くする）───────────────
+    # inference_hz（YOLO 推論を何 Hz で行うか）。
+    # 0.0 にすると入力画像が来るたびに推論するが、CPU/GPU と Foxglove が重くなりやすい。
+    # 最初は 5.0 程度がおすすめ。もっと軽くしたい場合は 2.0〜3.0 に下げる。
+    inference_hz: 2.0
+
+    # debug_image_hz（/yolo/debug_image を何 Hz で publish するか）。
+    # Foxglove の画像表示がカクつく場合は、この値を下げる。
+    # 推論結果 /yolo/detections は inference_hz 側に従う。
+    debug_image_hz: 2.0
+
+    # publish_debug_image（debug画像を publish するか）。
+    # fusion の動作確認だけなら false にするとさらに軽くなる。
+    publish_debug_image: true
+
+    # subscription_queue_size（画像購読キュー）。
+    # 1 にすると古い画像を溜めにくく、遅延が増えにくい。
+    subscription_queue_size: 1
+
+    # ─── Outputs（出力 topic）───────────────────────────────────
+    # detections_topic（YOLO の bbox/class/confidence/color 出力）。
+    detections_topic: "/yolo/detections"
+
+    # publish_detections（Detection2DArray を publish するか）。
+    publish_detections: true
+
+    # enable_color_estimation（bbox 内の画素から色を推定するか）。
+    # YOLO の class 名に red/green/yellow などが入っている場合は class 名を優先する。
+    enable_color_estimation: true
+
+
+
+    # ─── Legacy ROI / Virtual Wall（既存機能：タナベが触る前）────────────────────
+    # 既存の /buoy_roi と /virtual_obstacles 用。camera-lidar fusion 本線では
+    # /yolo/detections を使うので、必要なければ false のままでよい。
+    enable_roi: false
+    enable_virtual_wall: false
+    roi_topic: "/buoy_roi"
+    roi_frame_id: "base_link"
+    roi_range_predict: 5.0
+    roi_range_half: 2.0
+    camera_fov_deg: 90.0
+    roi_theta_min_deg: 2.0

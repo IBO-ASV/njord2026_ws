@@ -23,6 +23,10 @@ PlanarInput dutiesToPlanarInput(
   const std::vector<SimThrusterGeometry> & geometry,
   const T200Model & thrust_model);
 
+PlanarInput forcesToPlanarInput(
+  const std::vector<double> & forces,
+  const std::vector<SimThrusterGeometry> & geometry);
+
 }  // namespace sim
 }  // namespace njord
 

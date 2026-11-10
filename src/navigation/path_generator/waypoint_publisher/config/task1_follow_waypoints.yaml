@@ -1,0 +1,143 @@
+# Task 1 (follow test): Maneuvering and Path Finding
+# Bathymetry-style lawnmower follow-test waypoint configuration for the test07089 pool.
+#
+# Selected via `task_type:=task1_follow`. Coexists with the competition `task1`
+# waypoints (task1_waypoints.yaml) rather than replacing them.
+#
+# Pool rectangle reference points:
+#   A: 35°40'03.0"N 139°47'37.9"E
+#   B: 35°40'03.9"N 139°47'36.8"E
+#   C: 35°40'03.3"N 139°47'36.1"E
+#
+# B is the right-angle corner within measurement accuracy. GPS points 1 and 2
+# are placed near opposite corners of the usable survey area. The route is a
+# lawnmower pattern: each long leg is about 25 m, then the ASV shifts sideways
+# about 3.59 m before running the next leg in the opposite direction.
+
+task1_follow_config:
+  frame_id: "odom"
+  publish_rate_hz: 2.0
+  waypoints:
+    - id: 1
+      latitude: 35.6677242112
+      longitude: 139.7935559245
+      yaw: -0.7889
+      type: "start"
+      name: "GPS 1 - Survey Start"
+      tolerance_m: 2.0
+
+    - id: 2
+      latitude: 35.6675648499
+      longitude: 139.7937506994
+      yaw: -2.3294
+      type: "turn"
+      name: "Waypoint 1 - Lane 1 End"
+      tolerance_m: 2.0
+
+    - id: 3
+      latitude: 35.6675414184
+      longitude: 139.7937233624
+      yaw: 2.3527
+      type: "turn"
+      name: "Waypoint 2 - Lane 2 Start"
+      tolerance_m: 2.0
+
+    - id: 4
+      latitude: 35.6677007805
+      longitude: 139.7935285875
+      yaw: -2.3294
+      type: "turn"
+      name: "Waypoint 3 - Lane 2 End"
+      tolerance_m: 2.0
+
+    - id: 5
+      latitude: 35.6676773490
+      longitude: 139.7935012515
+      yaw: -0.7889
+      type: "turn"
+      name: "Waypoint 4 - Lane 3 Start"
+      tolerance_m: 2.0
+
+    - id: 6
+      latitude: 35.6675179877
+      longitude: 139.7936960264
+      yaw: -2.3294
+      type: "turn"
+      name: "Waypoint 5 - Lane 3 End"
+      tolerance_m: 2.0
+
+    - id: 7
+      latitude: 35.6674945570
+      longitude: 139.7936686905
+      yaw: 2.3527
+      type: "turn"
+      name: "Waypoint 6 - Lane 4 Start"
+      tolerance_m: 2.0
+
+    - id: 8
+      latitude: 35.6676539184
+      longitude: 139.7934739156
+      yaw: -2.3294
+      type: "turn"
+      name: "Waypoint 7 - Lane 4 End"
+      tolerance_m: 2.0
+
+    - id: 9
+      latitude: 35.6676304868
+      longitude: 139.7934465796
+      yaw: -0.7889
+      type: "turn"
+      name: "Waypoint 8 - Lane 5 Start"
+      tolerance_m: 2.0
+
+    - id: 10
+      latitude: 35.6674711255
+      longitude: 139.7936413546
+      yaw: -2.3294
+      type: "turn"
+      name: "Waypoint 9 - Lane 5 End"
+      tolerance_m: 2.0
+
+    - id: 11
+      latitude: 35.6674476949
+      longitude: 139.7936140175
+      yaw: 2.3527
+      type: "turn"
+      name: "Waypoint 10 - Lane 6 Start"
+      tolerance_m: 2.0
+
+    - id: 12
+      latitude: 35.6676070562
+      longitude: 139.7934192426
+      yaw: -2.3294
+      type: "turn"
+      name: "Waypoint 11 - Lane 6 End"
+      tolerance_m: 2.0
+
+    - id: 13
+      latitude: 35.6675836246
+      longitude: 139.7933919066
+      yaw: -0.7889
+      type: "turn"
+      name: "Waypoint 12 - Lane 7 Start"
+      tolerance_m: 2.0
+
+    - id: 14
+      latitude: 35.6674242633
+      longitude: 139.7935866816
+      yaw: -0.7889
+      type: "goal"
+      name: "GPS 2 - Survey Finish"
+      tolerance_m: 2.0
+
+  constraints:
+    follow_test: true
+    route_pattern: "bathymetry_lawnmower"
+    long_leg_length_m: 25.0
+    lane_spacing_m: 3.5938
+    lane_count: 7
+    pool_long_edge_m: 39.2189
+    pool_short_edge_m: 25.5628
+    edge_inset_m: 2.0
+    cardinal_marker_detection: false
+    vision_halfway: false

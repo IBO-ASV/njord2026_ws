@@ -1,5 +1,6 @@
 #include "um982_driver/utils.hpp"
 #include <algorithm>
+#include <cctype>
 #include <iostream>
 
 namespace um982_driver
@@ -47,9 +48,21 @@ bool validate_checksum(const std::string & sentence)
     checksum_str.erase(std::remove(checksum_str.begin(), checksum_str.end(), '\r'), checksum_str.end());
     checksum_str.erase(std::remove(checksum_str.begin(), checksum_str.end(), '\n'), checksum_str.end());
 
+    if (checksum_str.size() != 2 ||
+        !std::all_of(checksum_str.begin(), checksum_str.end(), [](unsigned char character) {
+            return std::isxdigit(character) != 0;
+        }))
+    {
+        return false;
+    }
+
     int provided_checksum = 0;
     try {
-        provided_checksum = std::stoi(checksum_str, nullptr, 16);
+        std::size_t parsed = 0;
+        provided_checksum = std::stoi(checksum_str, &parsed, 16);
+        if (parsed != checksum_str.size()) {
+            return false;
+        }
     } catch (...) {
         return false;
     }
@@ -63,31 +76,114 @@ bool validate_checksum(const std::string & sentence)
     return calculated_checksum == provided_checksum;
 }
 
-double convert_nmea_to_latlon(const std::string & value, const std::string & direction)
+bool parse_finite_double(const std::string & value, double & result) noexcept
 {
     if (value.empty()) {
-        return 0.0;
+        return false;
     }
 
     try {
-        double raw_val = std::stod(value);
-        
-        // ddmm.mmmm -> dd + mm.mmmm/60
-        // 100で割ると 3541.605 -> 35.41605 となる
-        int degrees = static_cast<int>(raw_val / 100);
-        double minutes = raw_val - (degrees * 100);
-        
-        double decimal = degrees + (minutes / 60.0);
-
-        if (direction == "S" || direction == "W") {
-            decimal = -decimal;
+        std::size_t parsed = 0;
+        const double candidate = std::stod(value, &parsed);
+        if (parsed != value.size() || !std::isfinite(candidate)) {
+            return false;
         }
-
-        return decimal;
+        result = candidate;
+        return true;
     } catch (...) {
-        // パースエラー時は安全のため0を返す、あるいは例外を投げる設計も可
-        return 0.0;
+        return false;
     }
+}
+
+bool parse_nmea_utc_seconds(const std::string & value, double & result) noexcept
+{
+    double raw = 0.0;
+    if (!parse_finite_double(value, raw) || raw < 0.0) {
+        return false;
+    }
+    const int hours = static_cast<int>(raw / 10000.0);
+    const int minutes = static_cast<int>(raw / 100.0) % 100;
+    const double seconds = raw - hours * 10000.0 - minutes * 100.0;
+    if (hours >= 24 || minutes >= 60 || seconds >= 60.0) {
+        return false;
+    }
+    result = hours * 3600.0 + minutes * 60.0 + seconds;
+    return true;
+}
+
+bool parse_int(const std::string & value, int & result) noexcept
+{
+    if (value.empty()) {
+        return false;
+    }
+
+    try {
+        std::size_t parsed = 0;
+        const int candidate = std::stoi(value, &parsed, 10);
+        if (parsed != value.size()) {
+            return false;
+        }
+        result = candidate;
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
+bool parse_gst_standard_deviations(
+    const std::string & sentence, double & latitude, double & longitude,
+    double & altitude) noexcept
+{
+    if (!validate_checksum(sentence)) {
+        return false;
+    }
+    const auto parts = split(sentence.substr(0, sentence.find('*')), ',');
+    if (parts.size() < 9 ||
+        (parts[0] != "$GPGST" && parts[0] != "$GNGST") ||
+        !parse_finite_double(parts[6], latitude) ||
+        !parse_finite_double(parts[7], longitude) ||
+        !parse_finite_double(parts[8], altitude))
+    {
+        return false;
+    }
+    return latitude > 0.0 && longitude > 0.0 && altitude > 0.0;
+}
+
+double normalize_angle_rad(double angle_rad) noexcept
+{
+    return std::atan2(std::sin(angle_rad), std::cos(angle_rad));
+}
+
+bool convert_nmea_to_latlon(
+    const std::string & value, const std::string & direction, double & result) noexcept
+{
+    if (direction != "N" && direction != "S" && direction != "E" && direction != "W") {
+        return false;
+    }
+
+    double raw_val = 0.0;
+    if (!parse_finite_double(value, raw_val) || raw_val < 0.0) {
+        return false;
+    }
+
+    const int degrees = static_cast<int>(raw_val / 100.0);
+    const double minutes = raw_val - (degrees * 100.0);
+    const int max_degrees = (direction == "N" || direction == "S") ? 90 : 180;
+    if (minutes < 0.0 || minutes >= 60.0 || degrees > max_degrees ||
+        (degrees == max_degrees && minutes > 0.0))
+    {
+        return false;
+    }
+
+    double decimal = degrees + (minutes / 60.0);
+    if (direction == "S" || direction == "W") {
+        decimal = -decimal;
+    }
+    if (!std::isfinite(decimal)) {
+        return false;
+    }
+    result = decimal;
+    return true;
 }
 
 uint32_t calculate_unicore_crc32(const uint8_t * data, size_t len)

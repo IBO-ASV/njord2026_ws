@@ -2,16 +2,7 @@
 set -euo pipefail
 
 WS_DIR="$(cd "$(dirname "$0")" && pwd)"
-VENV_DIR="${WS_DIR}/.venv"
 
-if [[ ! -d "${VENV_DIR}" ]]; then
-  echo "[ERROR] .venv not found at ${VENV_DIR}" >&2
-  echo "Create it first: python3 -m venv ${VENV_DIR}" >&2
-  exit 1
-fi
-
-# shellcheck disable=SC1091
-source "${VENV_DIR}/bin/activate"
 # shellcheck disable=SC1091
 source "${WS_DIR}/export_python_path.sh"
 

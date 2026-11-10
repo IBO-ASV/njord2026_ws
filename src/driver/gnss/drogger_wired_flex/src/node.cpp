@@ -24,7 +24,7 @@ DroggerWiredFlexNode::DroggerWiredFlexNode(const rclcpp::NodeOptions & options)
 
   fix_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>(params_.fix_topic, 10);
 
-  io_thread_ = std::thread([this]() { io_loop(); });
+  io_thread_ = std::thread([this]() {io_loop();});
 }
 
 DroggerWiredFlexNode::~DroggerWiredFlexNode()
@@ -81,9 +81,9 @@ void DroggerWiredFlexNode::io_loop()
 {
   while (rclcpp::ok() && keep_running_) {
     if (fd_ < 0 && !open_transport_fd()) {
-        auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      auto ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
           std::chrono::duration<double>(params_.reconnect_sec));
-        rclcpp::sleep_for(ns);
+      rclcpp::sleep_for(ns);
       continue;
     }
 
@@ -169,7 +169,8 @@ bool DroggerWiredFlexNode::open_serial_fd()
 {
   const int fd = ::open(params_.serial_port.c_str(), O_RDONLY | O_NOCTTY | O_NONBLOCK);
   if (fd < 0) {
-    RCLCPP_WARN(this->get_logger(), "open serial failed (%s): %s", params_.serial_port.c_str(), std::strerror(errno));
+    RCLCPP_WARN(this->get_logger(), "open serial failed (%s): %s", params_.serial_port.c_str(),
+        std::strerror(errno));
     return false;
   }
 
@@ -236,7 +237,8 @@ bool DroggerWiredFlexNode::open_tcp_fd()
   ::freeaddrinfo(result);
 
   if (sock < 0) {
-    RCLCPP_WARN(this->get_logger(), "tcp connect failed: %s:%d", params_.tcp_host.c_str(), params_.tcp_port);
+    RCLCPP_WARN(this->get_logger(), "tcp connect failed: %s:%d", params_.tcp_host.c_str(),
+        params_.tcp_port);
     return false;
   }
 
@@ -246,7 +248,8 @@ bool DroggerWiredFlexNode::open_tcp_fd()
   }
 
   fd_ = sock;
-  RCLCPP_INFO(this->get_logger(), "tcp connected: %s:%d", params_.tcp_host.c_str(), params_.tcp_port);
+  RCLCPP_INFO(this->get_logger(), "tcp connected: %s:%d", params_.tcp_host.c_str(),
+      params_.tcp_port);
   return true;
 }
 
@@ -348,7 +351,8 @@ bool DroggerWiredFlexNode::open_udp_fd()
   }
 
   fd_ = sock;
-  RCLCPP_INFO(this->get_logger(), "udp bound: %s:%d", params_.udp_bind_host.c_str(), params_.udp_port);
+  RCLCPP_INFO(this->get_logger(), "udp bound: %s:%d", params_.udp_bind_host.c_str(),
+      params_.udp_port);
   return true;
 }
 
@@ -429,12 +433,15 @@ void DroggerWiredFlexNode::parse_gga(const std::vector<std::string> & tokens)
     msg.longitude = convert_nmea_to_latlon(lon_val, lon_dir);
 
     const double altitude_msl = tokens[9].empty() ? 0.0 : std::stod(tokens[9]);
-    const double geoid_sep = (tokens.size() > 11 && !tokens[11].empty()) ? std::stod(tokens[11]) : 0.0;
+    const double geoid_sep = (tokens.size() > 11 &&
+      !tokens[11].empty()) ? std::stod(tokens[11]) : 0.0;
     msg.altitude = altitude_msl + geoid_sep;
 
     const int quality = q.empty() ? 0 : std::stoi(q);
     msg.status.status =
-      (quality > 0) ? sensor_msgs::msg::NavSatStatus::STATUS_FIX : sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
+      (quality >
+      0) ? sensor_msgs::msg::NavSatStatus::STATUS_FIX :
+      sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX;
     msg.status.service = sensor_msgs::msg::NavSatStatus::SERVICE_GPS |
       sensor_msgs::msg::NavSatStatus::SERVICE_GLONASS |
       sensor_msgs::msg::NavSatStatus::SERVICE_COMPASS |
@@ -498,7 +505,9 @@ bool DroggerWiredFlexNode::validate_nmea_checksum(const std::string & sentence)
   }
 }
 
-double DroggerWiredFlexNode::convert_nmea_to_latlon(const std::string & value, const std::string & direction)
+double DroggerWiredFlexNode::convert_nmea_to_latlon(
+  const std::string & value,
+  const std::string & direction)
 {
   const double raw = std::stod(value);
   const int degrees = static_cast<int>(raw / 100.0);

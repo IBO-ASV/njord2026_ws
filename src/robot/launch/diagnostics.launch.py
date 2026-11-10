@@ -16,8 +16,17 @@ def _monitor(
     stale_timeout,
     qos_reliability="best_effort",
 ):
+    diagnostic_name = monitor_name
+    if monitor_name == "local_filtered_odom":
+        diagnostic_name = "odom_local"
+    elif monitor_name == "global_filtered_odom":
+        diagnostic_name = "odom_global"
+    elif monitor_name == "thruster_command":
+        diagnostic_name = "thruster"
+
     return {
         "monitor_name": monitor_name,
+        "diagnostic_name": diagnostic_name,
         "topic": topic,
         "topic_type": topic_type,
         "mode": mode,
@@ -33,33 +42,17 @@ def _monitor(
 
 PROFILES = {
     "localization": [
-        _monitor(
-            "glim_odom",
-            "/odom",
-            "nav_msgs/msg/Odometry",
-            "required_frequency",
-            10.0,
-            2.0,
-            1.0,
-            5.0,
-        ),
-        _monitor(
-            "imu",
-            "/wit/imu",
-            "sensor_msgs/msg/Imu",
-            "required_frequency",
-            50.0,
-            20.0,
-            0.5,
-            2.0,
-        ),
+        # This profile is used by the miniPC role.  GLIM runs on the Jetson
+        # and the Spatial IMU is optional, so neither topic is a required
+        # miniPC heartbeat.  The local EKF subscribes to /livox/imu received
+        # from the Jetson; its resulting local odometry is monitored below.
         _monitor(
             "gps_fix",
-            "/gps/fix",
+            "/sensor/vehicle_gnss/fix/raw",
             "sensor_msgs/msg/NavSatFix",
             "required_frequency",
+            20.0,
             10.0,
-            2.0,
             1.0,
             3.0,
         ),
@@ -97,48 +90,6 @@ PROFILES = {
             "reliable",
         ),
         _monitor(
-            "global_filtered_odom",
-            "/odometry/filtered/global",
-            "nav_msgs/msg/Odometry",
-            "required_frequency",
-            30.0,
-            5.0,
-            1.0,
-            4.0,
-        ),
-    ],
-    "task3": [
-        _monitor(
-            "sim_odom",
-            "/odom",
-            "nav_msgs/msg/Odometry",
-            "required_frequency",
-            50.0,
-            20.0,
-            0.5,
-            2.0,
-        ),
-        _monitor(
-            "imu",
-            "/wit/imu",
-            "sensor_msgs/msg/Imu",
-            "required_frequency",
-            50.0,
-            20.0,
-            0.5,
-            2.0,
-        ),
-        _monitor(
-            "gps_fix",
-            "/gps/fix",
-            "sensor_msgs/msg/NavSatFix",
-            "required_frequency",
-            10.0,
-            2.0,
-            1.0,
-            3.0,
-        ),
-        _monitor(
             "local_filtered_odom",
             "/odometry/filtered/local",
             "nav_msgs/msg/Odometry",
@@ -148,48 +99,11 @@ PROFILES = {
             1.0,
             4.0,
         ),
-        _monitor(
-            "global_filtered_odom",
-            "/odometry/filtered/global",
-            "nav_msgs/msg/Odometry",
-            "required_frequency",
-            30.0,
-            5.0,
-            1.0,
-            4.0,
-        ),
-        _monitor(
-            "cmd_vel",
-            "/cmd_vel",
-            "geometry_msgs/msg/Twist",
-            "heartbeat_only",
-            10.0,
-            1.0,
-            2.0,
-            8.0,
-            "reliable",
-        ),
-        _monitor(
-            "thruster_command",
-            "/thruster_command",
-            "std_msgs/msg/Int16MultiArray",
-            "heartbeat_only",
-            10.0,
-            1.0,
-            2.0,
-            8.0,
-            "reliable",
-        ),
-        _monitor(
-            "buoy_costmap",
-            "/buoy_costmap",
-            "nav_msgs/msg/OccupancyGrid",
-            "required_frequency",
-            5.0,
-            1.0,
-            2.0,
-            6.0,
-        ),
+    ],
+    "task3": [
+        # The task3-1/2 compatibility graphs do not own a complete, current
+        # sensor inventory. Keep their legacy _monitor entries disabled rather
+        # than reporting false faults. Normal Task 3 uses the nav2 profile.
     ],
 }
 
@@ -203,21 +117,35 @@ def _launch_setup(context, *args, **kwargs):
             f"Available profiles: {', '.join(sorted(PROFILES))}"
         )
 
+    # A disabled global EKF intentionally has no /odometry/filtered/global
+    # publisher.  Omit that monitor so disabling the EKF cannot itself create
+    # an ERROR diagnostic or break the localization heartbeat tree.
+    if profile == "localization":
+        global_ekf_enabled = (
+            LaunchConfiguration("enable_global_ekf").perform(context).strip().lower()
+            in {"1", "true", "yes", "on"}
+        )
+        if not global_ekf_enabled:
+            monitors = [
+                monitor
+                for monitor in monitors
+                if monitor["monitor_name"] != "global_filtered_odom"
+            ]
+
     components = []
     for monitor in monitors:
-        name = f"{monitor['monitor_name']}_heartbeat"
         components.append(
             ComposableNode(
                 package="diagnostic_monitors",
                 plugin="njord::diagnostic_monitors::TopicHeartbeatMonitor",
-                name=name,
+                name=monitor["diagnostic_name"],
                 parameters=[monitor],
             )
         )
 
     return [
         ComposableNodeContainer(
-            name=f"{profile}_diagnostic_monitor_container",
+            name=f"{profile}_diag",
             namespace="",
             package="rclcpp_components",
             executable="component_container_mt",
@@ -234,6 +162,11 @@ def generate_launch_description():
                 "profile",
                 default_value="localization",
                 description="Diagnostic monitor profile: localization, nav2, or task3",
+            ),
+            DeclareLaunchArgument(
+                "enable_global_ekf",
+                default_value="true",
+                description="Monitor global filtered odometry only when its EKF is enabled.",
             ),
             OpaqueFunction(function=_launch_setup),
         ]

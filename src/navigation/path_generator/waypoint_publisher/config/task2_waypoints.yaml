@@ -1,47 +1,28 @@
 # Task 2: Collision Avoidance
-# Waypoint configuration for NJORD competition Task 2
+# Enter each WGS84 latitude/longitude as decimal degrees or DMS. Mission Manager
+# and Task2 MPPI project the values through /fromLL at run time.
 
 task2_config:
-  frame_id: "map"
+  frame_id: "odom"
   publish_rate_hz: 2.0
-  
+  # GPS 6 is approximately 24 m south-west of GPS 5.
   waypoints:
     - id: 5
-      x: 0.0
-      y: 0.0
-      yaw: 0.0
+      latitude: 63.440734
+      longitude: 10.423366
+      yaw: -1.9634954085
       type: "start"
-      name: "Start"
-      tolerance_m: 5.0
-      
-    - id: "gate_1"
-      x: 20.0
-      y: 0.0
-      yaw: 0.0
-      type: "gate"
-      name: "Entry Gate"
-      gate_pair: ["red", "green"]
-      spacing_m: 50.0
-      tolerance_m: 5.0
-      
-    - id: "gate_2"
-      x: 40.0
-      y: 0.0
-      yaw: 0.0
-      type: "gate"
-      name: "Exit Gate"
-      gate_pair: ["red", "green"]
-      spacing_m: 50.0
-      tolerance_m: 5.0
-      
+      name: "GPS 5 - Start"
+      tolerance_m: 2.0
+
     - id: 6
-      x: 60.0
-      y: 0.0
-      yaw: 0.0
+      latitude: 63.440460
+      longitude: 10.422980
+      yaw: -1.9634954085
       type: "goal"
-      name: "Goal"
-      tolerance_m: 5.0
-      
+      name: "GPS 6 - Goal"
+      tolerance_m: 2.0
+
   constraints:
     speed_knots: 2.0
     speed_requirement: "accelerate_immediately"

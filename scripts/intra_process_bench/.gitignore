@@ -1,0 +1,3 @@
+# Bench artifacts: launch/tegrastats logs, per-topic hz dumps, run summaries.
+out/
+__pycache__/

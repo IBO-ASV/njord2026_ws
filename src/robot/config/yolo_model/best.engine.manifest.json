@@ -1,0 +1,30 @@
+{
+  "tensorrt_version": "10.16.2.10",
+  "cuda_version": "unknown",
+  "gpu": "aarch64",
+  "engine_sha256": "b6aae6bf1c56e3db72313bc901ef89cc65f7c53002a84762308d7b62e3e8e9f5",
+  "onnx_sha256": "5ba64cc6a42bb3fe8b8ef0d1716f7e9baf4dbcfdd1898bd853fef4f969ee66b9",
+  "tensors": [
+    {
+      "name": "images",
+      "shape": [
+        1,
+        3,
+        640,
+        640
+      ],
+      "dtype": "DataType.FLOAT",
+      "mode": "TensorIOMode.INPUT"
+    },
+    {
+      "name": "output0",
+      "shape": [
+        1,
+        300,
+        6
+      ],
+      "dtype": "DataType.FLOAT",
+      "mode": "TensorIOMode.OUTPUT"
+    }
+  ]
+}

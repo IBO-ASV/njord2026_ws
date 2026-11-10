@@ -1,0 +1,287 @@
+# nav2_params_task3.yaml
+# Nav2 parameters tuned for Task 3 (docking) simulation
+# Robot: X-configuration 4-thruster omni-directional ASV (HOLONOMIC)
+#
+# Key design decisions for holonomic robot:
+#   - Planner: ThetaStarPlanner (holonomic, generates straight-line paths)
+#     → SmacPlannerHybrid/DUBIN was wrong: Dubins curves are for car-like robots.
+#       They force "rotate then drive" behavior which wastes time for omni robots.
+#   - Controller: DWBLocalPlanner with vy sampling enabled
+#     → RegulatedPurePursuit primarily commands linear.x + angular.z, which makes
+#       the ASV turn into the path instead of using the 4-thruster sway axis.
+#       DWB can sample vx/vy/vtheta and choose lateral motion directly.
+#   - velocity_smoother: y-axis velocity enabled
+#     → Omni robots produce linear.y; clamping it to 0 discards sway commands
+#       before they reach the thrusters.
+
+amcl:
+  ros__parameters:
+    enabled: false
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: odom
+    robot_base_frame: base_link
+    odom_topic: /odometry/filtered/local
+    bt_loop_duration: 10
+    replanning_frequency: 5.0
+    default_server_timeout: 20
+    # Rewritten by robot/launch/nav2.launch.py using the installed package share path.
+    default_nav_to_pose_bt_xml: ""
+    default_nav_through_poses_bt_xml: ""
+
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 50.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugin: "progress_checker"
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.3
+      movement_time_allowance: 30.0
+
+    FollowPath:
+      plugin: "dwb_core::DWBLocalPlanner"
+      debug_trajectory_details: false
+
+      # ── Holonomic velocity sampling ─────────────────────────────────────
+      min_vel_x: -0.5
+      max_vel_x: 0.5
+      min_vel_y: -0.5
+      max_vel_y: 0.5
+      max_vel_theta: 0.35
+      min_speed_xy: 0.0
+      max_speed_xy: 0.5
+      min_speed_theta: 0.0
+
+      acc_lim_x: 0.5
+      acc_lim_y: 0.5
+      acc_lim_theta: 0.7
+      decel_lim_x: -0.5
+      decel_lim_y: -0.5
+      decel_lim_theta: -0.7
+
+      vx_samples: 21
+      vy_samples: 21
+      vtheta_samples: 7
+      sim_time: 1.5
+      linear_granularity: 0.05
+      angular_granularity: 0.05
+      transform_tolerance: 0.3
+      xy_goal_tolerance: 0.8
+      trans_stopped_velocity: 0.05
+      short_circuit_trajectory_evaluation: true
+      stateful: true
+
+      # Use holonomic sway while approaching, then rotate in place at each
+      # Task 3 stage's final gate/dock/exit pose to meet its requested yaw.
+      critics: ["RotateToGoal", "Oscillation", "BaseObstacle", "PathDist", "GoalDist"]
+      BaseObstacle.scale: 0.02
+      PathDist.scale: 32.0
+      GoalDist.scale: 24.0
+      RotateToGoal.scale: 32.0
+      RotateToGoal.slowing_factor: 5.0
+      RotateToGoal.lookahead_time: -1.0
+
+    general_goal_checker:
+      # Only the dock mouth and berth require strict position/heading. All
+      # outside points (GPS/gate/corridor/exit/GPS10) complete within 1.5 m.
+      plugin: "robot::SelectiveHeadingGoalChecker"
+      xy_goal_tolerance: 0.8
+      position_only_xy_goal_tolerance: 1.5
+      # 20 degrees: tight enough to face the berth, tolerant of on-water yaw noise.
+      yaw_goal_tolerance: 0.35
+      # Mission Manager fills these with projected GPS8/berth1 or
+      # GPS11/berth2 map coordinates before it sends a Task 3 route.
+      heading_required_goal_tolerance: 1.0
+
+# ─── PLANNER ─────────────────────────────────────────────────────────────────
+# ThetaStarPlanner: holonomic planner that generates straight-line paths
+# between waypoints. Unlike SmacPlannerHybrid/DUBIN (which produces Dubins
+# curves for car-like robots), ThetaStar treats the robot as holonomic and
+# allows movement in any direction — ideal for an omni-directional ASV.
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 10.0
+    use_sim_time: false
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_theta_star_planner/ThetaStarPlanner"
+      how_many_corners: 8        # 8-connected grid (diagonal movement allowed)
+      w_euc_cost: 1.0            # Euclidean distance weight
+      w_traversal_cost: 2.0      # Costmap traversal weight
+      w_heuristic_cost: 1.0      # Heuristic weight
+
+# ─── LOCAL COSTMAP ───────────────────────────────────────────────────────────
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 30.0
+      publish_frequency: 20.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+      rolling_window: true
+      width: 20
+      height: 20
+      resolution: 0.1
+      robot_radius: 0.35
+      plugins: ["obstacle_layer", "inflation_layer"]
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: pointcloud
+        pointcloud:
+          topic: /pointcloud
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 20.0
+          obstacle_max_range: 18.0
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.5
+
+# ─── GLOBAL COSTMAP ──────────────────────────────────────────────────────────
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 10.0
+      publish_frequency: 10.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+      robot_radius: 0.35
+      resolution: 0.1
+      rolling_window: false
+      width: 50
+      height: 50
+      origin_x: -25.0
+      origin_y: -25.0
+      track_unknown_space: false
+
+      plugins: ["field_boundary_layer", "obstacle_layer", "inflation_layer"]
+
+      field_boundary_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: True
+        map_topic: "/field_boundary_costmap"
+        subscribe_to_updates: False
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: pointcloud
+        pointcloud:
+          topic: /pointcloud
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 30.0
+          obstacle_max_range: 30.0
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 2.0
+        inflation_radius: 0.5
+
+# ─── MISC ────────────────────────────────────────────────────────────────────
+map_server:
+  ros__parameters:
+    use_sim_time: false
+    yaml_filename: ""
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: false
+    autostart: true
+    node_names:
+      - controller_server
+      - smoother_server
+      - planner_server
+      - behavior_server
+      - bt_navigator
+      - waypoint_follower
+      - velocity_smoother
+      - collision_monitor
+
+behavior_server:
+  ros__parameters:
+    costmap_topic: local_costmap/costmap_raw
+    footprint_topic: local_costmap/published_footprint
+    cycle_frequency: 20.0
+    behavior_plugins: ["backup", "wait", "drive_on_heading"]
+    backup:
+      plugin: "nav2_behaviors/BackUp"
+    wait:
+      plugin: "nav2_behaviors/Wait"
+    drive_on_heading:
+      plugin: "nav2_behaviors/DriveOnHeading"
+    global_frame: odom
+    robot_base_frame: base_link
+    transform_tolerance: 0.2
+    use_sim_time: false
+
+# CRITICAL: y-axis (sway) must NOT be clamped to 0 for an omni robot.
+velocity_smoother:
+  ros__parameters:
+    use_sim_time: false
+    feedback: "OPEN_LOOP"
+    smoothing_frequency: 50.0
+    max_velocity: [0.5,  0.5,  0.65]  # limit yaw so the ASV keeps translating through bends
+    min_velocity: [-0.5, -0.5, -0.65]
+    max_accel:    [0.5,  0.5,  0.7]
+    max_decel:    [-0.5, -0.5, -0.7]
+    odom_topic: "/odometry/filtered/local"
+
+collision_monitor:
+  ros__parameters:
+    use_sim_time: false
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel_smoothed"
+    cmd_vel_out_topic: "/cmd_vel_nav"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 1.2
+      simulation_time_step: 0.1
+      min_points: 6
+      visualize: false
+      enabled: true
+    observation_sources: ["pointcloud"]
+    pointcloud:
+      type: "pointcloud"
+      topic: "/pointcloud"
+      min_height: -0.5
+      max_height: 2.0
+      use_global_height: false
+      enabled: true
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: false
+    smoother_plugins: ["natural_cubic_spline"]
+    natural_cubic_spline:
+      plugin: "natural_cubic_spline::NaturalCubicSplineSmoother"
+      path_point_spacing: 0.05
+      control_point_spacing: 0.5

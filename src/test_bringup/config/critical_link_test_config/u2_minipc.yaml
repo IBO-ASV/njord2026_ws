@@ -1,0 +1,10 @@
+# U2: built-in Wi-Fi receiver template. Fill the miniPC bind IP before use.
+critical_link_receiver:
+  ros__parameters:
+    joy_output_topic: /joy
+    heartbeat_output_topic: /heartbeat/ground_station
+    diagnostic_stale_after_sec: 3.0
+    # - "u2_builtin_wifi|<MINIPC_BUILTIN_WIFI_IP>|45101"
+    udp_paths: []
+    serial_device: ""
+    serial_baud: 921600

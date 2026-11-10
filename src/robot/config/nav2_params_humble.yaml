@@ -1,0 +1,283 @@
+# nav2_params.yaml (ASV Minimal Template)
+amcl:
+  ros__parameters:
+    enabled: false # GPS走行なのでAMCLは無効化
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: odom
+    robot_base_frame: base_link
+    odom_topic: /odometry/filtered/local
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    # robot/launch/nav2.launch.py rewrites these to installed package paths.
+    default_nav_to_pose_bt_xml: ""
+    default_nav_through_poses_bt_xml: ""
+
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 10.0
+    min_x_velocity_threshold: 0.001
+    min_theta_velocity_threshold: 0.001
+    progress_checker_plugins: ["progress_checker"]
+    goal_checker_plugins: ["general_goal_checker"]
+    controller_plugins: ["FollowPath"]
+
+    progress_checker:
+      plugin: "nav2_controller::SimpleProgressChecker"
+      required_movement_radius: 0.5
+      movement_time_allowance: 10.0
+
+    # --- Pure Pursuit Controllerの設定 (ASVに最適) ---
+    FollowPath:
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 1.0     # 目標速度 [m/s]
+      lookahead_dist: 1.5         # 参照点までの距離 [m]
+      min_lookahead_dist: 0.5
+      max_lookahead_dist: 3.0
+      lookahead_time: 1.5
+      # A surface vessel should curve toward the path while it is moving, not
+      # stop and turn back at a waypoint solely to satisfy its final yaw.
+      # PassThroughGoalChecker keeps yaw as the preferred completion condition
+      # and advances after the vessel has passed through the waypoint.
+      use_rotate_to_heading: false
+      rotate_to_heading_min_angle: 0.785
+      transform_tolerance: 0.1
+      use_velocity_scaled_lookahead_dist: true
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 1.0
+      # 船のサイズに合わせて調整
+      max_angular_accel: 2.0
+      max_linear_accel: 2.0
+
+    general_goal_checker:
+      plugin: "robot::PassThroughGoalChecker"
+      xy_goal_tolerance: 0.5   # ゴール判定の誤差許容範囲 [m] (船なので広めに)
+      yaw_goal_tolerance: 0.5  # 向きの許容範囲 [rad]
+      exit_margin_m: 0.05      # 一度半径に入り、外へ抜けたら次WPへ
+
+planner_server:
+  ros__parameters:
+    expected_planner_frequency: 5.0
+    use_sim_time: false
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_navfn_planner/NavfnPlanner" # 最もシンプルなA*プランナー
+      tolerance: 1.0
+      use_astar: false
+      allow_unknown: true
+
+# --- Costmap (障害物地図) の設定 ---
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+      rolling_window: true
+      # The Task 1 navigation profile is also used to reach the exam field.
+      # Keep this costmap centered on the vessel, but give its obstacle
+      # raytracing sources enough margin while the vessel is outside the
+      # original Task 1 test area.
+      width: 30
+      height: 30
+      resolution: 0.1
+      # ロボットの半径 (円形近似) または footprint (矩形)
+      robot_radius: 0.8
+      plugins: ["obstacle_layer", "inflation_layer"]
+
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        # LiDAR と Task 1 cardinal mark から生成する仮想壁。仮想壁は
+        # odom frame で publish されるため、local costmap と同じ TF tree
+        # (odom -> base_link) だけで取り込める。
+        observation_sources: safety_points virtual_wall
+        safety_points:
+          topic: /task1/safety_points
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 8.0
+          obstacle_max_range: 8.0
+        virtual_wall:
+          topic: /virtual_obstacles
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 10.0
+          obstacle_max_range: 9.0
+
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.5 # 障害物の周りに危険エリアを広げる半径
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+      robot_radius: 0.8
+      resolution: 0.1
+      track_unknown_space: true
+
+      # Exam-field navigation area, fixed in the odom frame.  The four
+      # specified WGS84 corners resolve through /fromLL to approximately
+      # x=-113.01..39.45 m and y=-219.10..41.81 m.  Keep a 20 m margin.
+      # A fixed odom-frame costmap prevents a legitimate distant GPS goal
+      # from falling outside a rolling odom-frame window.
+      rolling_window: false
+      width: 200 # x=-135..65 m
+      height: 310 # y=-240..70 m
+      origin_x: -135.0
+      origin_y: -240.0
+
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: True
+        observation_sources: safety_points virtual_wall
+        safety_points:
+          topic: /task1/safety_points
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 8.0
+          obstacle_max_range: 8.0
+        # 新しく追加: YOLOが生成した仮想壁
+        virtual_wall:
+          topic: /virtual_obstacles
+          max_obstacle_height: 2.0
+          clearing: True  # trueにすると、点群が消えたら壁も消える
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 10.0
+          obstacle_max_range: 9.0
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 1.5
+
+velocity_smoother:
+  ros__parameters:
+    smoothing_frequency: 20.0
+    stamp_smoothed_velocity_with_smoothing_time: false
+    scale_velocities: false
+    feedback: "OPEN_LOOP"
+    max_velocity: [1.0, 0.0, 1.0]
+    min_velocity: [-1.0, 0.0, -1.0]
+    max_accel: [2.0, 0.0, 2.0]
+    max_decel: [-2.0, 0.0, -2.0]
+    odom_topic: "/odometry/filtered/local"
+    odom_duration: 0.1
+    deadband_velocity: [0.0, 0.0, 0.0]
+    velocity_timeout: 1.0
+
+collision_monitor:
+  ros__parameters:
+    base_frame_id: "base_link"
+    odom_frame_id: "odom"
+    cmd_vel_in_topic: "/cmd_vel_smoothed"
+    cmd_vel_out_topic: "/cmd_vel_nav"
+    state_topic: "collision_monitor_state"
+    transform_tolerance: 0.2
+    source_timeout: 1.0
+    base_shift_correction: true
+    stop_pub_timeout: 2.0
+    polygons: ["FootprintApproach"]
+    FootprintApproach:
+      type: "polygon"
+      action_type: "approach"
+      footprint_topic: "/local_costmap/published_footprint"
+      time_before_collision: 1.2
+      simulation_time_step: 0.1
+      min_points: 6
+      visualize: false
+      enabled: true
+    observation_sources: ["safety_points", "virtual_wall"]
+    safety_points:
+      type: "pointcloud"
+      topic: "/task1/safety_points"
+      min_height: -0.5
+      max_height: 2.0
+      use_global_height: false
+      enabled: true
+    virtual_wall:
+      type: "pointcloud"
+      topic: "/virtual_obstacles"
+      min_height: -0.5
+      max_height: 2.0
+      use_global_height: false
+      enabled: true
+
+docking_server:
+  ros__parameters:
+    controller_frequency: 20.0
+    initial_perception_timeout: 5.0
+    wait_charge_timeout: 5.0
+    dock_approach_timeout: 30.0
+    undock_linear_tolerance: 0.05
+    undock_angular_tolerance: 0.1
+    max_retries: 3
+    base_frame: "base_link"
+    fixed_frame: "odom"
+    dock_backwards: false
+    dock_prestaging_tolerance: 0.5
+    dock_plugins: ["simple_charging_dock"]
+    simple_charging_dock:
+      plugin: "opennav_docking::SimpleChargingDock"
+      docking_threshold: 0.05
+      staging_x_offset: -0.7
+      use_external_detection_pose: true
+      use_battery_status: false
+      use_stall_detection: false
+    controller:
+      k_phi: 3.0
+      k_delta: 2.0
+      v_linear_min: 0.15
+      v_linear_max: 0.15
+      use_collision_detection: true
+      costmap_topic: "local_costmap/costmap_raw"
+      footprint_topic: "local_costmap/published_footprint"
+      transform_tolerance: 0.1
+      projection_time: 5.0
+      simulation_step: 0.1
+      dock_collision_threshold: 0.3
+
+map_server:
+  ros__parameters:
+    use_sim_time: false
+    yaml_filename: "" # マップファイルなし
+
+lifecycle_manager:
+  ros__parameters:
+    use_sim_time: false
+    autostart: true
+    node_names: ['controller_server',
+                 'smoother_server',
+                 'planner_server',
+                 'behavior_server',
+                 'bt_navigator',
+                 'waypoint_follower',
+                 'velocity_smoother',
+                 'collision_monitor']
+
+smoother_server:
+  ros__parameters:
+    use_sim_time: false
+    smoother_plugins: ["natural_cubic_spline"]
+    natural_cubic_spline:
+      plugin: "natural_cubic_spline::NaturalCubicSplineSmoother"
+      path_point_spacing: 0.05
+      control_point_spacing: 0.5

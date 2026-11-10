@@ -13,11 +13,11 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rcl_interfaces REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
 find_package(std_msgs REQUIRED)
-find_package(can_msgs REQUIRED)
 
 add_library(thruster_allocation SHARED src/allocation.cpp)
 target_include_directories(thruster_allocation PUBLIC
@@ -29,7 +29,7 @@ target_include_directories(thruster_driver_component PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
   $<INSTALL_INTERFACE:include>)
 ament_target_dependencies(thruster_driver_component
-  rclcpp rclcpp_components geometry_msgs nav_msgs std_msgs can_msgs)
+  rclcpp rcl_interfaces rclcpp_components geometry_msgs nav_msgs std_msgs)
 target_link_libraries(thruster_driver_component thruster_allocation)
 
 add_executable(thruster_driver_node src/main.cpp)

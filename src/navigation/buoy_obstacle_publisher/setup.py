@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'buoy_obstacle_publisher = buoy_obstacle_publisher.buoy_obstacle_publisher_node:main',
             'field_boundary_publisher = buoy_obstacle_publisher.field_boundary_publisher_node:main',
+            'cardinal_wall_publisher = buoy_obstacle_publisher.cardinal_wall_publisher_node:main',
         ],
     },
 )

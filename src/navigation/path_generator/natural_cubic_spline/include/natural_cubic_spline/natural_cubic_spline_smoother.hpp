@@ -52,6 +52,7 @@ private:
   // Configuration parameters
   double path_point_spacing_ = 0.05;    // Distance between output path points (meters)
   double control_point_spacing_ = 0.5;  // Distance between control points (meters)
+  rclcpp::Clock::SharedPtr clock_;
 
   /**
    * @brief Solve the natural cubic spline system for a single coordinate axis.

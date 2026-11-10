@@ -1,0 +1,111 @@
+# AGX onboard profile: depth points feed Task1 near-field safety.
+# Key must be the node's FULLY QUALIFIED name. zed2i.launch.py loads this node
+# as name="zed2i" inside namespace="/zed2i", so its FQN is /zed2i/zed2i and a
+# bare "zed2i:" key matches nothing -- the whole file was silently ignored and
+# every parameter fell back to its declare_parameter() default.
+# Note: this key is tied to the launch file's `namespace` argument (/zed2i).
+/zed2i/zed2i:
+  ros__parameters:
+    left_device: /dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_OV0001-video-index0
+    right_device: /dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_OV0001-video-index1
+    left_frame_id: zed2i_left_camera_frame
+    right_frame_id: zed2i_right_camera_frame
+    depth_frame_id: zed2i_left_camera_frame
+    camera_resolution: HD720
+    image_width: 1280
+    image_height: 720
+    framerate: 15
+    # The vessel normally starts against feature-poor water, where ZED's
+    # startup self-calibration returns POTENTIAL_CALIBRATION_ISSUE. Use the
+    # factory calibration; set false only when a suitable calibration scene
+    # is available.
+    disable_self_calibration: true
+    baseline_m: 0.12
+    fx: 1280.0
+    fy: 1280.0
+    cx: 640.0
+    cy: 360.0
+    depth_min_m: 0.3
+    depth_max_m: 20.0
+    # Let the ZED SDK continuously adjust exposure and gain from the water
+    # area, rather than locking either value. Ratios are relative to the left
+    # image; this default is its lower half (x=0, y=0.5H, w=W, h=0.5H).
+    aec_agc_enable: true
+    aec_agc_roi_enable: true
+    aec_agc_roi_x_ratio: 0.0
+    aec_agc_roi_y_ratio: 0.5
+    aec_agc_roi_width_ratio: 1.0
+    aec_agc_roi_height_ratio: 0.5
+    # Human-FOV-like elliptical region of interest. Disabled by default to
+    # preserve existing behavior; when enabled, RGB/depth/points/perception/
+    # ground-video are all restricted to inside the ellipse.
+    fov_ellipse_enable: false
+    fov_ellipse_cx_ratio: 0.5
+    fov_ellipse_cy_ratio: 0.5
+    fov_ellipse_a_ratio: 0.5
+    fov_ellipse_b_ratio: 0.5
+    # A Jetson deployment must set engine_path and enable this only after the
+    # matching local TensorRT engine has been generated.
+    enable_gpu_perception: false
+    engine_path: ""
+    # Optional YOLO-World vessel detector. Export the supplied yolov8s-world.pt
+    # with the single prompt/class "boat" and NMS enabled, then set this to
+    # that Jetson-local TensorRT engine. Boat results are visualization-only:
+    # they are drawn blue on /zed2i/debug/detections_image and never enter the
+    # buoy or virtual-wall topics.
+    enable_vessel_perception: false
+    vessel_engine_path: ""
+    vessel_confidence_threshold: 0.25
+    vessel_max_detections: 16
+    # Ground-video transport is opt-in: an empty host and false enable prevent
+    # accidental UDP transmission during normal development.
+    enable_ground_video: false
+    ground_video_codec: jpeg
+    ground_video_width: 360
+    ground_video_height: 240
+    ground_video_fps: 3.0
+    ground_video_jpeg_quality: 70
+    ground_video_host: ""
+    ground_video_port: 5600
+    ground_video_max_pending_frames: 1
+    ground_video_mtu: 1200
+    detection_topic: /buoy_detections_3d
+    # Foxglove用。購読者がいるときだけ、green/red buoyに対応した色のBB、
+    # ラベル、信頼度、ZED depth距離を重畳した画像を
+    # /zed2i/debug/detections_image にpublishする。
+    publish_debug_image: true
+    output_frame: base_link
+    confidence_threshold: 0.25
+    max_detections: 32
+    depth_center_ratio: 0.5
+    depth_sample_stride: 2
+    min_valid_depth_samples: 16
+    lidar_topic: /livox/lidar
+    lidar_max_age_sec: 0.15
+    lidar_tf_timeout_sec: 0.05
+    lidar_cluster_tolerance_m: 0.15
+    lidar_min_cluster_points: 5
+    lidar_max_cluster_points: 5000
+    fusion_max_range_delta_m: 2.0
+    # Nav2 obstacles are generated downstream from /buoy_detections_3d.
+    enable_virtual_wall: false
+    virtual_wall_topic: /virtual_obstacles
+    wall_frame: map
+    channel_heading_rad: .nan
+    wall_radius_m: 2.0
+    wall_points_per_full_circle: 40
+    # Connect adjacent red or green lateral marks only within this distance.
+    # This creates a continuous outer channel boundary without bridging gaps.
+    connect_same_color_buoys: true
+    same_color_wall_max_gap_m: 12.0
+    same_color_wall_point_spacing_m: 0.2
+    # Task1 safety points subscribe to this local depth cloud and downsample
+    # it again before transferring the compact result to the miniPC.
+    # Detection overlay is the only visual telemetry normally required.
+    # Point clouds are considerably larger, so opt in explicitly when needed.
+    publish_pointcloud: true
+    pointcloud_stride: 4
+    # /zed2i/points/detections is published only while Foxglove (or another
+    # subscriber) is attached; it contains ZED points inside YOLO boxes.
+    num_disparities: 128
+    block_size: 5

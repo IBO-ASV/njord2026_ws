@@ -1,0 +1,12 @@
+cardinal_wall_publisher:
+  ros__parameters:
+    detection_topic: /buoy_detections_3d
+    output_topic: /virtual_obstacles
+    map_frame: map
+    course_bounds: [-100.0, 100.0, -100.0, 100.0]
+    wall_width_m: 0.2
+    point_spacing_m: 0.1
+    max_wall_length_m: 13.0
+    marker_merge_radius_m: 2.0
+    confirmations_required: 2
+    publish_rate_hz: 2.0

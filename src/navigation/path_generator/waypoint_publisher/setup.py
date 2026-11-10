@@ -9,11 +9,17 @@ setup(
     data_files=[
         ("share/ament_index/resource_index/packages", ["resource/" + package_name]),
         ("share/" + package_name, ["package.xml"]),
-        ("share/" + package_name + "/launch", ["launch/waypoint_publisher.launch.py"]),
+        ("share/" + package_name + "/launch", [
+            "launch/waypoint_publisher.launch.py", "launch/waypoint_map.launch.py",
+        ]),
         ("share/" + package_name + "/config", [
             "config/task1_waypoints.yaml",
+            "config/task1_skip_1_1_waypoints.yaml",
+            "config/task1_follow_waypoints.yaml",
             "config/task2_waypoints.yaml",
+            "config/task2_bak_waypoints.yaml",
             "config/task3_waypoints.yaml",
+            "config/task4_waypoints.yaml",
         ]),
     ],
     install_requires=["setuptools"],
@@ -25,6 +31,7 @@ setup(
     entry_points={
         "console_scripts": [
             "waypoint_publisher_node = waypoint_publisher.waypoint_publisher_node:main",
+            "ground_waypoint_geo_publisher = waypoint_publisher.ground_waypoint_geo_publisher:main",
         ],
     },
 )

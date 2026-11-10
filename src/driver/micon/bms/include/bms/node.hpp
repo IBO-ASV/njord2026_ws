@@ -3,11 +3,14 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+#include <diagnostic_msgs/msg/key_value.hpp>
 #include <std_msgs/msg/float32_multi_array.hpp>
-#include <can_msgs/msg/frame.hpp>
+#include <std_msgs/msg/float32.hpp>
 
 #include <array>
-#include <string>
+#include <optional>
 
 namespace njord
 {
@@ -20,21 +23,26 @@ public:
   explicit BmsNode(const rclcpp::NodeOptions & options = rclcpp::NodeOptions());
 
 private:
-  void mrosCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
-  void canCallback(const can_msgs::msg::Frame::SharedPtr msg);
+  void cellsCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg);
+  void temperatureCallback(const std_msgs::msg::Float32::SharedPtr msg);
 
   void publishCells(const std::array<float, 4> & cells);
-  static std::string toLower(std::string value);
+  void publishDiagnostics(const std::array<float, 4> & cells);
 
-  rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_mros_;
-  rclcpp::Subscription<can_msgs::msg::Frame>::SharedPtr sub_can_;
+  rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr sub_cells_;
+  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr sub_temperature_;
   rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr pub_cells_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_pack_voltage_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_battery_percent_;
+  rclcpp::Publisher<std_msgs::msg::Float32>::SharedPtr pub_temperature_;
+  rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diagnostics_;
 
-  std::string transport_mode_;
-  std::uint32_t can_rx_id_;
-
-  bool can_enabled_;
-  bool mros_enabled_;
+  double warning_voltage_{3.5};
+  double error_voltage_{3.3};
+  double full_voltage_{4.2};
+  double diagnostic_publish_period_sec_{0.2};
+  rclcpp::Time last_diagnostic_publish_time_{0, 0, RCL_ROS_TIME};
+  std::optional<float> temperature_c_;
 };
 
 }  // namespace bms

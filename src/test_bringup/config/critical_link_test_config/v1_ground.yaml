@@ -1,0 +1,10 @@
+# V1: smartphone/VPN sender template. Fill both VPN IPv4 addresses before use.
+critical_link_sender:
+  ros__parameters:
+    joy_input_topic: /critical_link/input/joy
+    heartbeat_input_topic: /critical_link/input/heartbeat
+    # - "v1_internet_vpn|100.123.47.2|100.82.157.125|45103"
+    udp_paths:
+      - "v1_internet_vpn|100.123.47.2|100.82.157.125|45103"
+    serial_device: ""
+    serial_baud: 921600

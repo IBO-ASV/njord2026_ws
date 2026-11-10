@@ -7,6 +7,7 @@ endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(tf2 REQUIRED)
@@ -20,10 +21,11 @@ find_package(njord_interfaces REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
 
-add_executable(pcl_bouy_det src/pcl_bouy_det_node.cpp)
+add_library(pcl_bouy_det_component SHARED src/pcl_bouy_det_node.cpp)
 ament_target_dependencies(
-  pcl_bouy_det
+  pcl_bouy_det_component
   rclcpp
+  rclcpp_components
   sensor_msgs
   geometry_msgs
   tf2
@@ -32,10 +34,17 @@ ament_target_dependencies(
   pcl_conversions
   njord_interfaces
 )
-target_link_libraries(pcl_bouy_det ${PCL_LIBRARIES})
+target_link_libraries(pcl_bouy_det_component ${PCL_LIBRARIES})
 
-install(TARGETS pcl_bouy_det
-  DESTINATION lib/${PROJECT_NAME}
+rclcpp_components_register_node(pcl_bouy_det_component
+  PLUGIN "pcl_det::PclBuoyDetectionNode"
+  EXECUTABLE pcl_bouy_det
+)
+
+install(TARGETS pcl_bouy_det_component
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
 )
 
 install(DIRECTORY

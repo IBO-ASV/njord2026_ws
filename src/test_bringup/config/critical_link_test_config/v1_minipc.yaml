@@ -1,0 +1,11 @@
+# V1: smartphone/VPN receiver template. Fill the miniPC VPN bind IP before use.
+critical_link_receiver:
+  ros__parameters:
+    joy_output_topic: /joy
+    heartbeat_output_topic: /heartbeat/ground_station
+    diagnostic_stale_after_sec: 3.0
+    # - "v1_internet_vpn|100.82.157.125|45103"
+    udp_paths:
+      - "v1_internet_vpn|100.82.157.125|45103"
+    serial_device: ""
+    serial_baud: 921600

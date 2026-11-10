@@ -8,8 +8,10 @@
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
+  <buildtool_depend>njord_platform</buildtool_depend>
 
   <depend>rclcpp</depend>
+  <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>tf2</depend>

@@ -3,7 +3,7 @@
 <package format="3">
   <name>bms</name>
   <version>0.1.0</version>
-  <description>BMS bridge for 4-cell telemetry from ESP32 via mROS USB or CAN.</description>
+  <description>BMS cell voltage standardizer for micon serial telemetry.</description>
   <maintainer email="oswystk15662@keio.jp">osw</maintainer>
   <license>Apache-2.0</license>
 
@@ -11,8 +11,8 @@
 
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>std_msgs</depend>
-  <depend>can_msgs</depend>
 
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>

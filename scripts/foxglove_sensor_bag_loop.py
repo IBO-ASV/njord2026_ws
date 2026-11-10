@@ -1,0 +1,74 @@
+#!/usr/bin/env python3
+"""Stream recorded camera/LiDAR only; never publish recorded control topics.
+Playback follows bag recording timestamps, not hardware synchronization.
+Fresh display stamps prevent backwards time at repeat boundaries.
+"""
+import sys,time,yaml,os
+from pathlib import Path
+import rclpy,rosbag2_py
+from rclpy.node import Node
+from rclpy.serialization import deserialize_message
+from sensor_msgs.msg import PointCloud2,CompressedImage,NavSatFix
+from tf2_msgs.msg import TFMessage
+from geometry_msgs.msg import Point
+from std_msgs.msg import String
+from visualization_msgs.msg import Marker,MarkerArray
+
+class Preview(Node):
+ def __init__(self,path):
+  super().__init__('recorded_sensor_preview')
+  self.path=path
+  info=yaml.safe_load((Path(path)/'metadata.yaml').read_text())['rosbag2_bagfile_information']
+  self.zero=info['starting_time']['nanoseconds_since_epoch']
+  source_duration=info['duration']['nanoseconds']*1e-9
+  self.offset=float(os.environ.get('PREVIEW_START_OFFSET','0'))
+  if not 0<=self.offset<source_duration:raise ValueError('Start offset outside source duration')
+  self.zero+=round(self.offset*1e9)
+  self.duration=source_duration-self.offset+.15
+  available={t['topic_metadata']['name'] for t in info['topics_with_message_count'] if t['message_count']>0}
+  self.types={t:cls for t,cls in {'/livox/lidar':PointCloud2,'/back_cam/image_raw/compressed':CompressedImage,'/sensor/vehicle_gnss/fix/raw':NavSatFix,'/tf':TFMessage}.items() if t in available}
+  self.label=Path(path).name
+  self.pubs={t:self.create_publisher(cls,out,3) for t,cls,out in [('/livox/lidar',PointCloud2,'/preview/points'),('/back_cam/image_raw/compressed',CompressedImage,'/preview/camera/back/compressed'),('/sensor/vehicle_gnss/fix/raw',NavSatFix,'/sensor/vehicle_gnss/fix/raw'),('/tf',TFMessage,'/tf')] if t in self.types}
+  self.status=self.create_publisher(String,'/preview/status',3)
+  self.ownship=self.create_publisher(MarkerArray,'/preview/ownship',1)
+  self.clear=self.create_publisher(MarkerArray,'/preview/tracks',1)
+  self.cycle=0;self.last_status=-1;self.reset();self.create_timer(.005,self.tick)
+ def reset(self):
+  self.reader=rosbag2_py.SequentialReader()
+  self.reader.open(rosbag2_py.StorageOptions(uri=self.path,storage_id='mcap'),rosbag2_py.ConverterOptions('',''))
+  self.reader.set_filter(rosbag2_py.StorageFilter(topics=list(self.types)))
+  self.pending=self.reader.read_next() if self.reader.has_next() else None
+  while self.pending is not None and self.pending[2]<self.zero:
+   self.pending=self.reader.read_next() if self.reader.has_next() else None
+  if self.pending is None:raise RuntimeError('No readable sensor messages after start offset')
+  self.begin=time.monotonic();self.last_status=-1
+  self.get_logger().info(f'Loop {self.cycle}: {self.duration:.2f} seconds')
+ def tick(self):
+  elapsed=time.monotonic()-self.begin
+  if self.pending is None or elapsed>=self.duration:
+   self.get_logger().info(f'End of readable sensor data at {elapsed:.2f}s; restarting')
+   self.cycle+=1;self.reset();elapsed=0.
+  count=0
+  while self.pending and (self.pending[2]-self.zero)*1e-9<=elapsed and count<12:
+   topic,data,stamp=self.pending;m=deserialize_message(data,self.types[topic]);now=self.get_clock().now().to_msg()
+   if hasattr(m,'header'):m.header.stamp=now
+   if hasattr(m,'transforms'):
+    for transform in m.transforms:transform.header.stamp=now
+   self.pubs[topic].publish(m);count+=1
+   self.pending=self.reader.read_next() if self.reader.has_next() else None
+  if int(elapsed)!=self.last_status:
+   self.last_status=int(elapsed)
+   hull=Marker();hull.header.frame_id='base_link';hull.header.stamp=self.get_clock().now().to_msg();hull.ns='ownship_catamaran';hull.id=0;hull.type=Marker.LINE_STRIP;hull.action=Marker.ADD;hull.pose.orientation.w=1.;hull.scale.x=.08;hull.color.r=.0;hull.color.g=.9;hull.color.b=1.;hull.color.a=1.
+   # Reuse the GNSS Map Telemetry GUI silhouette; +X is the bow.
+   outline=[(11,3),(7,11),(7,30),(11,37),(15,30),(15,22),(25,22),(25,30),(29,37),(33,30),(33,11),(29,3),(25,11),(25,18),(15,18),(15,11),(11,3)]
+   hull.points=[Point(x=(20-y)*2.4/34,y=(20-x)*1.6/26,z=.15) for x,y in outline]
+   self.ownship.publish(MarkerArray(markers=[hull]))
+   self.status.publish(String(data=f'RECORDED {self.label} | source +{self.offset+elapsed:.1f}s | raw LiDAR | no GLIM/tracks | recording-time playback'))
+   marker=Marker();marker.action=Marker.DELETEALL;marker.header.frame_id='livox_frame';marker.header.stamp=self.get_clock().now().to_msg();self.clear.publish(MarkerArray(markers=[marker]))
+
+rclpy.init();node=Preview(sys.argv[1])
+try:rclpy.spin(node)
+except KeyboardInterrupt:pass
+finally:
+ node.destroy_node()
+ if rclpy.ok():rclpy.shutdown()

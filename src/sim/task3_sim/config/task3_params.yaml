@@ -5,11 +5,20 @@ task3_orchestrator:
     green_center: [0.0, -2.0]
     motion_amp: 0.3
     motion_freq_hz: 0.1
-    dock_pose: [15.0, 0.0, 0.0]
+    dock_pose: [20.0, 0.0, 0.0]
     dock_size_xy: [2.0, 4.13]
-    goal_xy: [13.0, 11.0]
+    goal_xy: [18.0, 10.0]
     goal_radius: 1.5
+    dock_visit_radius: 1.5
     publish_rate_hz: 10.0
+    # GUI-only perimeter markers; values match field_boundary_publisher.
+    course_bounds: [-24.0, 24.0, -14.0, 14.0]
+    boundary_marker_step: 4.0
+    # Simulation-only mirror of ZED lateral-mark virtual walls.
+    enable_virtual_walls: true
+    virtual_wall_radius_m: 2.0
+    same_color_wall_max_gap_m: 12.0
+    same_color_wall_point_spacing_m: 0.2
 
 sensor_noise_simulator:
   ros__parameters:
@@ -25,3 +34,11 @@ sensor_noise_simulator:
     frame_id_imu: "imu_link"
     frame_id_gps: "base_link"
     frame_id_compass: "base_link"
+
+task3_gui_status_dummy:
+  ros__parameters:
+    publish_rate_hz: 1.0
+    battery_percent: 86.0
+    cell_voltages: [4.05, 4.04, 4.06, 4.05]
+    temperature_c: 25.0
+    control_status: "auto"

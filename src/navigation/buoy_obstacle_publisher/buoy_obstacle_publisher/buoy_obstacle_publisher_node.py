@@ -20,6 +20,7 @@ Design rationale:
 
 import math
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from nav_msgs.msg import OccupancyGrid
 from tf2_ros import Buffer, TransformListener, LookupException, ConnectivityException, ExtrapolationException
@@ -136,17 +137,11 @@ def main(args=None):
     node = BuoyObstaclePublisher()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
-        try:
-            node.destroy_node()
-        except (Exception, KeyboardInterrupt):
-            pass
-        try:
-            rclpy.try_shutdown()
-        except (Exception, KeyboardInterrupt):
-            pass
+        node.destroy_node()
+        rclpy.try_shutdown()
 
 
 if __name__ == '__main__':

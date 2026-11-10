@@ -16,9 +16,11 @@ CON_NAME=$(nmcli -t -f NAME,DEVICE connection show | awk -F: -v d="$IFACE" '$2==
 if [ -z "$CON_NAME" ]; then
     CON_NAME="$FALLBACK_CON_NAME"
     sudo nmcli connection add type ethernet ifname "$IFACE" con-name "$CON_NAME" \
-        ipv4.method manual ipv4.addresses "$STATIC_IP"
+        ipv4.method manual ipv4.addresses "$STATIC_IP" ipv4.never-default yes
 else
-    sudo nmcli connection modify "$CON_NAME" ipv4.method manual ipv4.addresses "$STATIC_IP"
+    sudo nmcli connection modify "$CON_NAME" \
+        ipv4.method manual ipv4.addresses "$STATIC_IP" \
+        ipv4.gateway "" ipv4.dns "" ipv4.never-default yes
 fi
 
 sudo nmcli connection up "$CON_NAME"

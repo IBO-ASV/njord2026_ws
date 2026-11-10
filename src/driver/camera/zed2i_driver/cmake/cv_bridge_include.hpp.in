@@ -1,0 +1,3 @@
+#pragma once
+
+#include <@ZED2I_DRIVER_CV_BRIDGE_HEADER@>

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Commit Changes"
+  short_description: "Review and commit the intended local changes"
+  default_prompt: "Review the working tree and create an intentional local commit for the requested work."

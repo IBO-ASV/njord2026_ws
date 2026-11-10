@@ -1,0 +1,16 @@
+# Health signals observed by the ground-PC role.
+role: groundpc
+signals:
+  ground_station_heartbeat:
+    topic: /heartbeat/ground_station
+    type: std_msgs/msg/Empty
+    timeout_sec: 2.0
+    expected_frequency_hz: 1.0
+    minimum_frequency_hz: 0.5
+
+  joystick_input:
+    topic: /joy
+    type: sensor_msgs/msg/Joy
+    timeout_sec: 1.0
+    expected_frequency_hz: 20.0
+    minimum_frequency_hz: 10.0

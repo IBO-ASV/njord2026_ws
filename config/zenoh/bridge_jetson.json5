@@ -1,0 +1,76 @@
+{
+  // zenoh-bridge-ros2dds : Jetson (Jazzy) 側
+  //   ROS_DOMAIN_ID=6 のローカル DDS と zenoh を橋渡しする。
+  //   Ground PC用のbridgeとは分離し、Jetsonで生成・消費するtopicだけを
+  //   通す。地上側でRTP/JPEGを受けて生成する
+  //   /ground_video/image/compressed は含めない。
+  //   Livoxのrawデータは/livox/imuだけを通し、/livox/lidarはJetson内に
+  //   閉じ込める。
+  mode: "peer",
+
+  // Jetson から疎通確認済みの miniPC 有線 NIC へ接続する。
+  connect: {
+    endpoints: ["tcp/10.42.0.2:7447"],
+  },
+
+  scouting: {
+    multicast: { enabled: false },
+  },
+
+  plugins: {
+    ros2dds: {
+      domain: 7,
+
+      // The Jetson joins after the miniPC's robot_state_publisher in normal
+      // operation.  Request the TRANSIENT_LOCAL /tf_static history instead
+      // of relying on a fresh static-TF publication after startup.
+      transient_local_cache_multiplier: 20,
+      queries_timeout: {
+        transient_local_subscribers: 10.0,
+      },
+
+      allow: {
+        publishers: [
+          "/zed2i/left/image_raw",
+          "/odom", "/odometry/filtered/global", "/livox/imu",
+          "/task1/safety_points",
+          "/planned_path_pruned", "/mppi/crm_costmap",
+          "/autonomy/ready", "/heartbeat/autonomy",
+          "/task2/buoy_pose_correction",
+          "/docking/berth1_corrected", "/docking/berth2_corrected",
+          "/other_ship/twist",
+          "/task2/opponent_detected",
+          "/task2/selected_opponent_marker", "/task2/selected_opponent_velocity_marker",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/yolo/debug_preview/q40/compressed",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/zed2i/left/preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/foxglove_log",
+          "/gui/livox/points",
+        ],
+        subscribers: [
+          "/odom", "/odometry/filtered/global", "/odometry/filtered/local", "/tf", "/tf_static", "/livox/imu",
+          "/task1/safety_points",
+          "/planned_path_pruned", "/mppi/crm_costmap",
+          "/docking/berth1_nominal", "/docking/berth2_nominal",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/yolo/debug_preview/q40/compressed",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/zed2i/left/preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/foxglove_log",
+          "/gui/livox/points",
+        ],
+        service_servers: [], service_clients: [],
+        action_servers: [], action_clients: [],
+      },
+    },
+  },
+}

@@ -1,0 +1,143 @@
+amcl:
+  ros__parameters:
+    use_sim_time: false
+
+bt_navigator:
+  ros__parameters:
+    use_sim_time: false
+    global_frame: odom
+    robot_base_frame: base_link
+    odom_topic: /odom
+    bt_loop_duration: 10
+    default_server_timeout: 20
+    # 標準のXMLを使う場合は、標準的なプラグインを網羅しておく必要があります
+    default_nav_to_pose_bt_xml: "/opt/ros/humble/share/nav2_bt_navigator/behavior_trees/navigate_to_pose_w_replanning_and_recovery.xml"
+    default_nav_through_poses_bt_xml: "/opt/ros/humble/share/nav2_bt_navigator/behavior_trees/navigate_through_poses_w_replanning_and_recovery.xml"
+
+    plugin_lib_names:
+    # --- Action Nodes ---
+    - nav2_compute_path_to_pose_action_bt_node
+    - nav2_compute_path_through_poses_action_bt_node
+    - nav2_follow_path_action_bt_node
+    - nav2_back_up_action_bt_node
+    - nav2_spin_action_bt_node
+    - nav2_wait_action_bt_node
+    - nav2_clear_costmap_service_bt_node
+    - nav2_navigate_through_poses_action_bt_node
+    - nav2_navigate_to_pose_action_bt_node
+    - nav2_remove_passed_goals_action_bt_node
+    - nav2_truncate_path_action_bt_node
+    - nav2_planner_selector_bt_node
+    - nav2_controller_selector_bt_node
+    - nav2_goal_checker_selector_bt_node
+
+    # --- Control Flow Nodes (ここが足りていませんでした) ---
+    - nav2_recovery_node_bt_node         # <--- これが RecoveryNode に必要
+    - nav2_pipeline_sequence_bt_node     # <--- これが PipelineSequence に必要
+    - nav2_round_robin_node_bt_node      # <--- これが RoundRobin に必要
+    - nav2_transform_available_condition_bt_node
+    - nav2_rate_controller_bt_node
+
+    # --- Condition Nodes ---
+    - nav2_goal_reached_condition_bt_node
+    - nav2_initial_pose_received_condition_bt_node
+    - nav2_goal_updated_condition_bt_node
+    - nav2_globally_updated_goal_condition_bt_node
+    - nav2_is_stuck_condition_bt_node
+    - nav2_is_battery_low_condition_bt_node
+    - nav2_is_path_valid_condition_bt_node
+    - nav2_distance_traveled_condition_bt_node
+    - nav2_single_trigger_bt_node
+    - nav2_time_expired_condition_bt_node
+    # - nav2_path_expiring_timer_condition_bt_node
+
+controller_server:
+  ros__parameters:
+    use_sim_time: false
+    controller_frequency: 20.0
+    min_x_velocity_threshold: 0.001
+    min_y_velocity_threshold: 0.5
+    min_theta_velocity_threshold: 0.001
+    # 制御アルゴリズムのプラグイン設定
+    controller_plugins: ["FollowPath"]
+
+    FollowPath:
+      plugin: "nav2_regulated_pure_pursuit_controller::RegulatedPurePursuitController"
+      desired_linear_vel: 1.0
+      lookahead_dist: 1.5
+      min_lookahead_dist: 0.5
+      max_lookahead_dist: 3.0
+      lookahead_time: 1.5
+      rotate_to_heading_at_start: true
+      transform_tolerance: 0.1
+      use_velocity_scaled_lookahead_dist: true
+      min_approach_linear_velocity: 0.05
+      approach_velocity_scaling_dist: 1.0
+      # コストマップ関連 (今はダミー)
+      cost_scaling_dist: 3.0
+      inflation_radius: 0.55
+
+local_costmap:
+  local_costmap:
+    ros__parameters:
+      update_frequency: 5.0
+      publish_frequency: 2.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+      rolling_window: true
+      width: 10
+      height: 10
+      resolution: 0.05
+      plugins: ["obstacle_layer", "inflation_layer"]
+      # まだセンサが無いので、障害物レイヤーは空でOK
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.55
+
+# Global Costmap / Planner Server も同様に最低限必要ですが
+# まずはController単体の動作確認を目指します
+planner_server:
+  ros__parameters:
+    use_sim_time: false
+    planner_plugins: ["GridBased"]
+    GridBased:
+      plugin: "nav2_smac_planner::SmacPlanner2D"
+      tolerance: 0.5
+      use_astar: false
+      allow_unknown: true
+
+global_costmap:
+  global_costmap:
+    ros__parameters:
+      update_frequency: 1.0
+      publish_frequency: 1.0
+      global_frame: odom
+      robot_base_frame: base_link
+      use_sim_time: false
+
+      # 1. ロボットを中心にマップを動かす設定
+      rolling_window: true
+
+      # 2. マップのサイズ (メートル)
+      # 十分な広さを確保します。50m x 50m くらいあれば
+      # 画面外の遠くのゴールでも、とりあえず近くのパスは引けます。
+      width: 50
+      height: 50
+
+      # 3. 解像度 (メートル/ピクセル)
+      # Globalは粗くていいので、処理負荷を下げるためにLocalより粗くします
+      resolution: 0.1
+
+      plugins: ["obstacle_layer", "inflation_layer"]
+      obstacle_layer:
+        plugin: "nav2_costmap_2d::ObstacleLayer"
+        enabled: true
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        enabled: true

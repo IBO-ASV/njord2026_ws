@@ -26,11 +26,25 @@ SimNode::SimNode(const rclcpp::NodeOptions & options)
 : Node("dutyed_tf_pub_with_disturbance_node", options)
 {
   update_rate_hz_ = this->declare_parameter<double>("update_rate_hz", 50.0);
-  duty_resolution_ = this->declare_parameter<double>("duty_resolution", 1000.0);
   topic_thruster_command_ = this->declare_parameter<std::string>(
     "topic_thruster_command",
     "/thruster_command");
+  thruster_force_sign_ = this->declare_parameter<std::vector<double>>(
+    "thruster_force_sign", {1.0, 1.0, 1.0, 1.0});
+  if (thruster_force_sign_.size() != 4U || std::any_of(
+      thruster_force_sign_.begin(), thruster_force_sign_.end(),
+      [](double sign) {return sign != -1.0 && sign != 1.0;}))
+  {
+    throw std::runtime_error("thruster_force_sign must contain four values, each -1 or 1");
+  }
   topic_odom_ = this->declare_parameter<std::string>("topic_odom", "/odom");
+  const auto initial_pose = this->declare_parameter<std::vector<double>>(
+    "initial_pose_xyyaw", {0.0, 0.0, 0.0});
+  if (initial_pose.size() >= 3U) {
+    x_ = initial_pose[0];
+    y_ = initial_pose[1];
+    yaw_ = initial_pose[2];
+  }
 
   frame_world_ = this->declare_parameter<std::string>("frame_world", "world");
   frame_map_ = this->declare_parameter<std::string>("frame_map", "map");
@@ -54,11 +68,6 @@ SimNode::SimNode(const rclcpp::NodeOptions & options)
     odom_offset_yaw_ = odom_offset[2];
   }
 
-  const double max_forward = this->declare_parameter<double>("thruster.max_forward_newton", 50.0);
-  const double max_reverse = this->declare_parameter<double>("thruster.max_reverse_newton", 40.0);
-  half_beam_meter_ = this->declare_parameter<double>("thruster.half_beam_meter", 0.35);
-  left_reverse_ = this->declare_parameter<bool>("thruster.left_reverse", false);
-  right_reverse_ = this->declare_parameter<bool>("thruster.right_reverse", false);
 
   DoyleParams mmg;
   mmg.Lpp = this->declare_parameter<double>("mmg.Lpp", 1.0);
@@ -86,7 +95,6 @@ SimNode::SimNode(const rclcpp::NodeOptions & options)
   const double disturbance_sigma_r = this->declare_parameter<double>("disturbance.sigma_r", 0.04);
   const int disturbance_seed = this->declare_parameter<int>("disturbance.seed", 2026);
 
-  t200_model_ = std::make_unique<T200Model>(max_forward, max_reverse);
   mmg_model_ = std::make_unique<MMGDoyleModel>(mmg);
   disturbance_model_ = std::make_unique<DisturbanceModel>(
     disturbance_hz,
@@ -97,7 +105,7 @@ SimNode::SimNode(const rclcpp::NodeOptions & options)
     static_cast<std::uint32_t>(std::max(0, disturbance_seed)));
 
   pub_odom_ = this->create_publisher<nav_msgs::msg::Odometry>(topic_odom_, 10);
-  sub_command_ = this->create_subscription<std_msgs::msg::Int16MultiArray>(
+  sub_command_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
     topic_thruster_command_,
     10,
     std::bind(&SimNode::commandCallback, this, std::placeholders::_1));
@@ -114,31 +122,20 @@ SimNode::SimNode(const rclcpp::NodeOptions & options)
   RCLCPP_INFO(this->get_logger(), "dutyed_tf_pub_with_disturbance started");
 }
 
-void SimNode::commandCallback(const std_msgs::msg::Int16MultiArray::SharedPtr msg)
+void SimNode::commandCallback(const std_msgs::msg::Float32MultiArray::SharedPtr msg)
 {
-  if (msg->data.size() < 2U) {
+  if (msg->data.size() != 4U) {
     RCLCPP_WARN_THROTTLE(
       this->get_logger(),
       *this->get_clock(),
       2000,
-      "thruster_command requires at least 2 values [left, right]");
+      "thruster_command requires four force values [RR, RL, FR, FL]");
     return;
   }
 
-  const double res = std::max(1.0, duty_resolution_);
-  latest_left_duty_ = clamp(static_cast<double>(msg->data[0]) / res, -1.0, 1.0);
-  latest_right_duty_ = clamp(static_cast<double>(msg->data[1]) / res, -1.0, 1.0);
-
-  if (left_reverse_) {
-    latest_left_duty_ *= -1.0;
-  }
-  if (right_reverse_) {
-    latest_right_duty_ *= -1.0;
-  }
-
-  latest_duties_.resize(msg->data.size());
+  latest_forces_.resize(msg->data.size());
   for (size_t i = 0; i < msg->data.size(); ++i) {
-    latest_duties_[i] = clamp(static_cast<double>(msg->data[i]) / res, -1.0, 1.0);
+    latest_forces_[i] = static_cast<double>(msg->data[i]) * thruster_force_sign_[i];
   }
 }
 
@@ -194,20 +191,14 @@ void SimNode::onTimer()
   last_stamp_ = now;
 
   PlanarInput input;
-  if (latest_duties_.size() >= 4U) {
-    const std::vector<double> duties(latest_duties_.begin(), latest_duties_.begin() + 4);
+  if (latest_forces_.size() == 4U) {
     const std::vector<SimThrusterGeometry> geometry = {
-      {0.353553, -0.353553, 0.785398},
-      {0.353553, 0.353553, -0.785398},
-      {-0.353553, -0.353553, 2.35619},
-      {-0.353553, 0.353553, -2.35619}};
-    input = dutiesToPlanarInput(duties, geometry, *t200_model_);
-  } else {
-    const double left_force = t200_model_->forceFromDuty(latest_left_duty_);
-    const double right_force = t200_model_->forceFromDuty(latest_right_duty_);
-    input.surge_force = left_force + right_force;
-    input.sway_force = 0.0;
-    input.yaw_moment = (right_force - left_force) * half_beam_meter_;
+      // Match robot.urdf.xacro / robot.urdf_modified.urdf.
+      {-0.1803, -0.2500, 2.35619},
+      {-0.1803, 0.2500, -2.35619},
+      {0.1803, -0.2500, 0.785398},
+      {0.1803, 0.2500, -0.785398}};
+    input = forcesToPlanarInput(latest_forces_, geometry);
   }
 
   PlanarAccel accel = mmg_model_->computeAccel(state_, input);

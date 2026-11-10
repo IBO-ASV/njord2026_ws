@@ -1,0 +1,106 @@
+{
+  // zenoh-bridge-ros2dds : miniPC (Humble) 側
+  //   ROS_DOMAIN_ID=5 のローカル DDS と zenoh を橋渡しする。
+  //   Jetson とは DDS discovery を一切共有しないため、distro 混在による
+  //   ParticipantEntitiesInfo のデシリアライズ失敗（sequence size exceeds
+  //   remaining buffer）が起きない。
+  mode: "peer",
+
+  // Jetson 側ブリッジからの接続を受ける。IP は有線 NIC のもの。
+  listen: {
+    endpoints: ["tcp/0.0.0.0:7447"],
+  },
+
+  // 有線直結なのでマルチキャストスカウティングは不要。
+  scouting: {
+    multicast: { enabled: false },
+  },
+
+  plugins: {
+    ros2dds: {
+      domain: 5,
+
+      // /tf_static uses TRANSIENT_LOCAL durability.  Keep enough samples for
+      // all of its independent publishers (robot_state_publisher, UM982's
+      // static publisher, and navsat_transform), then give a late-joining
+      // remote subscriber time to retrieve that history.
+      transient_local_cache_multiplier: 20,
+      queries_timeout: {
+        transient_local_subscribers: 10.0,
+      },
+
+      // JetsonとGround PCの両bridgeに対するunion。各remote bridge側では
+      // 役割別にさらに絞り込む。/joy と /heartbeat/ground_station は
+      // critical_link_receiver だけがminiPCのcanonical topicへpublishする
+      // ため、ここには絶対に加えない。
+      // Docs/two_machine_split.md「トピックの流れ」に対応。地上側の
+      // /ground_video/image/compressed は意図的に含めず、Jetson へ戻さない。
+      // LivoxのrawデータはminiPCのlocal EKFが使う/livox/imuだけを通し、
+      // 大容量の/livox/lidarはJetson内に閉じ込める。
+      allow: {
+        publishers: [
+          "/odom", "/odometry/filtered/global", "/odometry/filtered/local", "/tf", "/tf_static", "/livox/imu",
+          "/mission/status", "/task/plan",
+          "/docking/berth1_nominal", "/docking/berth2_nominal",
+          "/task1/safety_points",
+          "/planned_path_pruned", "/mppi/crm_costmap",
+          "/autonomy/ready", "/heartbeat/autonomy",
+          "/task2/buoy_pose_correction",
+          "/docking/berth1_corrected", "/docking/berth2_corrected",
+          "/other_ship/twist",
+          "/task2/opponent_detected",
+          "/task2/selected_opponent_marker", "/task2/selected_opponent_velocity_marker",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/zed2i/left/preview/q40/compressed",
+          "/yolo/debug_preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/joy/set_feedback",
+          "/foxglove_log",
+          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/compass/raw",
+          "/gui/ground_speed_mps",
+          "/mission/waypoint_markers",
+          "/actual_path_marker", "/local_costmap/costmap",
+          "/cmd_vel_markers",
+          "/cmd_vel_markers",
+          "/gui/battery_percent",
+          "/gui/livox/points",
+        ],
+        subscribers: [
+          "/odom", "/odometry/filtered/global", "/livox/imu",
+          "/task1/safety_points",
+          "/planned_path_pruned", "/mppi/crm_costmap",
+          "/task2/buoy_pose_correction",
+          "/other_ship/twist",
+          "/task2/opponent_detected",
+          "/task2/selected_opponent_marker", "/task2/selected_opponent_velocity_marker",
+          "/waypoint1_pose", "/waypoint2_pose",
+          "/buoy_detections", "/buoy_detections_3d",
+          "/virtual_obstacles", "/buoy_roi", "/diagnostics",
+          "/zed2i/left/preview/q40/compressed",
+          "/yolo/debug_preview/q40/compressed",
+          "/zed2i/yolo/debug_image",
+          "/zed2i/debug/detections_image",
+          "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
+          "/joy/set_feedback",
+          "/foxglove_log",
+          "/gui/battery_percent",
+          "/gui/livox/points",
+        ],
+        service_servers: [
+          "/mission/list_tasks",
+          "/mission/get_status",
+          "/mission/start_task",
+          "/mission/stop_task",
+          "/control/set_mode",
+        ],
+        service_clients: [],
+        action_servers: ["/mission/run_task"],
+        action_clients: [],
+      },
+    },
+  },
+}

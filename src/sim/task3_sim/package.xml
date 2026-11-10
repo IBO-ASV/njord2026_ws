@@ -14,6 +14,7 @@
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>tf2_ros</depend>
+  <depend>visualization_msgs</depend>
   <depend>launch_ros</depend>
 
   <exec_depend>buoy_obstacle_publisher</exec_depend>
@@ -23,7 +24,9 @@
   <exec_depend>robot_state_publisher</exec_depend>
   <exec_depend>sensor_sim_with_noise</exec_depend>
   <exec_depend>thruster_driver</exec_depend>
+  <exec_depend>tf_frame_arrow_publisher</exec_depend>
   <exec_depend>waypoint_publisher</exec_depend>
+  <exec_depend>xacro</exec_depend>
 
   <test_depend>ament_flake8</test_depend>
   <test_depend>ament_pep257</test_depend>

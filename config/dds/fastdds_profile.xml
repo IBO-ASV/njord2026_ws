@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!--
+  fastdds_profile.xml
+
+  Default RMW config for the Jetson / miniPC split (NJORD_RMW=fastrtps).
+
+  Why FastRTPS (rmw_fastrtps_cpp) is the default here: the Jetson runs
+  ROS 2 Jazzy and the miniPC runs ROS 2 Humble. FastDDS is a stable,
+  wire-compatible DDS implementation across both distros, so it is the
+  known-good choice for cross-distro (Humble <-> Jazzy) interoperability
+  between the two machines. rmw_zenoh_cpp (see config/zenoh/) is an
+  opt-in alternative - see the warnings in that directory before using it.
+
+  scripts/njord_env.sh points FASTRTPS_DEFAULT_PROFILES_FILE at this file
+  when NJORD_RMW=fastrtps (the default).
+-->
+<dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">
+  <profiles>
+    <!--
+      interfaceWhiteList restricts DDS UDP traffic to specific network
+      interface addresses. This matters on a machine with multiple NICs
+      (e.g. a wired Ethernet link to the other machine plus Wi-Fi/USB
+      tethering/loopback-ish interfaces) so that discovery and data
+      traffic only go out over the wired link between the Jetson and the
+      miniPC.
+
+      DO NOT hardcode a real IP address here in version control -
+      addresses are environment-specific (DHCP, per-machine static
+      config, etc.). The whitelist transport_descriptor below is left
+      commented out by default so this profile works unmodified (all
+      interfaces used, default FastDDS transports) until an operator
+      opts in.
+
+      To enable: uncomment both the <transport_descriptors> block and
+      the <userTransports>/<useBuiltinTransports> lines in the
+      participant profile below, then replace the placeholder address
+      with the actual IPv4 address assigned to the wired NIC on this
+      machine (check with `ip addr show <iface>`), e.g. 192.168.1.10.
+      Do this identically (with each machine's own address) on both the
+      Jetson and the miniPC.
+
+    <transport_descriptors>
+      <transport_descriptor>
+        <transport_id>njord_wired_only</transport_id>
+        <type>UDPv4</type>
+        <interfaceWhiteList>
+          <address>REPLACE_WITH_WIRED_NIC_IPV4_ADDRESS</address>
+        </interfaceWhiteList>
+      </transport_descriptor>
+    </transport_descriptors>
+    -->
+
+    <participant profile_name="njord_default_participant" is_default_profile="true">
+      <rtps>
+        <!--
+          Uncomment together with the transport_descriptors block above
+          to restrict this participant to the wired NIC only:
+
+        <userTransports>
+          <transport_id>njord_wired_only</transport_id>
+        </userTransports>
+        <useBuiltinTransports>false</useBuiltinTransports>
+        -->
+      </rtps>
+    </participant>
+  </profiles>
+</dds>

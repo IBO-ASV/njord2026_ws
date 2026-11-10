@@ -23,6 +23,7 @@ void NaturalCubicSplineSmoother::configure(
   }
 
   RCLCPP_INFO(logger_, "Configuring %s as Smoother Plugin", name_.c_str());
+  clock_ = parent_ptr->get_clock();
 
   // Declare and retrieve parameters
   if (!parent_ptr->has_parameter(name_ + ".path_point_spacing")) {
@@ -132,6 +133,14 @@ bool NaturalCubicSplineSmoother::smooth(
     return false;
   }
 
+  std_msgs::msg::Header output_header = path.header;
+  if (output_header.frame_id.empty() && !path.poses.empty()) {
+    output_header.frame_id = path.poses.front().header.frame_id;
+  }
+  if (clock_) {
+    output_header.stamp = clock_->now();
+  }
+
   // 5. Generate smoothed path
   int num_path_points = static_cast<int>(std::ceil(total_distance / path_point_spacing_)) + 1;
   num_path_points = std::max(3, num_path_points);
@@ -154,7 +163,7 @@ bool NaturalCubicSplineSmoother::smooth(
     double y = evaluateSpline(y_splines[segment_idx], u);
 
     geometry_msgs::msg::PoseStamped pose;
-    pose.header = path.header;
+    pose.header = output_header;
     pose.pose.position.x = x;
     pose.pose.position.y = y;
     pose.pose.position.z = 0.0;
@@ -195,6 +204,7 @@ bool NaturalCubicSplineSmoother::smooth(
   }
 
   path.poses = std::move(smoothed_poses);
+  path.header = output_header;
   return true;
 }
 

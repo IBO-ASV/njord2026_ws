@@ -47,9 +47,14 @@
     "isam2_relinearize_skip": 1,
     "isam2_relinearize_thresh": 0.1,
     "fix_imu_bias": false,
+    "compute_covs": false,
     // Voxel params
+    // 港湾標準: 0.25 mは岸壁・係留柱の形状を残す。遠方ほど最大0.5 mまで緩める。
     "voxel_resolution": 0.25,
     "voxel_resolution_max": 0.5,
+    // 候補（同時に有効化しない）:
+    // "voxel_resolution": 0.15, "voxel_resolution_max": 0.30, // docking精度優先
+    // "voxel_resolution": 0.35, "voxel_resolution_max": 0.70, // 軽量・広域移動優先
     "voxel_resolution_dmin": 5.0,
     "voxel_resolution_dmax": 20.0,
     "voxelmap_levels": 2,
@@ -61,9 +66,12 @@
     "keyframe_min_overlap": 0.01,
     "keyframe_max_overlap": 0.7,
     "keyframe_delta_trans": 2.0,
+    // "keyframe_delta_trans": 1.0, // docking周辺の地図密度優先。計算量/メモリ増
+    // "keyframe_delta_trans": 3.0, // 軽量。狭い岸壁付近では地図が粗くなりやすい
     "keyframe_delta_rot": 0.5,
     "keyframe_entropy_thresh": 0.99,
     // MISC
+    "validate_imu": true,
     "save_imu_rate_trajectory": true,
     "num_threads": 2
   }

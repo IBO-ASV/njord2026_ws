@@ -1,0 +1,12 @@
+# The geographic home configured in home.yaml is projected through /fromLL.
+return_home_config:
+  frame_id: map
+  waypoints:
+    - id: home
+      latitude: 63.442096626145
+      longitude: 10.424757352535376
+      yaw: 0.0
+      type: home
+      name: Home
+  stages:
+    return_home: [home]

@@ -1,0 +1,18 @@
+# ROS bag extraction: Task 2 left ZED image only
+#
+# The source bag also contains the right image, depth image, point cloud, and
+# back-camera image.  They are deliberately excluded from this transfer.
+
+[bag]
+source = "/home/gembu/njord2026_ws/rosbag2_2026_08_07-01_36_24"
+destination_root = "/media/hashilab/7C8CE32A8CE2DDA0/data"
+destination_name = "rosbag2_2026_08_07-01_36_24"
+
+[selection]
+topics = ["/zed2i/left/image_rect"]
+
+[[topics]]
+name = "/zed2i/left/image_rect"
+type = "sensor_msgs/msg/Image"
+role = "Left ZED rectified image"
+notes = "The only selected topic. /zed2i/right/image_rect, /zed2i/depth/image, /zed2i/points, and back-camera topics are excluded."

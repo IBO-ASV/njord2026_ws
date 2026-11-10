@@ -1,0 +1,47 @@
+um982_feedback_ekf:
+  ros__parameters:
+    frequency: 30.0
+    sensor_timeout: 0.5
+    two_d_mode: true
+    # The only dynamic TF authority in the miniPC fusion mode.
+    publish_tf: true
+    map_frame: map
+    odom_frame: odom
+    base_link_frame: base_link
+    world_frame: odom
+    print_diagnostics: true
+
+    # Absolute local ENU position and dual-antenna heading from UM982.
+    odom0: odometry/feedback
+    odom0_config: [true, true, false,
+                   false, false, true,
+                   false, false, false,
+                   false, false, false,
+                   false, false, false]
+    odom0_differential: false
+    odom0_relative: false
+    odom0_queue_size: 10
+
+    # GLIM is initialized independently on the Jetson. Treat its first pose
+    # as this EKF's local origin and fuse planar motion, but keep yaw from
+    # the UM982's absolute dual-antenna heading.
+    odom1: /odom
+    odom1_config: [true, true, false,
+                   false, false, false,
+                   true, true, false,
+                   false, false, true,
+                   false, false, false]
+    odom1_differential: false
+    odom1_relative: true
+    odom1_queue_size: 20
+
+    # MID-360 has no attitude estimate; use planar acceleration and yaw rate.
+    imu0: /livox/imu
+    imu0_config: [false, false, false,
+                  false, false, false,
+                  false, false, false,
+                  false, false, true,
+                  true, true, false]
+    imu0_differential: false
+    imu0_relative: false
+    imu0_remove_gravitational_acceleration: false

@@ -32,11 +32,14 @@ double AngleDiff(double a, double b)
 }
 }
 
+namespace pcl_det
+{
+
 class PclBuoyDetectionNode : public rclcpp::Node
 {
 public:
-  PclBuoyDetectionNode()
-  : Node("pcl_bouy_det_node"),
+  explicit PclBuoyDetectionNode(const rclcpp::NodeOptions & options)
+  : Node("pcl_bouy_det_node", options),
     tf_buffer_(this->get_clock()),
     tf_listener_(tf_buffer_),
     tf_broadcaster_(this)
@@ -91,7 +94,8 @@ private:
     }
 
     if ((msg->header.stamp.sec == 0 && msg->header.stamp.nanosec == 0) ||
-        (latest_roi_.header.stamp.sec == 0 && latest_roi_.header.stamp.nanosec == 0)) {
+      (latest_roi_.header.stamp.sec == 0 && latest_roi_.header.stamp.nanosec == 0))
+    {
       return;
     }
 
@@ -130,7 +134,8 @@ private:
     const double dir_y = roi_point_cloud.point.y - origin_y;
     const double theta_predict_cloud = std::atan2(dir_y, dir_x);
 
-    const double r_min = std::max(0.0, static_cast<double>(latest_roi_.r_predict - latest_roi_.r_range));
+    const double r_min = std::max(0.0,
+        static_cast<double>(latest_roi_.r_predict - latest_roi_.r_range));
     const double r_max = static_cast<double>(latest_roi_.r_predict + latest_roi_.r_range);
 
     pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>());
@@ -235,10 +240,7 @@ private:
   tf2_ros::TransformBroadcaster tf_broadcaster_;
 };
 
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<PclBuoyDetectionNode>());
-  rclcpp::shutdown();
-  return 0;
-}
+}  // namespace pcl_det
+
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(pcl_det::PclBuoyDetectionNode)

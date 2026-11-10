@@ -1,0 +1,112 @@
+# Legacy waypoint files remain the source of route coordinates during Phase 3.
+# Runtime Nav2 profile switching is deliberately unsupported in this slice.
+nav2_profiles: [task1, task2, task3]
+control_policies: [task1, task2, task3, return_home]
+tasks:
+  task1:
+    display_name: Task 1
+    availability: experimental
+    executor: waypoint_sequence
+    route_package: waypoint_publisher
+    route: config/task1_waypoints.yaml
+    route_key: task1_config
+    frame_id: odom
+    nav2_profile: task1
+    control_policy: task1
+    features: {cardinal_walls: true}
+  task1_skip_1_1:
+    display_name: Task 1 GPS smoke test
+    availability: experimental
+    executor: waypoint_sequence
+    route_package: waypoint_publisher
+    route: config/task1_skip_1_1_waypoints.yaml
+    route_key: task1_skip_1_1_config
+    frame_id: odom
+    nav2_profile: task1
+    control_policy: task1
+  task1_2:
+    display_name: Task 1-2 marker-driven route
+    availability: not_implemented
+    reason: Marker-driven route generation is not implemented
+  task2:
+    display_name: Task 2
+    availability: experimental
+    executor: task2_mppi
+    route_package: waypoint_publisher
+    route: config/task2_waypoints.yaml
+    route_key: task2_config
+    frame_id: odom
+    nav2_profile: task2
+    control_policy: task2
+    features: {buoy_perception: false}
+  task2_bak:
+    display_name: Task 2 fallback route
+    availability: experimental
+    executor: waypoint_sequence
+    route_package: waypoint_publisher
+    route: config/task2_bak_waypoints.yaml
+    route_key: task2_bak_config
+    frame_id: odom
+    nav2_profile: task2
+    control_policy: task2
+  task3_1:
+    display_name: Task 3-1
+    availability: experimental
+    executor: staged_docking
+    route_package: waypoint_publisher
+    route: config/task3_waypoints.yaml
+    route_key: task3_1_config
+    frame_id: odom
+    nav2_profile: task3
+    control_policy: task3
+  task3_2:
+    display_name: Task 3-2
+    availability: experimental
+    executor: staged_docking
+    route_package: waypoint_publisher
+    route: config/task3_waypoints.yaml
+    route_key: task3_2_config
+    frame_id: odom
+    nav2_profile: task3
+    control_policy: task3
+  task4:
+    display_name: Task 4 (two-berth route)
+    availability: experimental
+    executor: staged_docking
+    route_package: waypoint_publisher
+    route: config/task4_waypoints.yaml
+    route_key: task4_config
+    frame_id: map
+    nav2_profile: task3
+    control_policy: task1
+    # Buoy walls are advisory after GPS14.  Do not block Task4 startup when
+    # the camera has not yet produced a detection.
+    features: {cardinal_walls: false, buoy_perception: false, task4_buoy_walls: true}
+  return_home:
+    display_name: Ground-link failsafe return home
+    availability: experimental
+    executor: waypoint_sequence
+    route: return_home_waypoints.yaml
+    route_key: return_home_config
+    frame_id: map
+    # Mission Manager permits this task from any active Nav2 profile.
+    nav2_profile: task1
+    control_policy: return_home
+  move_to_exam_field:
+    display_name: Move to exam field
+    availability: experimental
+    executor: waypoint_sequence
+    route: move_to_exam_field_waypoints.yaml
+    route_key: move_to_exam_field_config
+    frame_id: odom
+    nav2_profile: task1
+    control_policy: task1
+  back_to_birth_point:
+    display_name: Back to birth point
+    availability: experimental
+    executor: waypoint_sequence
+    route: move_to_exam_field_waypoints.yaml
+    route_key: back_to_birth_point_config
+    frame_id: odom
+    nav2_profile: task1
+    control_policy: task1

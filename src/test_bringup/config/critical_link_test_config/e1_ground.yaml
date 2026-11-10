@@ -1,0 +1,9 @@
+# E1: ESP-NOW gateway sender template. Set the USB serial by-id path before use.
+critical_link_sender:
+  ros__parameters:
+    joy_input_topic: /critical_link/input/joy
+    heartbeat_input_topic: /critical_link/input/heartbeat
+    udp_paths: []
+    # /dev/serial/by-id/usb-...-ground-esp32
+    serial_device: ""
+    serial_baud: 921600

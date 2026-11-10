@@ -10,7 +10,9 @@ opponent_vessel_node:
     publish_rate_hz: 10.0
     start_delay_s: 3.0
     speed_mps: 1.0289
-    start_xy: [60.0, 0.0]
+    # The simulated own vessel starts at (0, 0), so this gives a 25 m
+    # initial separation before the opponent begins moving toward it.
+    start_xy: [25.0, 0.0]
     goal_xy: [0.0, 0.0]
     disturbance_amp_m: 0.3
     disturbance_freq_hz: 0.1

@@ -1,0 +1,13 @@
+twist_mux:
+  ros__parameters:
+    # joy_converter and Nav2 publish geometry_msgs/Twist, not TwistStamped.
+    use_stamped: false
+    topics:
+      navigation:
+        topic: /cmd_vel_nav
+        timeout: 0.5
+        priority: 10
+      manual:
+        topic: /cmd_vel_manual
+        timeout: 0.5
+        priority: 100

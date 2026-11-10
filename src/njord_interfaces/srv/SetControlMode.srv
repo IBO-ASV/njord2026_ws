@@ -1,0 +1,16 @@
+# Request
+uint8 MODE_MANUAL=0
+uint8 MODE_AUTO=1
+
+uint8 requested_mode
+string request_id
+---
+# Response
+uint8 ACCEPTED=0
+uint8 INVALID_MODE=1
+uint8 SAFETY_INHIBITED=2
+uint8 INTERNAL_ERROR=255
+
+bool accepted
+uint8 reason_code
+string message
