@@ -61,3 +61,7 @@ these simulation tuning overrides unchanged on the real vessel.
 | Guard follow-up | Change | Evidence |
 |---|---|---|
 | Head-on seed 2028 with the first guard still contacted the NPC; logs alternated -3.5 m and +3.5 m lanes, then held while the NPC closed | Require a clear port-crossing geometry rather than a small noisy lateral velocity; retain the first observed encounter lane and prefer its complete +/-5 m route before rolling horizons | Failure retained as `task2-headon-oscillating-guard-noise2028`. Rotational/noisy-side and lane-retention tests added; replacement matrix is `task2-committed-lane` |
+
+| Wall observation audit | Change | Evidence |
+|---|---|---|
+| The observer subscribed only to the Task4 wall-enable topic, so Task1 JSON said `wall_enabled_seen: false` despite the wall node's north lock / marker confirmations | Subscribe to Task1's canonical enable topic for Task1/1.2, observe actual `/virtual_obstacles` point counts, and require a nonempty wall cloud while enabled | This strengthens instrumentation/acceptance, not controller tuning. Fresh Task1 full-route audit and Task1.2 rerun use the corrected predicate; earlier noise/MMG results retain their original fields |

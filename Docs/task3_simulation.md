@@ -1,5 +1,8 @@
 # Task3 Navigation and Simulation
 
+Mission Manager経由のセンサなし完遂試験は [新しい共通sim手順](../src/sim/njord_sim/README.md)
+と [実行結果](simulation_acceptance.md) を参照してください。以下は既存のTask3単体起動の説明です。
+
 ## Run
 
 Build and source the workspace, then launch either Task3 mode:

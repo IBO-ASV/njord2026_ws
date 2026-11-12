@@ -37,7 +37,11 @@ real-vessel assessment. The synthetic port-side NPC never yields, so this
 fixture includes emergency avoidance rather than assuming stand-on priority
 alone prevents collision.
 
-For interactive use:
+For interactive use, install the optional bridge (`sudo apt install
+ros-jazzy-foxglove-bridge`). CPU PyTorch can be installed with
+`sudo apt install python3-torch`. Build the dependency packages named above
+before running Task2.
+
 
 ```bash
 export ROS_DOMAIN_ID=89 ROS_LOCALHOST_ONLY=1 RMW_IMPLEMENTATION=rmw_fastrtps_cpp

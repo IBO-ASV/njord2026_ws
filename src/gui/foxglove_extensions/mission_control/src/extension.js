@@ -1,5 +1,8 @@
 const STATES = ['IDLE','VALIDATING','CONFIGURING','WAITING FOR INPUT','WAITING FOR AUTO','RUNNING','PAUSED','CANCELING','SUCCEEDED','FAILED','REJECTED'];
 const SOURCES = ['STOPPED / ZERO','MANUAL','AUTO','SBUS'];
+const HEALTH = ['UNKNOWN','OK','DEGRADED','ERROR','STALE','DISABLED'];
+const PATTERNS = ['消灯','点灯','点滅'];
+function lampColors(value){return [[1,'緑'],[2,'黄'],[4,'赤']].filter(([bit])=>value&bit).map(([,label])=>label).join('＋')||'消灯';}
 function initPanel(context) {
   const root = context.panelElement;
   root.replaceChildren();
@@ -20,14 +23,15 @@ function initPanel(context) {
     const task=tasks.find(t=>t.task_id===select.value);
     start.disabled=busy||!ready||!task||task.availability>1||mission.state!==0;
     stop.disabled=busy||!mission?.execution_id||![1,2,3,4,5,6,7].includes(mission.state);
-    mode.textContent=fresh(lastControl)?`要求: ${control.requested_mode===1?'AUTO':'MANUAL'} ｜ AUTO許可: ${control.auto_permitted?'可':'不可'} ｜ 実効出力: ${SOURCES[control.effective_source]??'UNKNOWN'}`:'制御状態: STALE / 未受信';
+    mode.textContent=fresh(lastControl)?`要求: ${control.requested_mode===1?'AUTO':'MANUAL'} ｜ AUTO許可: ${control.auto_permitted?'可':'不可'} ｜ 実効出力: ${SOURCES[control.effective_source]??'UNKNOWN'}${control.emergency_stop?' ｜ 緊急停止':''}`:'制御状態: STALE / 未受信';
     mode.style.color=ready?(control.emergency_stop?'#f87171':control.effective_source===2?'#4ade80':'#fbbf24'):'#f87171';
     state.textContent=fresh(lastMission)?`${mission.task_id||'--'} · ${STATES[mission.state]??'UNKNOWN'} · ${mission.stage||'--'}`:'Mission: STALE / 未受信';
     progress.value=fresh(lastMission)?Math.max(0,Math.min(1,mission.progress||0)):0;
     const reasons=[...(control?.inhibit_reasons||[]),...(mission?.inhibit_reasons||[])];
     detail.textContent=[mission?.message||'',...new Set(reasons)].filter(Boolean).join(' / ');
-    health.textContent=fresh(lastHealth)?`Health: ${summary.message||summary.summary_state}`:'Health: STALE / 未受信';
-    lamp.textContent=fresh(lastLamp)?`状態灯: ${lampMessage.reason||lampMessage.state||''} / color=${lampMessage.color} pattern=${lampMessage.pattern}`:'状態灯: STALE / 未受信';
+    health.textContent=fresh(lastHealth)?`Health: ${HEALTH[summary.summary_state]??'UNKNOWN'} · ${summary.message||''}`:'Health: STALE / 未受信';
+    lamp.style.color=fresh(lastLamp)?(lampMessage.color&4?'#f87171':lampMessage.color&2?'#fbbf24':lampMessage.color&1?'#4ade80':'#edf3fa'):'#f87171';
+    lamp.textContent=fresh(lastLamp)?`状態灯（指令）: ${lampColors(lampMessage.color)} · ${PATTERNS[lampMessage.pattern]??'不明'}${lampMessage.pattern===2?` (${lampMessage.period}秒周期)`:''} / ${lampMessage.reason||''}`:'状態灯: STALE / 未受信';
   }
   async function call(service,request){busy=true;render();try{const response=await context.callService(service,request);feedback.textContent=response?.message||'応答を受信';return response;}catch(e){feedback.textContent=`操作失敗: ${e.message||e}`;return null;}finally{busy=false;render();}}
   async function list(){const response=await call('/mission/list_tasks',{});if(!response)return;tasks=response.tasks||[];const old=select.value;select.replaceChildren();for(const task of tasks){const o=document.createElement('option');o.value=task.task_id;o.textContent=`${task.display_name}${task.availability>1?' (利用不可)':''}`;o.disabled=task.availability>1;o.title=task.reason||'';select.append(o);}if(tasks.some(t=>t.task_id===old))select.value=old;render();}

@@ -67,6 +67,9 @@ def main():
                     "reason": "observer failed before producing evaluation",
                 }
             )
+            if code != 0:
+                result["passed"] = False
+                result["reason"] = f"runner exit {code}: {result.get('reason', '')}"
             return {"run": name, "exit_code": code, **result}
         finally:
             domains.put(domain)

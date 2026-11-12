@@ -16,6 +16,9 @@ test('Mission controls use task discovery, execution IDs and freshness',async()=
   await start.onclick();assert.equal(calls.at(-1)[0],'/mission/start_task');assert.equal(calls.at(-1)[1].task_id,'task1');assert.equal(calls.at(-1)[1].request_auto_mode,true);
   render({state:5,execution_id:'execution-123',task_id:'task1',progress:.5},{requested_mode:1,effective_source:0,auto_permitted:false,inhibit_reasons:['GNSS stale']});
   assert.equal(start.disabled,true);assert.equal(stop.disabled,false);await stop.onclick();assert.equal(calls.at(-1)[1].execution_id,'execution-123');
+  context.onRender({currentFrame:[{topic:'/alert_lamp/command',message:{color:6,pattern:2,period:.5,reason:'sensor not ready'}},{topic:'/health/state',message:{summary_state:3,message:'GNSS stale'}}]},()=>{});
+  assert(elements.some(e=>String(e.textContent).includes('黄＋赤 · 点滅 (0.5秒周期)')));
+  assert(elements.some(e=>String(e.textContent).includes('Health: ERROR · GNSS stale')));
   time+=4000;timer();assert.equal(start.disabled,true);assert(elements.some(e=>String(e.textContent).includes('STALE')));
   context.onRender({currentFrame:[{topic:'/mission/last_result',message:{task_id:'task1',state:9,message:'navigation failed'}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('FAILED')));

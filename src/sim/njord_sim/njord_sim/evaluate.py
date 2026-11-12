@@ -14,6 +14,7 @@ from rclpy.qos import QoSProfile, DurabilityPolicy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist
 from std_msgs.msg import Bool
+from sensor_msgs.msg import PointCloud2
 from njord_interfaces.msg import MissionStatus, ControlState
 from njord_interfaces.srv import StopTask
 from .scenario import (
@@ -52,6 +53,8 @@ class Evaluation(Node):
         self.cpa_astern = None
         self.gates = set()
         self.wall_events = []
+        self.max_wall_points = 0
+        self.enabled_wall_cloud_seen = False
         self.t0 = time.monotonic()
         self.wp = 0
         self.min_clearance = math.inf
@@ -79,9 +82,14 @@ class Evaluation(Node):
         self.create_subscription(Bool, "/task2/opponent_detected", self.on_detected, 10)
         self.create_subscription(
             Bool,
-            "/task4/buoy_wall_enable",
+            "/task1/cardinal_wall_enable"
+            if args.task.startswith("task1")
+            else "/task4/buoy_wall_enable",
             lambda m: self.wall_events.append(m.data),
             qos,
+        )
+        self.create_subscription(
+            PointCloud2, "/virtual_obstacles", self.on_wall_cloud, 10
         )
         self.create_subscription(
             Bool, "/autonomy/ready", lambda m: setattr(self, "nav_ready", m.data), 10
@@ -89,6 +97,12 @@ class Evaluation(Node):
 
     def on_detected(self, m):
         self.opponent_selected = self.opponent_selected or m.data
+
+    def on_wall_cloud(self, message):
+        points = message.width * message.height
+        self.max_wall_points = max(self.max_wall_points, points)
+        if points and self.wall_events and self.wall_events[-1]:
+            self.enabled_wall_cloud_seen = True
 
     def on_status(self, m):
         if self.state is None or (m.state, m.stage, m.message) != (
@@ -261,6 +275,7 @@ class Evaluation(Node):
                     encounter_ok = encounter_ok and self.cpa_astern is True
         passed = (
             encounter_ok
+            and (not self.args.task.startswith("task1") or self.enabled_wall_cloud_seen)
             and self.result == 8
             and self.action_result == 0
             and self.wp == len(self.s.route.waypoints)
@@ -326,6 +341,8 @@ class Evaluation(Node):
             "gates_passed": sorted(self.gates),
             "wall_enabled_seen": True in self.wall_events,
             "wall_disabled_seen": False in self.wall_events,
+            "maximum_wall_points": self.max_wall_points,
+            "enabled_wall_cloud_seen": self.enabled_wall_cloud_seen,
             "dock_contact_samples": self.contacts,
             "cardinal_passages": self.cardinal,
             "final_stationary_s": self.stop_duration,
