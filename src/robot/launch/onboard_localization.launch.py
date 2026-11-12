@@ -15,6 +15,10 @@ def include(name,args):
 def generate_launch_description():
  sim=C('use_sim_time')
  common={'use_sim_time':sim,'frequency':10.0,'zero_altitude':True,'broadcast_utm_transform':False,'wait_for_datum':False,'use_odometry_yaw':False}
+ # Task routes are expressed in the continuous local odom frame.  Its
+ # navsat projector must still initialize when the dual-antenna heading is
+ # temporarily unavailable; the local filter supplies the matching yaw.
+ route_projection={**common,'use_odometry_yaw':True}
  heading=('imu','/localization/gnss_heading_imu');fix=('gps/fix','/sensor/vehicle_gnss/fix/raw')
  return LaunchDescription([
   DeclareLaunchArgument('use_sim_time',default_value='false'),
@@ -26,6 +30,6 @@ def generate_launch_description():
    Node(package='robot',executable='gnss_heading_imu',parameters=[{'use_sim_time':sim}]),
    Node(package='robot_localization',executable='ekf_node',name='ekf_onboard_map',parameters=[P([FindPackageShare('robot'),'config','ekf_onboard_map.yaml']),{'use_sim_time':sim}],remappings=[('odometry/filtered','/odometry/filtered/global')]),
    Node(package='robot_localization',executable='navsat_transform_node',name='navsat_map',parameters=[common],remappings=[heading,fix,('odometry/filtered','/odometry/filtered/global'),('odometry/gps','/localization/gnss_map'),('fromLL','/localization/map/fromLL'),('toLL','/localization/map/toLL'),('datum','/localization/map/datum'),('setUTMZone','/localization/map/setUTMZone')]),
-   Node(package='robot_localization',executable='navsat_transform_node',name='navsat_routes_odom',parameters=[common],remappings=[heading,fix,('odometry/filtered','/odometry/filtered/local'),('odometry/gps','/localization/gnss_odom_projection')]),
+   Node(package='robot_localization',executable='navsat_transform_node',name='navsat_routes_odom',parameters=[route_projection],remappings=[heading,fix,('odometry/filtered','/odometry/filtered/local'),('odometry/gps','/localization/gnss_odom_projection')]),
   ])
  ])

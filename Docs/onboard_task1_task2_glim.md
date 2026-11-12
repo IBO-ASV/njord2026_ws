@@ -7,8 +7,12 @@ Both workspaces: /home/ibo/njord2026_ws, branch fix/agx-startup.
 
 AGX: choose one task, never both concurrently:
 
-    ros2 launch robot agx_task1.launch.py enable_mid360:=true
-    ros2 launch robot agx_task2.launch.py enable_mid360:=true
+    ros2 launch robot agx_task1.launch.py
+    ros2 launch robot agx_task2.launch.py
+
+AGX bringup starts the configured LiDAR by default (`enable_lidar:=true`);
+`lidar_model` defaults to `mid360s`. Disable it explicitly with
+`enable_lidar:=false` when the sensor/network is unavailable.
 
 Ground PC, common to both:
 

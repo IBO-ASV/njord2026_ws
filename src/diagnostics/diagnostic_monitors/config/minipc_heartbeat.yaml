@@ -37,18 +37,6 @@ minipc_heartbeat:
     output_topic: /heartbeat/driver/camera
     timeout: 1.5
 
-  # All miniPC driver health
-  - name: heartbeat_driver
-    inputs:
-      # - topic: /heartbeat/driver/camera
-      #   topic_type: std_msgs/msg/Empty
-      - topic: /heartbeat/driver/gnss
-        topic_type: std_msgs/msg/Empty
-      - topic: /heartbeat/driver/micon
-        topic_type: std_msgs/msg/Empty
-    output_topic: /heartbeat/driver
-    timeout: 1.5
-
   # Optional Jetson front-camera branch. Also add its heartbeat output to
   # heartbeat_driver_camera when enabling it.
   # - name: heartbeat_driver_camera_front

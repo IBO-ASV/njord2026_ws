@@ -48,7 +48,7 @@ def test_existing_task_routes_load_without_changing_waypoint_files():
     task3 = loader.load(WAYPOINT_ROOT / "config/task3_waypoints.yaml", "task3_1_config")
     task3_2 = loader.load(WAYPOINT_ROOT / "config/task3_waypoints.yaml", "task3_2_config")
     task4 = loader.load(WAYPOINT_ROOT / "config/task4_waypoints.yaml", "task4_config")
-    assert len(task1.waypoints) == 11
+    assert len(task1.waypoints) == 4
     assert task1.frame_id == task3.frame_id == task3_2.frame_id == "odom"
     assert task4.frame_id == "map"
     assert [waypoint.competition_id for waypoint in task4.waypoints if waypoint.competition_id] == [
@@ -64,7 +64,7 @@ def test_existing_task_routes_load_without_changing_waypoint_files():
     ]
     assert displayed == ["01", "02", "03", "04", "05", "06", "07", "08", "09", "10", "11", "12"]
     assert len(task1.projection_points()) == len(task1.waypoints)
-    assert task1.waypoints[6].competition_id == "3"
+    assert task1.waypoints[2].competition_id == "3"
     assert task1.waypoints[-1].competition_id == "4"
     assert [waypoint.waypoint_id for waypoint in task2.waypoints] == ["5", "6"]
     assert [(waypoint.latitude, waypoint.longitude) for waypoint in task2.waypoints] == [

@@ -6,7 +6,6 @@ control_policy:
   # このポリシーが参照してよい health signal 名。heartbeat inventory に実在する名前のみ。
   health_signals:
     - ground_station_heartbeat  # 地上局からの生存信号 (/heartbeat/ground_station)
-    - driver_heartbeat          # スラスタドライバの生存信号 (/heartbeat/driver)
     - local_odometry            # ローカル自己位置 (/odometry/filtered/local)
     - gnss                      # GNSS 測位 (/sensor/vehicle_gnss/fix/raw)
 

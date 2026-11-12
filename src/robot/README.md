@@ -25,9 +25,9 @@ ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
 ./scripts/run_agx_pair.sh vessel
 ./scripts/run_agx_pair.sh ground
 
-# miniPC: task selection uses the persistent Mission Manager
-njord-task check task1
-njord-task start task1 --auto
+# Ground PC: task selection uses the persistent Mission Manager
+ros2 run mission_manager njord-task check task1
+ros2 run mission_manager njord-task start task1 --auto
 ```
 
 minipc_bringup.launch.py / jetson_bringup.launch.py は各端末で一度だけ起動する。
@@ -89,10 +89,9 @@ GLIM自身の`/tf`は外部へ出さないこと。既存のJetson bringupはGLI
 `/glim/tf_unused`へ隔離している。このlaunchと従来の`localization.launch.py`または
 UM982 feedback EKFを同時に起動するとTFが競合するため、排他的に使用する。
 
-driver heartbeatは実データの鮮度から階層的に生成する。Jetsonが前カメラと
-LiDARのleaf heartbeatを生成し、miniPCがback camera、GNSS、Miconと合わせて
-`/heartbeat/driver` へ集約する。local/global odometryも
-`/heartbeat/localization` へ集約される。
+GNSS、Micon、local odometryなどの稼働状態は、それぞれの実データの鮮度を
+health signalとして個別に監視する。現在の構成ではGNSSとMiconを重ねた
+`/heartbeat/driver`集約は生成しない。
 
 Ground PCではNTRIP casterも既定起動する。Drogger RWS/ETHMの接続設定は
 `192.168.1.72:2101`、mountpoint `RTCM3`、SOURCE password `osw` の

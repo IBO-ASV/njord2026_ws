@@ -8,7 +8,7 @@ def test_voxelize_keeps_one_per_cell_and_honours_limit():
     assert len(voxelize([(float(i), 0, 0, 0) for i in range(10)], .1, 3)) == 3
 
 
-def test_cloud_points_accepts_field_dict_keys():
+def test_cloud_points_checks_required_names_against_field_mapping():
     message = SimpleNamespace(
         fields=[SimpleNamespace(name=name, offset=offset) for name, offset in (("x", 0), ("y", 4), ("z", 8))],
         point_step=12, is_bigendian=False, data=b"\0" * 12,

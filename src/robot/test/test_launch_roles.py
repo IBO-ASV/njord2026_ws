@@ -183,6 +183,13 @@ def test_task2_uses_fixed_odom_with_global_map_transform_available():
     assert 'name="task2_safety_points"' not in jetson_task2
 
 
+def test_odom_route_projector_can_initialize_without_gnss_heading():
+    source = _read_launch_source("onboard_localization.launch.py")
+
+    assert "route_projection={**common,'use_odometry_yaw':True}" in source
+    assert "name='navsat_routes_odom',parameters=[route_projection]" in source
+
+
 def test_minipc_bringup_adds_sbus_without_replacing_the_ground_link_joy_path():
     source = _read_launch_source("minipc_bringup.launch.py")
 
@@ -205,6 +212,15 @@ def test_resident_nav2_profile_is_selected_by_role_bringup():
     assert "'task2': 'nav2_params_task2_humble.yaml'" in nav2_source
     assert "'task3': 'nav2_params_task3_humble.yaml'" in nav2_source
     assert "changed by Mission Manager" in nav2_source
+
+
+def test_task1_navfn_plugin_uses_jazzy_pluginlib_type_name():
+    params = yaml.safe_load(
+        (Path(_LAUNCH_DIR).parents[0] / "config" / "nav2_params_humble.yaml").read_text()
+    )
+    planner = params["planner_server"]["ros__parameters"]["GridBased"]
+
+    assert planner["plugin"] == "nav2_navfn_planner::NavfnPlanner"
 
 
 @pytest.mark.parametrize("filename", ["nav2_params_task3_humble.yaml", "nav2_params_task3_jazzy.yaml"])

@@ -150,9 +150,9 @@ ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
 であり、自動目標は送信されない。
 
 ```bash
-njord-task list
-njord-task check task1
-njord-task start task1 --auto
+ros2 run mission_manager njord-task list
+ros2 run mission_manager njord-task check task1
+ros2 run mission_manager njord-task start task1 --auto
 ```
 
 Task 2/3は対応するprofile、collision monitor、dynamic gate TFを検証してregistryを

@@ -102,10 +102,10 @@ def generate_launch_description():
     )
     arg_heading_baseline_yaw = DeclareLaunchArgument(
         'heading_baseline_yaw_rad',
-        # Primary: gnss_link=(-0.5, +0.4); secondary:
-        # gnss_sub_link=(+0.5, -0.4), in robot.urdf.xacro.
-        # atan2(-0.8, +1.0): UM982 primary -> secondary baseline in base_link.
-        default_value='-0.6747409422235526',
+        # Primary: gnss_link=(+0.3, +0.2); secondary:
+        # gnss_sub_link=(-0.3, 0.0), in robot.urdf.xacro.
+        # atan2(-0.2, -0.6): UM982 primary -> secondary baseline in base_link.
+        default_value='-2.819842099193151',
         description=(
             'UM982 primary-to-secondary antenna baseline yaw in base_link '
             '[rad]; subtracted from UNIHEADING to obtain vessel yaw'

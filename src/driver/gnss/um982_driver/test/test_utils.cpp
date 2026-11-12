@@ -56,12 +56,12 @@ TEST(NumericParsing, AcceptsOnlyCompleteFiniteValues)
 
 TEST(HeadingMounting, ConvertsPrimaryToSecondaryBaselineToVesselYaw)
 {
-    constexpr double kBaselineYawRad = -0.6747409422235526;
+    constexpr double kBaselineYawRad = -2.819842099193151;
     const double reported_baseline_yaw = um982_driver::utils::deg2rad(20.0);
     const double vessel_yaw = um982_driver::utils::normalize_angle_rad(
         reported_baseline_yaw - kBaselineYawRad);
 
-    EXPECT_NEAR(vessel_yaw, um982_driver::utils::deg2rad(58.6598082541), 1e-10);
+    EXPECT_NEAR(vessel_yaw, um982_driver::utils::deg2rad(-178.4349488229), 1e-10);
     EXPECT_NEAR(
         um982_driver::utils::normalize_angle_rad(4.0 * M_PI), 0.0, 1e-12);
 }

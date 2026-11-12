@@ -74,7 +74,7 @@
 	<joint name="gnss_joint" type="fixed">
 		<parent link="base_link"/>
 		<child link="gnss_link"/>
-		<origin rpy="0 0 0" xyz="-0.5 0.4 1.0"/>
+		<origin rpy="0 0 0" xyz="0.3 0.2 1.0"/>
 	</joint>
 	<link name="gnss_sub_link">
 		<visual>
@@ -91,7 +91,7 @@
 	<joint name="gnss_sub_joint" type="fixed">
 		<parent link="base_link"/>
 		<child link="gnss_sub_link"/>
-		<origin rpy="0 0 0" xyz="-0.5 -0.4 1.0"/>
+		<origin rpy="0 0 0" xyz="-0.3 0.0 1.0"/>
 	</joint>
 	<link name="thruster_FR">
 		<visual>

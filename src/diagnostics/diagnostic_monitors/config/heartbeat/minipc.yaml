@@ -38,13 +38,6 @@ signals:
   #   timeout_sec: 1.0
   #   expected_frequency_hz: 30.0
 
-  driver_heartbeat:
-    topic: /heartbeat/driver
-    type: std_msgs/msg/Empty
-    timeout_sec: 1.5
-    expected_frequency_hz: 2.0
-    minimum_frequency_hz: 1.5
-
   ground_station_heartbeat:
     topic: /heartbeat/ground_station
     type: std_msgs/msg/Empty
@@ -61,23 +54,10 @@ signals:
     timeout_sec: 2.0
     expected_frequency_hz: 1.0
     minimum_frequency_hz: 0.5
-
   autonomy_heartbeat:
     topic: /heartbeat/autonomy
     type: std_msgs/msg/Empty
     timeout_sec: 2.0
     expected_frequency_hz: 1.0
     minimum_frequency_hz: 0.5
-
-# Derived heartbeats are role-owned just like the monitored signals above.
-# They are emitted only while every listed driver data source is fresh, so the
-# aggregate never masks a failed branch with an unconditional timer heartbeat.
-aggregates:
-  driver:
-    output_topic: /heartbeat/driver
-    input_signals:
-      # - back_camera
-      - gnss
-      - micon
-    input_timeout_sec: 1.5
-    publish_period_sec: 0.5
+# Signals are monitored individually; no aggregate driver heartbeat is emitted.

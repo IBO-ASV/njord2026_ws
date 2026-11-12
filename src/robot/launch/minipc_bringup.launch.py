@@ -525,10 +525,7 @@ def generate_launch_description():
         executable="autonomy_supervisor_node",
         name="autonomy_supervisor",
         output="screen",
-        condition=IfCondition(PythonExpression([
-            "'", enable_autonomy_supervisor, "' == 'true' and '",
-            active_nav2_profile, "' != 'task2'",
-        ])),
+        condition=IfCondition(enable_autonomy_supervisor),
     )
 
     heartbeat_launch = include_launch(
