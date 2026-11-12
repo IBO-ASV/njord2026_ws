@@ -19,6 +19,8 @@ test('Mission controls use task discovery, execution IDs and freshness',async()=
   context.onRender({currentFrame:[{topic:'/alert_lamp/command',message:{color:6,pattern:2,period:.5,reason:'sensor not ready'}},{topic:'/health/state',message:{summary_state:3,message:'GNSS stale'}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('黄＋赤 · 点滅 (0.5秒周期)')));
   assert(elements.some(e=>String(e.textContent).includes('Health: ERROR · GNSS stale')));
+  context.onRender({currentFrame:[{topic:'/mission/status',message:{state:5,execution_id:'execution-2',task_id:'task2'}},{topic:'/mission/task2/path_safe',message:{data:false}}]},()=>{});
+  assert(elements.some(e=>String(e.textContent).includes('避航経路の安全条件未成立')));
   time+=4000;timer();assert.equal(start.disabled,true);assert(elements.some(e=>String(e.textContent).includes('STALE')));
   context.onRender({currentFrame:[{topic:'/mission/last_result',message:{task_id:'task1',state:9,message:'navigation failed'}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('FAILED')));

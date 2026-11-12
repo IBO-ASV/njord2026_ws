@@ -1,0 +1,15 @@
+{
+  "task": "task1",
+  "noise": false,
+  "disturbance": false,
+  "seed": 2026,
+  "model": "kinematic",
+  "timeout": 65,
+  "domain": 94,
+  "output": "/tmp/njord-night/cancel-fixed-test",
+  "encounter": "head_on",
+  "cancel_after": 25.0,
+  "dropout_after": 0.0,
+  "commit": "1f19649fabf823e22441b3652d0bf4cb876ddac3",
+  "started": 1794508401.0946565
+}

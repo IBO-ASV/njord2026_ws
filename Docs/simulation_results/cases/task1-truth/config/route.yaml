@@ -1,0 +1,84 @@
+sim_route:
+  constraints:
+    cardinal_marker_detection: true
+  frame_id: odom
+  full_sequence_stages: {}
+  stages: {}
+  waypoints:
+  - competition_id: '1'
+    id: '1'
+    latitude: 63.4408
+    longitude: 10.4233194444
+    name: GPS 1
+    type: waypoint
+    yaw: -2.7270818055634902
+  - competition_id: '1.1'
+    id: '1.1'
+    latitude: 63.440766708020305
+    longitude: 10.42315045112605
+    name: GPS 1.1
+    type: waypoint
+    yaw: -1.2305665583229692
+  - competition_id: '1.2'
+    id: '1.2'
+    latitude: 63.44070013328369
+    longitude: 10.423203088973892
+    name: GPS 1.2
+    type: waypoint
+    yaw: -1.471708793782912
+  - competition_id: '1.3'
+    id: '1.3'
+    latitude: 63.440625233293595
+    longitude: 10.423219720025395
+    name: GPS 1.3
+    type: waypoint
+    yaw: 3.1023411579849927
+  - competition_id: '1.4'
+    id: '1.4'
+    latitude: 63.440630785857195
+    longitude: 10.422903896036454
+    name: GPS 1.4
+    type: waypoint
+    yaw: -2.1020761129903254
+  - competition_id: '2'
+    id: '2'
+    latitude: 63.44053369083956
+    longitude: 10.422776462241766
+    name: GPS 2
+    type: waypoint
+    yaw: -0.3879952099163184
+  - competition_id: '3'
+    id: '3'
+    latitude: 63.440414519273965
+    longitude: 10.423427703760511
+    name: GPS 3
+    type: waypoint
+    yaw: 1.9054963731493195
+  - competition_id: '3.1'
+    id: '3.1'
+    latitude: 63.44057529999183
+    longitude: 10.423302813681332
+    name: GPS 3.1
+    type: waypoint
+    yaw: -0.32370208875443207
+  - competition_id: '3.2'
+    id: '3.2'
+    latitude: 63.440542007964986
+    longitude: 10.423524442815879
+    name: GPS 3.2
+    type: waypoint
+    yaw: 0.9737130702604913
+  - competition_id: '3.3'
+    id: '3.3'
+    latitude: 63.44063921889269
+    longitude: 10.423672056495663
+    name: GPS 3.3
+    type: waypoint
+    yaw: 1.2092738748074894
+  - competition_id: '4'
+    id: '4'
+    latitude: 63.44076948842379
+    longitude: 10.423782082066653
+    name: GPS 4
+    type: goal
+    yaw: 1.2092738748074894

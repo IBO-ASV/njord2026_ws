@@ -1,0 +1,84 @@
+{
+  "test_mode": "none",
+  "task": "task2",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 2,
+  "waypoints_total": 2,
+  "minimum_buoy_clearance_m": 1.675952393189582,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [],
+  "other_ship_clearance_m": null,
+  "opponent_selected": false,
+  "max_starboard_offset_m": 0.11957051949144049,
+  "cpa_astern": null,
+  "gates_passed": [
+    0,
+    1
+  ],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 0,
+  "enabled_wall_cloud_seen": false,
+  "dock_contact_samples": 0,
+  "cardinal_passages": {},
+  "final_stationary_s": 3.250341451028362,
+  "samples": 880,
+  "events": [
+    {
+      "t": 5.544616024999414,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "control state unavailable"
+      ]
+    },
+    {
+      "t": 10.01668033999158,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.024244986998383,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.145340332004707,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Task 2 MPPI FollowPath gate enabled",
+      "inhibit": []
+    },
+    {
+      "t": 46.84440253803041,
+      "state": 0,
+      "stage": "",
+      "message": "Task 2 FollowPath goal reached",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

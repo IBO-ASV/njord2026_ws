@@ -250,7 +250,7 @@ class Evaluation(Node):
         out = Path(self.args.output)
         out.mkdir(parents=True, exist_ok=True)
         with (out / "trajectory.csv").open("w") as f:
-            writer = csv.writer(f)
+            writer = csv.writer(f, lineterminator="\n")
             writer.writerow(("time_s", "x", "y", "yaw", "speed", "yaw_rate"))
             writer.writerows(self.samples)
         required = [

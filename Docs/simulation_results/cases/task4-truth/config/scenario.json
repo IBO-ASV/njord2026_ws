@@ -1,0 +1,295 @@
+{
+  "task": {
+    "task_id": "task4",
+    "display_name": "Task 4 (two-berth route)",
+    "availability": "experimental",
+    "executor": "staged_docking",
+    "route_package": "waypoint_publisher",
+    "route": "config/task4_waypoints.yaml",
+    "route_key": "task4_config",
+    "frame_id": "map",
+    "nav2_profile": "task3",
+    "control_policy": "task1",
+    "reason": "",
+    "supports_dry_run": true,
+    "supports_auto_mode": true,
+    "features": {
+      "cardinal_walls": false,
+      "buoy_perception": false,
+      "task4_buoy_walls": true
+    }
+  },
+  "route": {
+    "frame_id": "map",
+    "waypoints": [
+      {
+        "waypoint_id": "13",
+        "x": 0.0,
+        "y": 0.0,
+        "yaw": 0.2773,
+        "name": "GPS 13 - Task 4 Start",
+        "waypoint_type": "start",
+        "gate_pair": null,
+        "competition_id": "01",
+        "latitude": 63.440797,
+        "longitude": 10.42386,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "14_outbound",
+        "x": 6.6875414586405455,
+        "y": 14.936802614075491,
+        "yaw": -2.4342,
+        "name": "GPS 14 - Berth 1 Transit",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "02",
+        "latitude": 63.440931,
+        "longitude": 10.423994,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "8_berth1_approach",
+        "x": 10.036856041882206,
+        "y": 15.196901117613248,
+        "yaw": 0.43806142156731387,
+        "name": "GPS 8 - Berth 1 Approach",
+        "waypoint_type": "dock_approach",
+        "gate_pair": null,
+        "competition_id": "03",
+        "latitude": 63.4409333333,
+        "longitude": 10.4240611111,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "berth1",
+        "x": 11.623342663726724,
+        "y": 15.940034375677945,
+        "yaw": 0.43806142156731387,
+        "name": "Berth 1 - Inside Dock",
+        "waypoint_type": "dock",
+        "gate_pair": null,
+        "competition_id": "04",
+        "latitude": 63.44094,
+        "longitude": 10.4240929,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "8_berth1_exit",
+        "x": 10.036856041882206,
+        "y": 15.196901117613248,
+        "yaw": 0.43806142156731387,
+        "name": "GPS 8 - Berth 1 Exit",
+        "waypoint_type": "dock_approach",
+        "gate_pair": null,
+        "competition_id": "05",
+        "latitude": 63.4409333333,
+        "longitude": 10.4240611111,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "8_exit_turn",
+        "x": 10.036856041882206,
+        "y": 15.196901117613248,
+        "yaw": -2.1539,
+        "name": "GPS 8 - Turn toward GPS 14",
+        "waypoint_type": "dock_approach",
+        "gate_pair": null,
+        "competition_id": "06",
+        "latitude": 63.4409333333,
+        "longitude": 10.4240611111,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "14_return",
+        "x": 6.6875414586405455,
+        "y": 14.936802614075491,
+        "yaw": -2.4342,
+        "name": "GPS 14 - Return Transit",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "07",
+        "latitude": 63.440931,
+        "longitude": 10.423994,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "15",
+        "x": -6.53778504654857,
+        "y": 32.21443938054312,
+        "yaw": 0.8034,
+        "name": "GPS 15",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "08",
+        "latitude": 63.441086,
+        "longitude": 10.423729,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "16",
+        "x": 13.125445269751985,
+        "y": 39.90579497554605,
+        "yaw": 2.2277,
+        "name": "GPS 16",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "09",
+        "latitude": 63.441155,
+        "longitude": 10.424123,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "17",
+        "x": 12.27707997550957,
+        "y": 27.532773927997702,
+        "yaw": -0.3681,
+        "name": "GPS 17 - Berth 2 Transit",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "10",
+        "latitude": 63.441044,
+        "longitude": 10.424106,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "11_berth2_approach",
+        "x": 14.334364318989323,
+        "y": 24.17633952804797,
+        "yaw": 2.9119,
+        "name": "GPS 11 - Berth 2 Approach",
+        "waypoint_type": "dock_approach",
+        "gate_pair": null,
+        "competition_id": "11",
+        "latitude": 63.4410138889,
+        "longitude": 10.4241472222,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "berth2",
+        "x": 13.018221332028027,
+        "y": 21.407575837896058,
+        "yaw": 2.9119,
+        "name": "Berth 2 - Inside Dock",
+        "waypoint_type": "dock",
+        "gate_pair": null,
+        "competition_id": "12",
+        "latitude": 63.44098905,
+        "longitude": 10.42412085,
+        "altitude": 0.0,
+        "docking_motion": ""
+      }
+    ],
+    "stages": {
+      "stage_1_gate": [
+        "13"
+      ],
+      "stage_1": [
+        "14_outbound"
+      ],
+      "stage_2": [
+        "8_berth1_approach"
+      ],
+      "stage_3": [
+        "berth1"
+      ],
+      "stage_4": [
+        "8_berth1_exit"
+      ],
+      "stage_5": [
+        "8_exit_turn"
+      ],
+      "stage_6": [
+        "14_return"
+      ],
+      "stage_7": [
+        "15"
+      ],
+      "stage_8": [
+        "16"
+      ],
+      "stage_9": [
+        "17"
+      ],
+      "stage_10": [
+        "11_berth2_approach"
+      ],
+      "stage_11": [
+        "berth2"
+      ]
+    },
+    "full_sequence_stages": {},
+    "constraints": {
+      "wait_time_s": 10,
+      "second_wait_time_s": 5,
+      "attempts": 2,
+      "stage_order": [
+        "stage_1_gate",
+        "stage_1",
+        "stage_2",
+        "stage_3",
+        "stage_4",
+        "stage_5",
+        "stage_6",
+        "stage_7",
+        "stage_8",
+        "stage_9",
+        "stage_10",
+        "stage_11"
+      ],
+      "buoy_avoidance": true,
+      "finish_in_final_dock": true
+    }
+  },
+  "datum": {
+    "latitude": 63.440797,
+    "longitude": 10.42386,
+    "yaw": 0.0
+  },
+  "buoys": [
+    [
+      2.018856756720469,
+      39.31963293108872,
+      "RED"
+    ],
+    [
+      4.568803466482947,
+      32.80060142500045,
+      "GREEN"
+    ]
+  ],
+  "docks": [
+    [
+      11.623342663726724,
+      15.940034375677945,
+      0.43806142156731387,
+      2.0,
+      2.0,
+      3
+    ],
+    [
+      13.018221332028027,
+      21.407575837896058,
+      2.9119,
+      4.0,
+      2.0,
+      0
+    ]
+  ],
+  "initial": [
+    0.0,
+    0.0,
+    1.1498380489893762
+  ]
+}

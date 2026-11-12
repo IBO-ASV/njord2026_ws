@@ -1,0 +1,132 @@
+sim_route:
+  constraints:
+    attempts: 2
+    buoy_avoidance: true
+    finish_in_final_dock: true
+    second_wait_time_s: 5
+    stage_order:
+    - stage_1_gate
+    - stage_1
+    - stage_2
+    - stage_3
+    - stage_4
+    - stage_5
+    - stage_6
+    - stage_7
+    - stage_8
+    - stage_9
+    - stage_10
+    - stage_11
+    wait_time_s: 10
+  frame_id: map
+  full_sequence_stages: {}
+  stages:
+    stage_1:
+    - 14_outbound
+    stage_10:
+    - 11_berth2_approach
+    stage_11:
+    - berth2
+    stage_1_gate:
+    - '13'
+    stage_2:
+    - 8_berth1_approach
+    stage_3:
+    - berth1
+    stage_4:
+    - 8_berth1_exit
+    stage_5:
+    - 8_exit_turn
+    stage_6:
+    - 14_return
+    stage_7:
+    - '15'
+    stage_8:
+    - '16'
+    stage_9:
+    - '17'
+  waypoints:
+  - competition_id: '01'
+    id: '13'
+    latitude: 63.440797
+    longitude: 10.42386
+    name: GPS 13 - Task 4 Start
+    type: start
+    yaw: 0.2773
+  - competition_id: '02'
+    id: 14_outbound
+    latitude: 63.440931
+    longitude: 10.423994
+    name: GPS 14 - Berth 1 Transit
+    type: waypoint
+    yaw: -2.4342
+  - competition_id: '03'
+    id: 8_berth1_approach
+    latitude: 63.4409333333
+    longitude: 10.4240611111
+    name: GPS 8 - Berth 1 Approach
+    type: dock_approach
+    yaw: 0.43806142156731387
+  - competition_id: '04'
+    id: berth1
+    latitude: 63.44094
+    longitude: 10.4240929
+    name: Berth 1 - Inside Dock
+    type: dock
+    yaw: 0.43806142156731387
+  - competition_id: '05'
+    id: 8_berth1_exit
+    latitude: 63.4409333333
+    longitude: 10.4240611111
+    name: GPS 8 - Berth 1 Exit
+    type: dock_approach
+    yaw: 0.43806142156731387
+  - competition_id: '06'
+    id: 8_exit_turn
+    latitude: 63.4409333333
+    longitude: 10.4240611111
+    name: GPS 8 - Turn toward GPS 14
+    type: dock_approach
+    yaw: -2.1539
+  - competition_id: '07'
+    id: 14_return
+    latitude: 63.440931
+    longitude: 10.423994
+    name: GPS 14 - Return Transit
+    type: waypoint
+    yaw: -2.4342
+  - competition_id: 08
+    id: '15'
+    latitude: 63.441086
+    longitude: 10.423729
+    name: GPS 15
+    type: waypoint
+    yaw: 0.8034
+  - competition_id: 09
+    id: '16'
+    latitude: 63.441155
+    longitude: 10.424123
+    name: GPS 16
+    type: waypoint
+    yaw: 2.2277
+  - competition_id: '10'
+    id: '17'
+    latitude: 63.441044
+    longitude: 10.424106
+    name: GPS 17 - Berth 2 Transit
+    type: waypoint
+    yaw: -0.3681
+  - competition_id: '11'
+    id: 11_berth2_approach
+    latitude: 63.4410138889
+    longitude: 10.4241472222
+    name: GPS 11 - Berth 2 Approach
+    type: dock_approach
+    yaw: 2.9119
+  - competition_id: '12'
+    id: berth2
+    latitude: 63.44098905
+    longitude: 10.42412085
+    name: Berth 2 - Inside Dock
+    type: dock
+    yaw: 2.9119

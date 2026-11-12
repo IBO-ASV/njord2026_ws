@@ -1,0 +1,22 @@
+control_policies:
+- task1
+- task2
+- task3
+- return_home
+nav2_profiles:
+- task1
+- task2
+- task3
+tasks:
+  task2:
+    availability: experimental
+    control_policy: task2
+    display_name: Task 2
+    executor: task2_mppi
+    features:
+      buoy_perception: true
+    frame_id: odom
+    nav2_profile: task2
+    route: route.yaml
+    route_key: sim_route
+    route_package: ''

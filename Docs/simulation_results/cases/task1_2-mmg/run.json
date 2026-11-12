@@ -1,0 +1,14 @@
+{
+  "task": "task1_2",
+  "noise": false,
+  "disturbance": false,
+  "seed": 2026,
+  "model": "mmg",
+  "timeout": 300,
+  "domain": 89,
+  "output": "/tmp/njord-night/task1_2-mmg-run2",
+  "encounter": "head_on",
+  "cancel_after": 0.0,
+  "commit": "1f19649fabf823e22441b3652d0bf4cb876ddac3",
+  "started": 1794507697.456988
+}

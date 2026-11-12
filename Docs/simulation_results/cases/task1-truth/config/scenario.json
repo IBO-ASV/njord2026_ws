@@ -1,0 +1,217 @@
+{
+  "task": {
+    "task_id": "task1",
+    "display_name": "Task 1",
+    "availability": "experimental",
+    "executor": "waypoint_sequence",
+    "route_package": "waypoint_publisher",
+    "route": "config/task1_waypoints.yaml",
+    "route_key": "task1_config",
+    "frame_id": "odom",
+    "nav2_profile": "task1",
+    "control_policy": "task1",
+    "reason": "",
+    "supports_dry_run": true,
+    "supports_auto_mode": true,
+    "features": {
+      "cardinal_walls": true
+    }
+  },
+  "route": {
+    "frame_id": "odom",
+    "waypoints": [
+      {
+        "waypoint_id": "1",
+        "x": 0.0,
+        "y": 0.0,
+        "yaw": -2.7270818055634902,
+        "name": "GPS 1",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "1",
+        "latitude": 63.4408,
+        "longitude": 10.4233194444,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "1.1",
+        "x": -8.434,
+        "y": -3.711,
+        "yaw": -1.2305665583229692,
+        "name": "GPS 1.1",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "1.1",
+        "latitude": 63.440766708020305,
+        "longitude": 10.42315045112605,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "1.2",
+        "x": -5.807,
+        "y": -11.132,
+        "yaw": -1.471708793782912,
+        "name": "GPS 1.2",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "1.2",
+        "latitude": 63.44070013328369,
+        "longitude": 10.423203088973892,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "1.3",
+        "x": -4.977,
+        "y": -19.481,
+        "yaw": 3.1023411579849927,
+        "name": "GPS 1.3",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "1.3",
+        "latitude": 63.440625233293595,
+        "longitude": 10.423219720025395,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "1.4",
+        "x": -20.739,
+        "y": -18.862,
+        "yaw": -2.1020761129903254,
+        "name": "GPS 1.4",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "1.4",
+        "latitude": 63.440630785857195,
+        "longitude": 10.422903896036454,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "2",
+        "x": -27.099,
+        "y": -29.685,
+        "yaw": -0.3879952099163184,
+        "name": "GPS 2",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "2",
+        "latitude": 63.44053369083956,
+        "longitude": 10.422776462241766,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "3",
+        "x": 5.403,
+        "y": -42.969,
+        "yaw": 1.9054963731493195,
+        "name": "GPS 3",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "3",
+        "latitude": 63.440414519273965,
+        "longitude": 10.423427703760511,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "3.1",
+        "x": -0.83,
+        "y": -25.047,
+        "yaw": -0.32370208875443207,
+        "name": "GPS 3.1",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "3.1",
+        "latitude": 63.44057529999183,
+        "longitude": 10.423302813681332,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "3.2",
+        "x": 10.231,
+        "y": -28.758,
+        "yaw": 0.9737130702604913,
+        "name": "GPS 3.2",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "3.2",
+        "latitude": 63.440542007964986,
+        "longitude": 10.423524442815879,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "3.3",
+        "x": 17.598,
+        "y": -17.922,
+        "yaw": 1.2092738748074894,
+        "name": "GPS 3.3",
+        "waypoint_type": "waypoint",
+        "gate_pair": null,
+        "competition_id": "3.3",
+        "latitude": 63.44063921889269,
+        "longitude": 10.423672056495663,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "4",
+        "x": 23.089,
+        "y": -3.401,
+        "yaw": 1.2092738748074894,
+        "name": "GPS 4",
+        "waypoint_type": "goal",
+        "gate_pair": null,
+        "competition_id": "4",
+        "latitude": 63.44076948842379,
+        "longitude": 10.423782082066653,
+        "altitude": 0.0,
+        "docking_motion": ""
+      }
+    ],
+    "stages": {},
+    "full_sequence_stages": {},
+    "constraints": {
+      "cardinal_marker_detection": true
+    }
+  },
+  "datum": {
+    "latitude": 63.4408,
+    "longitude": 10.4233194444,
+    "yaw": 0.0
+  },
+  "buoys": [
+    [
+      1.864,
+      -38.592,
+      "RED"
+    ],
+    [
+      10.61,
+      -27.048,
+      "E"
+    ],
+    [
+      -0.072,
+      -23.976,
+      "W"
+    ],
+    [
+      10.809,
+      -9.827,
+      "GREEN"
+    ]
+  ],
+  "docks": [],
+  "initial": [
+    0.0,
+    0.0,
+    -2.7270818055634902
+  ]
+}

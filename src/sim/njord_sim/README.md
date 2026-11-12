@@ -12,7 +12,9 @@ source install/setup.bash
 python3 scripts/run_mission_sim.py --task task1 --output /tmp/njord/task1
 python3 scripts/run_mission_sim.py --task task1_2 --model mmg --output /tmp/njord/task1-mmg
 python3 scripts/run_mission_sim.py --task task3_1 --noise --seed 2026 --output /tmp/njord/dock
-python3 scripts/run_sim_suite.py --truth --workers 2 --output /tmp/njord/suite
+python3 scripts/run_sim_suite.py --tasks task1,task1_2 --truth --workers 2 --output /tmp/njord/task1-suite
+python3 scripts/run_sim_suite.py --tasks task2 --encounters head_on,port,starboard,none --truth --workers 1 --output /tmp/njord/task2-suite
+python3 scripts/run_sim_suite.py --tasks task3_1,task3_2,task4 --truth --workers 1 --output /tmp/njord/docking-suite
 ```
 
 Tasks: `task1`, `task1_2`, `task2`, `task3_1`, `task3_2`, `task4`.
@@ -96,6 +98,8 @@ Each run writes `run.json`, `config/`, `launch.log`, `observer.log`,
 `trajectory.csv` and `evaluation.json`. Success requires the Mission action
 result, sequential waypoint visits, no hull contact, correct cardinal side
 at closest approach within 10 m, and at least 2 s of final stationarity.
+Task1/1.2 additionally require a nonempty `/virtual_obstacles` cloud while the
+canonical Task1 wall gate is enabled; the summary records its maximum point count.
 The action result is authoritative because an immediately followed IDLE
 status can overwrite a terminal transient-local sample.
 

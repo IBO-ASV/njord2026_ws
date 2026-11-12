@@ -1,0 +1,108 @@
+{
+  "test_mode": "sensor_loss",
+  "task": "task1",
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 9,
+  "action_result_code": 1,
+  "waypoints_visited": 2,
+  "waypoints_total": 11,
+  "minimum_buoy_clearance_m": 13.680146037864644,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [],
+  "other_ship_clearance_m": null,
+  "opponent_selected": false,
+  "max_starboard_offset_m": 0.0,
+  "cpa_astern": null,
+  "gates_passed": [],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "dock_contact_samples": 0,
+  "cardinal_passages": {},
+  "final_stationary_s": 0.0,
+  "samples": 554,
+  "events": [
+    {
+      "t": 5.99056520400336,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "control state unavailable"
+      ]
+    },
+    {
+      "t": 10.882255954958964,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.90211740595987,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projected waypoint 1/10",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.983126114995684,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 11.09897801297484,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 1/10: 1.1",
+      "inhibit": []
+    },
+    {
+      "t": 11.127295002981555,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 1/10",
+      "inhibit": []
+    },
+    {
+      "t": 23.218179100949783,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 2/10: 1.2",
+      "inhibit": []
+    },
+    {
+      "t": 23.270904643984977,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 2/10",
+      "inhibit": []
+    },
+    {
+      "t": 31.022973615967203,
+      "state": 7,
+      "stage": "navigate",
+      "message": "cancellation requested",
+      "inhibit": []
+    },
+    {
+      "t": 31.07242567499634,
+      "state": 0,
+      "stage": "",
+      "message": "waypoint goal canceled",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

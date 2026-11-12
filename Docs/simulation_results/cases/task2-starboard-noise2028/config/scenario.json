@@ -1,0 +1,99 @@
+{
+  "task": {
+    "task_id": "task2",
+    "display_name": "Task 2",
+    "availability": "experimental",
+    "executor": "task2_mppi",
+    "route_package": "waypoint_publisher",
+    "route": "config/task2_waypoints.yaml",
+    "route_key": "task2_config",
+    "frame_id": "odom",
+    "nav2_profile": "task2",
+    "control_policy": "task2",
+    "reason": "",
+    "supports_dry_run": true,
+    "supports_auto_mode": true,
+    "features": {
+      "buoy_perception": false
+    }
+  },
+  "route": {
+    "frame_id": "odom",
+    "waypoints": [
+      {
+        "waypoint_id": "5",
+        "x": 0.0,
+        "y": 0.0,
+        "yaw": -1.9634954085,
+        "name": "GPS 5 - Start",
+        "waypoint_type": "start",
+        "gate_pair": null,
+        "competition_id": "5",
+        "latitude": 63.440734,
+        "longitude": 10.423366,
+        "altitude": 0.0,
+        "docking_motion": ""
+      },
+      {
+        "waypoint_id": "6",
+        "x": -19.26442833972765,
+        "y": -30.542343790134407,
+        "yaw": -1.9634954085,
+        "name": "GPS 6 - Goal",
+        "waypoint_type": "goal",
+        "gate_pair": null,
+        "competition_id": "6",
+        "latitude": 63.44046,
+        "longitude": 10.42298,
+        "altitude": 0.0,
+        "docking_motion": ""
+      }
+    ],
+    "stages": {},
+    "full_sequence_stages": {},
+    "constraints": {
+      "speed_knots": 2.0,
+      "speed_requirement": "accelerate_immediately",
+      "obstacle_avoidance": true,
+      "colreg_compliance": true,
+      "collision_angles_deg": [
+        -100,
+        100
+      ],
+      "attempts_per_scenario": 2
+    }
+  },
+  "datum": {
+    "latitude": 63.440734,
+    "longitude": 10.423366,
+    "yaw": 0.0
+  },
+  "buoys": [
+    [
+      -0.7751461501547068,
+      -5.9150731291805485,
+      "RED"
+    ],
+    [
+      -5.004182351763588,
+      -3.2476300078597724,
+      "GREEN"
+    ],
+    [
+      -14.260245987964064,
+      -27.29471378227463,
+      "RED"
+    ],
+    [
+      -18.489282189572947,
+      -24.627270660953858,
+      "GREEN"
+    ]
+  ],
+  "docks": [],
+  "initial": [
+    0.0,
+    0.0,
+    -2.1335161615630676
+  ]
+}

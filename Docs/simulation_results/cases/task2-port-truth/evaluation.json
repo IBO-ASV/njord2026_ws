@@ -1,0 +1,89 @@
+{
+  "test_mode": "none",
+  "task": "task2",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 2,
+  "waypoints_total": 2,
+  "minimum_buoy_clearance_m": 0.8071730178670522,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [],
+  "other_ship_clearance_m": 5.349880751282763,
+  "opponent_selected": true,
+  "max_starboard_offset_m": 2.710505431213761e-20,
+  "cpa_astern": true,
+  "gates_passed": [
+    0,
+    1
+  ],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "dock_contact_samples": 0,
+  "cardinal_passages": {},
+  "final_stationary_s": 3.2997386709903367,
+  "samples": 1069,
+  "events": [
+    {
+      "t": 5.930770311038941,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "control state unavailable"
+      ]
+    },
+    {
+      "t": 12.159268014016561,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 12.164824225008488,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 12.232214973017108,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Task 2 MPPI FollowPath gate enabled",
+      "inhibit": []
+    },
+    {
+      "t": 55.05748757702531,
+      "state": 8,
+      "stage": "navigate",
+      "message": "Task 2 FollowPath goal reached",
+      "inhibit": []
+    },
+    {
+      "t": 55.06086694204714,
+      "state": 0,
+      "stage": "",
+      "message": "Task 2 FollowPath goal reached",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

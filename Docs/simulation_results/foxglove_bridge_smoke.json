@@ -1,0 +1,19 @@
+{
+  "handshake": 101,
+  "capabilities": [
+    "connectionGraph",
+    "parameters",
+    "parametersSubscribe",
+    "services"
+  ],
+  "mission_services": [
+    "/mission/get_status",
+    "/mission/list_tasks",
+    "/mission/start_task",
+    "/mission/stop_task"
+  ],
+  "mission_channel": true,
+  "list_tasks_cdr_response": [
+    "task1_2"
+  ]
+}

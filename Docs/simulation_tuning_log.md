@@ -65,3 +65,15 @@ these simulation tuning overrides unchanged on the real vessel.
 | Wall observation audit | Change | Evidence |
 |---|---|---|
 | The observer subscribed only to the Task4 wall-enable topic, so Task1 JSON said `wall_enabled_seen: false` despite the wall node's north lock / marker confirmations | Subscribe to Task1's canonical enable topic for Task1/1.2, observe actual `/virtual_obstacles` point counts, and require a nonempty wall cloud while enabled | This strengthens instrumentation/acceptance, not controller tuning. Fresh Task1 full-route audit and Task1.2 rerun use the corrected predicate; earlier noise/MMG results retain their original fields |
+
+Final acceptance closed on 2026-11-12: Task1 and Task1.2 each passed truth +
+seeds 2026/2027/2028 with actual enabled wall clouds (maximum 1,572 points).
+Their minimum buoy hull clearances were 0.204 m / 0.220 m. Task2 passed all
+16 encounter/noise combinations with minimum moving-vessel hull gap 2.192 m.
+Normal docking, parallel docking and Task4 passed all 12 truth/noise runs with
+zero dock contacts and continuous truth dwell above the configured durations.
+Including one MMG Task1.2 case and two fault/stop cases, 39 selected tests pass.
+See `simulation_acceptance.md` and the retained JSON for the exact configurations.
+The focused Python regression set is now 77 passed; the plugin gtest and GUI
+behavioral test also pass. This does not clear the seven unrelated baseline
+launch/network/video assertions noted above.

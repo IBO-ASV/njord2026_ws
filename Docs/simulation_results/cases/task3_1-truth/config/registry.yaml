@@ -1,0 +1,20 @@
+control_policies:
+- task1
+- task2
+- task3
+- return_home
+nav2_profiles:
+- task1
+- task2
+- task3
+tasks:
+  task3_1:
+    availability: experimental
+    control_policy: task3
+    display_name: Task 3-1
+    executor: staged_docking
+    frame_id: odom
+    nav2_profile: task3
+    route: route.yaml
+    route_key: sim_route
+    route_package: ''

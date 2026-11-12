@@ -1,0 +1,24 @@
+control_policies:
+- task1
+- task2
+- task3
+- return_home
+nav2_profiles:
+- task1
+- task2
+- task3
+tasks:
+  task4:
+    availability: experimental
+    control_policy: task1
+    display_name: Task 4 (two-berth route)
+    executor: staged_docking
+    features:
+      buoy_perception: false
+      cardinal_walls: false
+      task4_buoy_walls: true
+    frame_id: map
+    nav2_profile: task3
+    route: route.yaml
+    route_key: sim_route
+    route_package: ''

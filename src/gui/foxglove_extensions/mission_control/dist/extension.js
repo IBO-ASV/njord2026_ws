@@ -16,7 +16,7 @@ function initPanel(context) {
   const progress=document.createElement('progress'); progress.max=1; progress.style.width='100%';
   for(const b of [select,refresh,start,stop]) b.style.cssText+=';margin:4px;padding:8px';
   root.append(heading,select,refresh,start,stop,mode,state,progress,detail,health,lamp,feedback);
-  let mission=null,control=null,lastMission=0,lastControl=0,lastHealth=0,lastLamp=0,busy=false,tasks=[],summary=null,lampMessage=null,lastExecution='';
+  let mission=null,control=null,lastMission=0,lastControl=0,lastHealth=0,lastLamp=0,busy=false,tasks=[],summary=null,lampMessage=null,lastExecution='',lastPathSafety=0,pathSafe=true;
   const fresh=t=>t>0&&Date.now()-t<3000;
   function render(){
     const ready=fresh(lastMission)&&fresh(lastControl);
@@ -28,7 +28,8 @@ function initPanel(context) {
     state.textContent=fresh(lastMission)?`${mission.task_id||'--'} · ${STATES[mission.state]??'UNKNOWN'} · ${mission.stage||'--'}`:'Mission: STALE / 未受信';
     progress.value=fresh(lastMission)?Math.max(0,Math.min(1,mission.progress||0)):0;
     const reasons=[...(control?.inhibit_reasons||[]),...(mission?.inhibit_reasons||[])];
-    detail.textContent=[mission?.message||'',...new Set(reasons)].filter(Boolean).join(' / ');
+    const pathReason=mission?.task_id==='task2'&&mission.state===5&&lastPathSafety?(fresh(lastPathSafety)?(pathSafe?'':'避航経路の安全条件未成立（停止）'):'避航経路の判定: STALE'):'';
+    detail.textContent=[mission?.message||'',pathReason,...new Set(reasons)].filter(Boolean).join(' / ');
     health.textContent=fresh(lastHealth)?`Health: ${HEALTH[summary.summary_state]??'UNKNOWN'} · ${summary.message||''}`:'Health: STALE / 未受信';
     lamp.style.color=fresh(lastLamp)?(lampMessage.color&4?'#f87171':lampMessage.color&2?'#fbbf24':lampMessage.color&1?'#4ade80':'#edf3fa'):'#f87171';
     lamp.textContent=fresh(lastLamp)?`状態灯（指令）: ${lampColors(lampMessage.color)} · ${PATTERNS[lampMessage.pattern]??'不明'}${lampMessage.pattern===2?` (${lampMessage.period}秒周期)`:''} / ${lampMessage.reason||''}`:'状態灯: STALE / 未受信';
@@ -38,9 +39,9 @@ function initPanel(context) {
   refresh.onclick=list; select.onchange=render;
   start.onclick=()=>call('/mission/start_task',{task_id:select.value,request_auto_mode:true,dry_run:false,request_id:`foxglove-${Date.now()}-${Math.random().toString(16).slice(2)}`});
   stop.onclick=()=>call('/mission/stop_task',{execution_id:mission.execution_id,return_to_manual:true});
-  context.subscribe(['/mission/status','/mission/last_result','/control/state','/health/state','/alert_lamp/command'].map(topic=>({topic})));
+  context.subscribe(['/mission/status','/mission/last_result','/control/state','/health/state','/alert_lamp/command','/mission/task2/path_safe'].map(topic=>({topic})));
   context.watch('currentFrame');
-  context.onRender=(rs,done)=>{try{for(const e of rs.currentFrame||[]){const m=e.message||{};if(e.topic==='/mission/last_result'){feedback.textContent=`直近の結果 ${m.task_id}: ${STATES[m.state]} · ${m.message}`;}else if(e.topic==='/mission/status'){mission=m;lastMission=Date.now();if(m.execution_id&&m.execution_id!==lastExecution){lastExecution=m.execution_id;feedback.textContent='';}if([8,9,10].includes(m.state))feedback.textContent=`${STATES[m.state]}: ${m.message}`;}else if(e.topic==='/control/state'){control=m;lastControl=Date.now();}else if(e.topic==='/health/state'){summary=m;lastHealth=Date.now();}else if(e.topic==='/alert_lamp/command'){lampMessage=m;lastLamp=Date.now();}}render();}finally{done();}};
+  context.onRender=(rs,done)=>{try{for(const e of rs.currentFrame||[]){const m=e.message||{};if(e.topic==='/mission/task2/path_safe'){pathSafe=m.data;lastPathSafety=Date.now();}else if(e.topic==='/mission/last_result'){feedback.textContent=`直近の結果 ${m.task_id}: ${STATES[m.state]} · ${m.message}`;}else if(e.topic==='/mission/status'){mission=m;lastMission=Date.now();if(m.execution_id&&m.execution_id!==lastExecution){lastExecution=m.execution_id;feedback.textContent='';}if([8,9,10].includes(m.state))feedback.textContent=`${STATES[m.state]}: ${m.message}`;}else if(e.topic==='/control/state'){control=m;lastControl=Date.now();}else if(e.topic==='/health/state'){summary=m;lastHealth=Date.now();}else if(e.topic==='/alert_lamp/command'){lampMessage=m;lastLamp=Date.now();}}render();}finally{done();}};
   const timer=setInterval(render,500);render();list();
   return()=>{clearInterval(timer);root.replaceChildren();};
 }

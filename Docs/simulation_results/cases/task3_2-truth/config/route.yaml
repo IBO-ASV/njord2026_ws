@@ -1,0 +1,48 @@
+sim_route:
+  constraints:
+    attempts: 2
+    impact_minimization: true
+    wait_condition: after_docking_stationary
+    wait_time_s: 5
+  frame_id: odom
+  full_sequence_stages: {}
+  stages:
+    stage_1:
+    - '11'
+    stage_1_gate:
+    - '10'
+    stage_2:
+    - berth2
+    stage_3:
+    - '11'
+    stage_4:
+    - '12'
+  waypoints:
+  - competition_id: '10'
+    id: '10'
+    latitude: 63.4411333333
+    longitude: 10.4242305556
+    name: GPS 10 - Task 3.2 Start
+    type: start
+    yaw: -1.8732
+  - competition_id: '11'
+    id: '11'
+    latitude: 63.4410138889
+    longitude: 10.4241472222
+    name: GPS 11 - Berth 2 Approach
+    type: dock_approach
+    yaw: 2.9119
+  - competition_id: berth2
+    id: berth2
+    latitude: 63.44098905
+    longitude: 10.42412085
+    name: Berth 2 - Inside Dock
+    type: dock
+    yaw: 2.9119
+  - competition_id: '12'
+    id: '12'
+    latitude: 63.4410361111
+    longitude: 10.4239361111
+    name: GPS 12 - Final Goal
+    type: goal
+    yaw: 2.9119

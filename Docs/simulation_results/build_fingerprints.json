@@ -1,0 +1,18 @@
+{
+  "commit": "cc7b04b25a6cb3e2630020cedf3e9975eff61a07",
+  "architecture": "aarch64",
+  "python": "3.12.3",
+  "pytorch": "2.15.0+cpu",
+  "pytorch_cuda_available": false,
+  "ros_distro": "jazzy",
+  "files": {
+    "src/robot/src/pass_through_goal_checker.cpp": {
+      "sha256": "2ae421cbb09ea597d17956dcde87afc244bd2628d355ef480f49334ef6af918c",
+      "mtime": 1794509761.2153044
+    },
+    "install/robot/lib/libpass_through_goal_checker.so": {
+      "sha256": "af9843acf8f15bd5b67c0fc803b117f312065d468d5defb4fae5c5909f9b7958",
+      "mtime": 1794509778.067534
+    }
+  }
+}

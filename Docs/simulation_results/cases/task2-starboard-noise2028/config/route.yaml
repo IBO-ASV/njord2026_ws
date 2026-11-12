@@ -1,0 +1,28 @@
+sim_route:
+  constraints:
+    attempts_per_scenario: 2
+    collision_angles_deg:
+    - -100
+    - 100
+    colreg_compliance: true
+    obstacle_avoidance: true
+    speed_knots: 2.0
+    speed_requirement: accelerate_immediately
+  frame_id: odom
+  full_sequence_stages: {}
+  stages: {}
+  waypoints:
+  - competition_id: '5'
+    id: '5'
+    latitude: 63.440734
+    longitude: 10.423366
+    name: GPS 5 - Start
+    type: start
+    yaw: -1.9634954085
+  - competition_id: '6'
+    id: '6'
+    latitude: 63.44046
+    longitude: 10.42298
+    name: GPS 6 - Goal
+    type: goal
+    yaw: -1.9634954085
