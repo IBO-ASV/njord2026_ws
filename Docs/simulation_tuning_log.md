@@ -57,3 +57,7 @@ constitute a measured sensor error model. CPU MMG qualification currently
 covers Task1.2 only; the full task/seed matrix uses the kinematic model.
 The original MPPI-only failures are retained as evidence against deploying
 these simulation tuning overrides unchanged on the real vessel.
+
+| Guard follow-up | Change | Evidence |
+|---|---|---|
+| Head-on seed 2028 with the first guard still contacted the NPC; logs alternated -3.5 m and +3.5 m lanes, then held while the NPC closed | Require a clear port-crossing geometry rather than a small noisy lateral velocity; retain the first observed encounter lane and prefer its complete +/-5 m route before rolling horizons | Failure retained as `task2-headon-oscillating-guard-noise2028`. Rotational/noisy-side and lane-retention tests added; replacement matrix is `task2-committed-lane` |

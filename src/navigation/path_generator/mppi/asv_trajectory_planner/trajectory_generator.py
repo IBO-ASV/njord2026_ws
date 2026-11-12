@@ -3,7 +3,7 @@
 import math
 import time
 from types import SimpleNamespace
-from asv_trajectory_planner.path_guard import guarded_path
+from asv_trajectory_planner.path_guard import guarded_path, line_coordinates
 from typing import List, Optional, Tuple
 
 from geometry_msgs.msg import PoseStamped, Transform, TwistStamped
@@ -54,6 +54,7 @@ class TrajectoryGenerator:
         self.path_guard_safe = True
         self.path_guard_message = ''
         self._guard_target = None
+        self._guard_lane = None
 
         self.opponent_use_distance_m = float(opponent_use_distance_m)
         self.opponent_passed_margin_m = float(opponent_passed_margin_m)
@@ -204,31 +205,73 @@ class TrajectoryGenerator:
                 )
 
         if self.path_guard_enabled:
-            c,s=math.cos(own_map_yaw),math.sin(own_map_yaw)
-            observed=time.monotonic()
+            c, s = math.cos(own_map_yaw), math.sin(own_map_yaw)
+            observed = time.monotonic()
             if other_state_base is not None:
-                other=other_state_base
-                self._guard_target=(own_map_x+c*other.x-s*other.y,own_map_y+s*other.x+c*other.y,
-                    c*other.vx-s*other.vy,s*other.vx+c*other.vy,observed)
-            guard_other=other_state_base
-            stale=False
+                other = other_state_base
+                self._guard_target = (
+                    own_map_x + c * other.x - s * other.y,
+                    own_map_y + s * other.x + c * other.y,
+                    c * other.vx - s * other.vy,
+                    s * other.vx + c * other.vy,
+                    observed,
+                )
+            guard_other = other_state_base
+            stale = False
             if guard_other is None and self._guard_target is not None:
-                x,y,vx,vy,stamp=self._guard_target; age=observed-stamp
-                x+=vx*age-own_map_x;y+=vy*age-own_map_y
-                guard_other=SimpleNamespace(x=c*x+s*y,y=-s*x+c*y,vx=c*vx+s*vy,vy=-s*vx+c*vy)
+                x, y, vx, vy, stamp = self._guard_target
+                age = observed - stamp
+                x += vx * age - own_map_x
+                y += vy * age - own_map_y
+                guard_other = SimpleNamespace(
+                    x=c * x + s * y, y=-s * x + c * y, vx=c * vx + s * vy, vy=-s * vx + c * vy
+                )
                 # Clear a predicted target only after it is safely behind the
                 # GPS course; otherwise stale perception requests a hold.
-                ex,ey=waypoint2_base[0]-waypoint1_base[0],waypoint2_base[1]-waypoint1_base[1]
-                if guard_other.x*ex+guard_other.y*ey < -5*math.hypot(ex,ey):
-                    self._guard_target=None;guard_other=None
-                elif age>4.: stale=True
+                ex, ey = (
+                    waypoint2_base[0] - waypoint1_base[0],
+                    waypoint2_base[1] - waypoint1_base[1],
+                )
+                if guard_other.x * ex + guard_other.y * ey < -5 * math.hypot(ex, ey):
+                    self._guard_target = None
+                    guard_other = None
+                    self._guard_lane = None
+                elif age > 4.0:
+                    stale = True
+            if guard_other is not None and self._guard_lane is None:
+                _, lateral, _, ex, ey = line_coordinates(
+                    (guard_other.x, guard_other.y),
+                    (0.0, 0.0),
+                    (
+                        waypoint2_base[0] - waypoint1_base[0],
+                        waypoint2_base[1] - waypoint1_base[1],
+                    ),
+                )
+                forward_speed = guard_other.vx * ex + guard_other.vy * ey
+                lateral_speed = -guard_other.vx * ey + guard_other.vy * ex
+                if math.hypot(guard_other.vx, guard_other.vy) > 0.4:
+                    port_cross = (
+                        lateral > 3.0
+                        and lateral_speed < -0.3
+                        and abs(lateral_speed) > abs(forward_speed)
+                    )
+                    self._guard_lane = 5.0 if port_cross else -5.0
             if stale:
-                points_base=None;self.path_guard_message='opponent observation stale before safe passage'
+                points_base = None
+                self.path_guard_message = "opponent observation stale before safe passage"
             else:
-                points_base,self.path_guard_message=guarded_path(points_base,waypoint1_base,waypoint2_base,
-                    guard_other,self.planner.target_speed,detected_buoys_base)
-            self.path_guard_safe=points_base is not None
-            if points_base is None: points_base=[]
+                points_base, self.path_guard_message = guarded_path(
+                    points_base,
+                    waypoint1_base,
+                    waypoint2_base,
+                    guard_other,
+                    self.planner.target_speed,
+                    detected_buoys_base,
+                    self._guard_lane,
+                )
+            self.path_guard_safe = points_base is not None
+            if points_base is None:
+                points_base = []
 
         # --------------------------------------------------
         # 6. base_link基準点列をmap基準Pathへ変換

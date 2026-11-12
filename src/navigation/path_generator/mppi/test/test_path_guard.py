@@ -34,3 +34,29 @@ def test_close_obstacle_without_a_safe_candidate_inhibits_the_path():
         [(0.0, 0.0), (10.0, 0.0)], (0.0, 0.0), (10.0, 0.0), None, 1.0, [(0.0, 0.0)]
     )
     assert path is None
+
+
+def test_small_head_on_tracking_noise_does_not_choose_a_port_lane():
+    other = SimpleNamespace(x=100.0, y=1.0, vx=-1.0, vy=-0.4)
+    path, _ = guarded_path(
+        [(0.0, 0.0), (36.0, 0.0)], (0.0, 0.0), (36.0, 0.0), other, 1.0, []
+    )
+    assert path is not None
+    assert min(y for _, y in path) < -4.0
+    assert max(y for _, y in path) <= 0.0
+
+
+def test_committed_encounter_lane_survives_later_classification_noise():
+    other = SimpleNamespace(x=100.0, y=-1.0, vx=-1.0, vy=0.0)
+    path, _ = guarded_path(
+        [(0.0, 0.0), (36.0, 0.0)],
+        (0.0, 0.0),
+        (36.0, 0.0),
+        other,
+        1.0,
+        [],
+        preferred_lane=5.0,
+    )
+    assert path is not None
+    assert max(y for _, y in path) > 4.0
+    assert min(y for _, y in path) >= 0.0

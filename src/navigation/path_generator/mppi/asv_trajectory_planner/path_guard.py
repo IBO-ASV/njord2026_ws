@@ -98,20 +98,35 @@ def lane_path(start, end, lane, buoys, spacing=0.25):
     return points
 
 
-def guarded_path(raw, start, end, other, speed, buoys):
+def guarded_path(raw, start, end, other, speed, buoys, preferred_lane=None):
     """Return (safe path, diagnostic); None requests propulsion inhibition."""
     own_s, _, length, ex, ey = line_coordinates((0.0, 0.0), start, end)
     near_finish = length - own_s < 8.0 and other is None
-    if not near_finish and safe_path(raw, other, speed, buoys, start, end):
+    if (
+        other is None
+        and not near_finish
+        and safe_path(raw, other, speed, buoys, start, end)
+    ):
         return raw, "MPPI path accepted"
     lanes = [0.0]
     if other is not None:
         lateral = -other.x * ey + other.y * ex
         lateral_speed = -other.vx * ey + other.vy * ex
-        port_cross = lateral > 0 and lateral_speed < -0.3
-        # The stand-on fixture's NPC never yields. Port-side emergency options
-        # are considered only after the original path failed its safety check.
-        lanes += [3.5, 5.0, -3.5, -5.0] if port_cross else [-3.5, -5.0]
+        forward_speed = other.vx * ex + other.vy * ey
+        port_cross = (
+            lateral > 3
+            and lateral_speed < -0.3
+            and abs(lateral_speed) > abs(forward_speed)
+        )
+        lane = (
+            preferred_lane
+            if preferred_lane is not None
+            else (5.0 if port_cross else -5.0)
+        )
+        # Commit early to a complete route rather than alternate rolling MPPI
+        # horizons and opposite lanes during a closing encounter. The caller
+        # retains the observed encounter side until the target has passed.
+        lanes = [lane, math.copysign(3.5, lane)]
     for lane in lanes:
         candidate = lane_path(start, end, lane, buoys)
         if safe_path(candidate, other, speed, buoys, start, end):
