@@ -51,7 +51,9 @@ def test_duplicate_or_unknown_policy_content_is_rejected(tmp_path):
 
 
 def test_auto_permission_lists_all_failed_interlocks():
-    requirements = load_policy(POLICY).requirements_for("task1")
+    requirements = dict(load_policy(POLICY).requirements_for("task1"))
+    # Exercise the enabled interlock, independently of field-test defaults.
+    requirements["require_ground_station"] = True
     decision = evaluate_auto_permission(
         requirements,
         SafetyInputs(

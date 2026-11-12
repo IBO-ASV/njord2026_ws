@@ -26,8 +26,15 @@ tasks:
     control_policy: task1
   task1_2:
     display_name: Task 1-2 marker-driven route
-    availability: not_implemented
-    reason: Marker-driven route generation is not implemented
+    availability: experimental
+    executor: waypoint_sequence
+    route_package: waypoint_publisher
+    route: config/task1_waypoints.yaml
+    route_key: task1_config
+    frame_id: odom
+    nav2_profile: task1
+    control_policy: task1
+    features: {cardinal_walls: true}
   task2:
     display_name: Task 2
     availability: experimental

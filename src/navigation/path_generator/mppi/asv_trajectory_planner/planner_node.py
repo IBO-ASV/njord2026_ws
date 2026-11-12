@@ -73,6 +73,7 @@ class PlannerNode(Node):
         self.declare_parameter("avoid_offset", 3.0)
         self.declare_parameter("require_other_ship", True)
         self.declare_parameter("other_twist_is_relative", True)
+        self.declare_parameter("other_heading_from_velocity", False)
         self.declare_parameter("reconnect_line_distance_m", 1.0)
         self.declare_parameter("reconnect_ahead_length_m", 8.0)
         self.declare_parameter("straight_path_spacing_m", 2.0)
@@ -88,6 +89,10 @@ class PlannerNode(Node):
         # keeps the planner behaviorally identical to the previous version.
         # See config/mppi_params.yaml for the parameter -> code mapping.
         # ------------------------------------------------------------
+        seed = int(self.declare_parameter("mppi.random_seed", -1).value)
+        if seed >= 0:
+            torch.manual_seed(seed)
+            np.random.seed(seed)
         self.declare_parameter("mppi.horizon", 225)
         self.declare_parameter("mppi.dt", 0.1)
         self.declare_parameter("mppi.num_samples", 5000)
@@ -95,6 +100,7 @@ class PlannerNode(Node):
         self.declare_parameter("mppi.control_noise_sigma", [35.0, 0.0])
         self.declare_parameter("mppi.target_speed", 2.0 * 1852.0 / 3600.0)
         self.declare_parameter("mppi.path_cost_weight", 150.0)
+        self.declare_parameter("mppi.starboard_bias_weight", 0.0)
         # collision cost is a (min, max) scaling pair in the code
         # (col_cost_min / col_cost_max), not a single weight.
         self.declare_parameter("mppi.collision_cost_min", 10.0)
@@ -173,6 +179,7 @@ class PlannerNode(Node):
             ],
             "target_speed": float(self.get_parameter("mppi.target_speed").value),
             "path_cost_weight": float(self.get_parameter("mppi.path_cost_weight").value),
+            "starboard_bias_weight": float(self.get_parameter("mppi.starboard_bias_weight").value),
             "collision_cost_min": float(self.get_parameter("mppi.collision_cost_min").value),
             "collision_cost_max": float(self.get_parameter("mppi.collision_cost_max").value),
             "gate_cost_weight": float(self.get_parameter("mppi.gate_cost_weight").value),
@@ -206,6 +213,7 @@ class PlannerNode(Node):
             avoid_radius=avoid_radius,
             avoid_offset=avoid_offset,
             other_twist_is_relative=other_twist_is_relative,
+            other_heading_from_velocity=bool(self.get_parameter("other_heading_from_velocity").value),
             opponent_use_distance_m=opponent_use_distance_m,
             opponent_passed_margin_m=opponent_passed_margin_m,
             reconnect_line_distance_m=reconnect_line_distance_m,

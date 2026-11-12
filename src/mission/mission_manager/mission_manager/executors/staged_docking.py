@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from typing import Callable, Optional
+import time
 
 from .base import CompletionCallback, ExecutorStatus, FeedbackCallback, TaskExecutor
 from ..waypoint_config import Route
@@ -13,13 +14,16 @@ class StagedDockingExecutor(TaskExecutor):
 
     def __init__(self, navigation, create_wait_timer: Callable[[float, Callable[[], None]], object],
                  cancel_wait_timer: Callable[[object], None], dock_target_correction=None,
-                 stage_succeeded=None) -> None:
+                 stage_succeeded=None, stationary_gate=None, now=time.monotonic) -> None:
         super().__init__(navigation)
         self._create_wait_timer = create_wait_timer
         self._cancel_wait_timer = cancel_wait_timer
         self._dock_target_correction = dock_target_correction
         self._stage_succeeded = stage_succeeded
+        self._stationary_gate = stationary_gate
+        self._now = now
         self._route: Optional[Route] = None
+        self._current_stage_poses = ()
         self._full_sequence = False
         self._stage_names: list[str] = []
         self._stage_index = 0
@@ -70,6 +74,7 @@ class StagedDockingExecutor(TaskExecutor):
         poses = self._route.stage(stage_name, full_sequence=self._full_sequence)
         if self._dock_target_correction is not None and poses and poses[-1].waypoint_type == "dock":
             poses = (*poses[:-1], self._dock_target_correction(poses[-1]))
+        self._current_stage_poses = poses
         progress = self._stage_index / len(self._stage_names)
         self._report(stage_name, progress, f"sending docking {stage_name}")
         expected_id = self.execution_id
@@ -127,12 +132,37 @@ class StagedDockingExecutor(TaskExecutor):
         expected_id = self.execution_id
 
         def elapsed() -> None:
-            self._wait_timer = None
+            self._cancel_wait()
             if expected_id != self.execution_id or self._finished or self._cancel_requested:
                 return
             self._advance_stage()
 
-        self._wait_timer = self._create_wait_timer(max(0.0, seconds), elapsed)
+        if self._stationary_gate is None:
+            self._wait_timer = self._create_wait_timer(max(0.0, seconds), elapsed)
+        else:
+            # A Nav2 success is not evidence of stationarity. Count only a
+            # continuous stationary interval, restarting after drift/stale odom.
+            poses = self._current_stage_poses
+            stationary_since = None
+            deadline = self._now() + 120.0 + seconds
+            def poll():
+                nonlocal stationary_since
+                if expected_id != self.execution_id or self._finished or self._cancel_requested:
+                    return
+                if self._stage_index >= len(self._stage_names) or self._stage_names[self._stage_index] != stage:
+                    return
+                now = self._now()
+                if now > deadline:
+                    self._cancel_wait()
+                    self._finish(ExecutorStatus.NAVIGATION_FAILED, "stationary berth dwell timed out")
+                    return
+                if not self._stationary_gate(poses[-1]):
+                    stationary_since = None
+                elif stationary_since is None:
+                    stationary_since = now
+                elif now - stationary_since >= 2.0 + seconds:
+                    elapsed()
+            self._wait_timer = self._create_wait_timer(0.1, poll)
 
     def _advance_stage(self) -> None:
         self._cancel_wait()

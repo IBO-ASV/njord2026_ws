@@ -41,9 +41,11 @@ class TrajectoryGenerator:
         straight_path_length_m: float = 60.0,
         mppi_smoothing_window: int = 5,
         mppi_params: Optional[dict] = None,
+        other_heading_from_velocity: bool = False,
     ):
         self.frame_id = frame_id
         self.other_twist_is_relative = other_twist_is_relative
+        self.other_heading_from_velocity = other_heading_from_velocity
 
         self.opponent_use_distance_m = float(opponent_use_distance_m)
         self.opponent_passed_margin_m = float(opponent_passed_margin_m)
@@ -573,6 +575,11 @@ class TrajectoryGenerator:
             other_vy = -s_own * tw_x + c_own * tw_y
             other_r_deg = tw_r_deg
 
+        # CRM predicts a scalar forward speed along yaw. A cluster/PCA box
+        # axis can differ by 180 degrees or be a hull axis rather than COG.
+        # Straight-line tracking consumers may explicitly select measured COG.
+        if self.other_heading_from_velocity and math.hypot(other_vx, other_vy) > 0.1:
+            other_yaw_deg = math.degrees(math.atan2(other_vy, other_vx))
         cy = math.cos(math.radians(other_yaw_deg))
         sy = math.sin(math.radians(other_yaw_deg))
 

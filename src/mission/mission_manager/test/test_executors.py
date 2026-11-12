@@ -1,5 +1,5 @@
 from mission_manager.executors import (
-    ExecutorStatus, StagedDockingExecutor, Task2MppiExecutor, Task4CompositeExecutor,
+    ExecutorStatus, StagedDockingExecutor, Task2MppiExecutor,
     WaypointSequenceExecutor,
 )
 from mission_manager.mission_manager_node import _RosNavigationClient
@@ -194,86 +194,64 @@ def test_task2_mppi_reports_follow_path_goal_success_once():
     assert [result.status for result in results] == [ExecutorStatus.SUCCEEDED]
 
 
-def test_task4_composite_sends_the_required_route_and_profile_switches():
-    nav = FakeNavigation()
-    switches, strict, results = [], [], []
-    callbacks = {"switch": [], "strict": []}
-    route = Route("odom", tuple(
-        Waypoint(waypoint_id, 0.0, 0.0, 0.0, waypoint_id, "dock")
-        for waypoint_id in ("13", "14", "normal_dock", "normal_exit", "15", "16", "17", "parallel_dock")
-    ), {}, {}, {})
-    executor = Task4CompositeExecutor(
-        nav,
-        lambda profile, complete: (switches.append(profile), callbacks["switch"].append(complete)),
-        lambda goals, complete: (strict.append(goals[0].waypoint_id), callbacks["strict"].append(complete)),
-    )
-    executor.start("execution", route, lambda *_: None, results.append)
-
-    expected = ["13", "14", "normal_dock", "normal_exit", "15", "16", "17", "17", "parallel_dock"]
-    for waypoint_id in expected:
-        if callbacks["strict"]:
-            callbacks["strict"].pop(0)(True, "")
-        poses, accepted, completed = nav.sent[-1]
-        assert [pose.waypoint_id for pose in poses] == [waypoint_id]
-        accepted(True)
-        completed(ExecutorStatus.SUCCEEDED, "ok")
-        if waypoint_id == "14" and len(nav.sent) == 4:
-            callbacks["switch"].pop(0)(True, "")
-        if waypoint_id == "17" and len(nav.sent) == 7:
-            callbacks["switch"].pop(0)(True, "")
-    assert switches == ["task1", "task3"]
-    assert strict == ["14", "normal_dock", "17", "parallel_dock"]
-    assert results[0].status == ExecutorStatus.SUCCEEDED
+def test_dwell_requires_continuous_stationarity_and_cancels_poll_timer():
+    nav=FakeNavigation(); timers=[]; canceled=[]; clock=[0.]; stationary=[False]
+    executor=StagedDockingExecutor(nav,lambda _seconds,callback:timers.append(callback) or callback,
+       canceled.append,stationary_gate=lambda _w:stationary[0],now=lambda:clock[0])
+    results=[]; executor.start('dwell',_route(),lambda *_:None,results.append)
+    nav.sent[0][2](ExecutorStatus.SUCCEEDED,'gate')
+    nav.sent[1][2](ExecutorStatus.SUCCEEDED,'dock')
+    poll=timers[0]
+    clock[0]=10.;poll(); assert len(nav.sent)==2
+    stationary[0]=True;poll()
+    clock[0]=12.;poll(); assert len(nav.sent)==2  # 2 s settling + 1 s dwell
+    stationary[0]=False;poll()
+    stationary[0]=True;clock[0]=13.;poll()
+    clock[0]=16.1;poll();assert len(nav.sent)==3
+    assert canceled==[poll]
+    # A previously queued periodic callback cannot advance the next stage.
+    poll();assert len(nav.sent)==3
 
 
-def test_task4_composite_stops_after_a_rejected_profile_switch():
-    nav = FakeNavigation()
-    callbacks, results = [], []
-    route = Route("odom", tuple(
-        Waypoint(waypoint_id, 0.0, 0.0, 0.0, waypoint_id, "dock")
-        for waypoint_id in ("13", "14", "normal_dock", "normal_exit", "15", "16", "17", "parallel_dock")
-    ), {}, {}, {})
-    executor = Task4CompositeExecutor(
-        nav, lambda _profile, complete: callbacks.append(complete), lambda _goals, complete: complete(True, "")
-    )
-    executor.start("execution", route, lambda *_: None, results.append)
-    for _ in range(4):
-        nav.sent[-1][2](ExecutorStatus.SUCCEEDED, "ok")
-    callbacks[0](False, "switch rejected")
-    assert [poses[0].waypoint_id for poses, *_ in nav.sent] == ["13", "14", "normal_dock", "normal_exit"]
-    assert results[0].status == ExecutorStatus.INTERNAL_ERROR
+def test_cancel_while_waiting_for_stationary_input_finishes_once():
+    nav=FakeNavigation();timers=[];clock=[0.];results=[]
+    executor=StagedDockingExecutor(nav,lambda _seconds,callback:timers.append(callback) or callback,
+       lambda _:None,stationary_gate=lambda _:False,now=lambda:clock[0])
+    executor.start('cancel',_route(),lambda *_:None,results.append)
+    nav.sent[0][2](ExecutorStatus.SUCCEEDED,'gate');nav.sent[1][2](ExecutorStatus.SUCCEEDED,'dock')
+    executor.cancel('cancel');timers[0]()
+    assert [r.status for r in results]==[ExecutorStatus.CANCELED]
 
 
-def test_task4_composite_cancels_during_profile_switch_and_ignores_late_result():
-    nav = FakeNavigation()
-    callbacks, results = [], []
-    route = Route("odom", tuple(
-        Waypoint(waypoint_id, 0.0, 0.0, 0.0, waypoint_id, "dock")
-        for waypoint_id in ("13", "14", "normal_dock", "normal_exit", "15", "16", "17", "parallel_dock")
-    ), {}, {}, {})
-    executor = Task4CompositeExecutor(
-        nav, lambda _profile, complete: callbacks.append(complete), lambda _goals, complete: complete(True, "")
-    )
-    executor.start("execution", route, lambda *_: None, results.append)
-    for _ in range(4):
-        nav.sent[-1][2](ExecutorStatus.SUCCEEDED, "ok")
-    executor.cancel("execution")
-    callbacks[0](True, "late")
-    assert results[0].status == ExecutorStatus.CANCELED
-    assert [poses[0].waypoint_id for poses, *_ in nav.sent] == ["13", "14", "normal_dock", "normal_exit"]
-
-
-def test_task4_composite_stops_after_navigation_failure():
-    nav = FakeNavigation()
-    results = []
-    route = Route("odom", tuple(
-        Waypoint(waypoint_id, 0.0, 0.0, 0.0, waypoint_id, "dock")
-        for waypoint_id in ("13", "14", "normal_dock", "normal_exit", "15", "16", "17", "parallel_dock")
-    ), {}, {}, {})
-    executor = Task4CompositeExecutor(
-        nav, lambda _profile, complete: complete(True, ""), lambda _goals, complete: complete(True, "")
-    )
-    executor.start("execution", route, lambda *_: None, results.append)
-    nav.sent[0][2](ExecutorStatus.NAVIGATION_FAILED, "blocked")
-    assert len(nav.sent) == 1
-    assert results[0].status == ExecutorStatus.NAVIGATION_FAILED
+def test_service_stop_cannot_request_an_invalid_ros_action_transition():
+    import asyncio
+    import threading
+    from mission_manager.mission_manager_node import MissionManager
+    from mission_manager.state_machine import ResultCode, StartDecision
+    from njord_interfaces.action import RunTask
+    class Handle:
+        request=RunTask.Goal(task_id='task1',request_id='stop-test')
+        is_cancel_requested=False  # StopTask service, not action cancel.
+        def publish_feedback(self,_): pass
+        def abort(self): self.terminal='abort'
+        def canceled(self): raise AssertionError('EXECUTING -> CANCELED is invalid')
+    manager=object.__new__(MissionManager)
+    manager._lock=threading.RLock()
+    manager._start=lambda _:StartDecision(True,ResultCode.SUCCEEDED,'accepted','execution')
+    manager._action_results={'execution':(ResultCode.CANCELED,'stopped by service')}
+    class Machine:
+        snapshot=None
+    manager._machine=Machine()
+    manager._feedback=lambda _:RunTask.Feedback()
+    manager._inhibit_reasons=[]
+    handle=Handle()
+    # Execute callback's loop only requires a valid context, no graph activity.
+    import rclpy
+    owned=not rclpy.ok()
+    if owned:rclpy.init()
+    try:
+        result=asyncio.run(manager._execute_action(handle))
+        assert result.result_code==ResultCode.CANCELED
+        assert handle.terminal=='abort'
+    finally:
+        if owned:rclpy.shutdown()

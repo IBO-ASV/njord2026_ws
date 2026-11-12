@@ -1,0 +1,22 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>njord_sim</name><version>0.1.0</version>
+  <description>Hardware-free mission integration and acceptance simulation</description>
+  <maintainer email="ibo@example.com">IBO-ASV</maintainer><license>Apache-2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <exec_depend>rclpy</exec_depend><exec_depend>mission_manager</exec_depend>
+  <exec_depend>control_manager</exec_depend><exec_depend>task1_sim</exec_depend>
+  <exec_depend>task3_sim</exec_depend><exec_depend>robot</exec_depend>
+  <exec_depend>sensor_msgs_py</exec_depend><exec_depend>tf2_ros</exec_depend>
+  <exec_depend>robot_localization</exec_depend><exec_depend>lifecycle_msgs</exec_depend><exec_depend>njord_interfaces</exec_depend>
+  <exec_depend>nav2_msgs</exec_depend><exec_depend>nav_msgs</exec_depend>
+  <exec_depend>geometry_msgs</exec_depend><exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>visualization_msgs</exec_depend><exec_depend>std_msgs</exec_depend>
+  <exec_depend>ament_index_python</exec_depend><exec_depend>python3-yaml</exec_depend>
+  <exec_depend>ship_perception_bringup</exec_depend><exec_depend>task2_perception</exec_depend><exec_depend>python3-torch</exec_depend>
+  <exec_depend>launch_ros</exec_depend><exec_depend>asv_trajectory_planner</exec_depend>
+  <exec_depend>buoy_obstacle_publisher</exec_depend><exec_depend>alert_lamp</exec_depend>
+  <exec_depend>dutyed_tf_pub_with_disturbance</exec_depend><exec_depend>thruster_driver</exec_depend>
+  <test_depend>python3-pytest</test_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

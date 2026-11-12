@@ -14,7 +14,7 @@ from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import Point, PoseStamped
 from geographic_msgs.msg import GeoPoint
 from nav2_msgs.action import NavigateThroughPoses
-from nav_msgs.msg import Path as NavPath
+from nav_msgs.msg import Path as NavPath, Odometry
 from rcl_interfaces.msg import Parameter, ParameterType, ParameterValue
 from rcl_interfaces.srv import SetParameters
 from robot_localization.srv import FromLL
@@ -37,7 +37,6 @@ from .executors import (
     ExecutorStatus,
     StagedDockingExecutor,
     Task2MppiExecutor,
-    Task4CompositeExecutor,
     WaypointSequenceExecutor,
 )
 from .state_machine import MissionState, MissionStateMachine, ResultCode, StartRequest
@@ -237,6 +236,8 @@ class MissionManager(Node):
         self._registry = TaskRegistry.from_file(registry_path, package_shares=shares)
 
         self._status_pub = self.create_publisher(MissionStatus, "/mission/status", _STATUS_QOS)
+        self._last_result_pub = self.create_publisher(MissionStatus, "/mission/last_result", _STATUS_QOS)
+        self._route_pub = self.create_publisher(NavPath, "/mission/plan", _STATUS_QOS)
         self._plan_pub = self.create_publisher(NavPath, "/task/plan", _STATUS_QOS)
         self._waypoint_markers_pub = self.create_publisher(
             MarkerArray, "/mission/waypoint_markers", _STATUS_QOS
@@ -262,7 +263,6 @@ class MissionManager(Node):
         self._task4_buoy_wall_heading_pub = self.create_publisher(
             Float64, "/task4/gps14_to_gps16_heading", _STATUS_QOS
         )
-        self._task1_wall_enable_after_remaining: int | None = None
         self._task1_walls_enabled = False
         self._task4_walls_enabled = False
         self._set_task2_enabled(False)
@@ -280,6 +280,9 @@ class MissionManager(Node):
             for berth in ("berth1", "berth2")
         }
         self._dock_corrections: dict[str, PoseStamped] = {}
+        self._docking_odom_by_frame = {}
+        self.create_subscription(Odometry, "/odometry/filtered/local", self._on_docking_odometry, 10)
+        self.create_subscription(Odometry, "/odometry/filtered/global", self._on_docking_odometry, 10)
         for berth in self._dock_nominal_pub:
             self.create_subscription(PoseStamped, f"/docking/{berth}_corrected",
                                      lambda message, berth=berth: self._on_dock_correction(berth, message), 10)
@@ -367,7 +370,12 @@ class MissionManager(Node):
             if result is not None:
                 code, message = result
                 if code == ResultCode.CANCELED:
-                    goal_handle.canceled()
+                    # StopTask can cancel execution without an action cancel
+                    # request. ROS only allows CANCELED after CANCELING.
+                    if goal_handle.is_cancel_requested:
+                        goal_handle.canceled()
+                    else:
+                        goal_handle.abort()
                 elif code == ResultCode.SUCCEEDED:
                     goal_handle.succeed()
                 else:
@@ -521,7 +529,7 @@ class MissionManager(Node):
             route = self._transform_route_for_cart_test(route, anchor)
         except ValueError as exc:
             return self._reject_started(decision.execution_id, ResultCode.CONFIGURATION_FAILED, str(exc))
-        if task.nav2_profile != "task3" or request.dry_run or task.executor == "task4_composite":
+        if task.nav2_profile != "task3" or request.dry_run:
             return self._finish_configure_route(decision, task, route, request)
         if not self._task3_goal_checker_client.service_is_ready():
             return self._reject_started(
@@ -603,6 +611,13 @@ class MissionManager(Node):
                     self._publish_dock_nominal(waypoint)
         self._active_route = route
         self._active_task = task
+        planned = NavPath()
+        planned.header.frame_id = route.frame_id
+        planned.header.stamp = self.get_clock().now().to_msg()
+        planned.poses = [self._navigation._pose(waypoint) for waypoint in route.waypoints]
+        for pose in planned.poses:
+            pose.header = planned.header
+        self._route_pub.publish(planned)
         self._navigation.set_frame_id(route.frame_id)
         self._configure_task1_cardinal_walls(task, route)
         self._configure_task4_buoy_walls(task, route)
@@ -765,6 +780,7 @@ class MissionManager(Node):
 
     def _reject_started(self, execution_id: str, code: ResultCode, message: str):
         self._machine.finish(execution_id, code, message)
+        self._last_result_pub.publish(self._status_message())
         self._action_results[execution_id] = (code, message)
         self._publish_status()
         self._machine.reset_to_idle(execution_id)
@@ -779,6 +795,11 @@ class MissionManager(Node):
     def _load_route(self, task: TaskDefinition) -> Route:
         root = self._waypoint_share_path() if task.route_package == "waypoint_publisher" else self._registry_path().parent
         route = self._loader.load(root / task.route, task.route_key)
+        if task.task_id == "task1_2":
+            start = next((i for i, w in enumerate(route.waypoints) if w.competition_id == "3"), None)
+            if start is None:
+                raise RegistryError("Task1.2 requires competition GPS3")
+            return replace(route, waypoints=route.waypoints[start:])
         if task.task_id != "task1":
             return route
         waypoints = tuple(
@@ -798,17 +819,16 @@ class MissionManager(Node):
         self._pending_coordinate_projection = None
         self._machine.transition(MissionState.RUNNING, execution_id=execution_id,
                                  stage="starting", message="starting task executor")
-        self._navigation.set_feedback_callback(
-            self._on_task1_navigation_feedback if task.features.get("cardinal_walls") is True else None
-        )
+
         if task.executor == "waypoint_sequence":
-            executor = WaypointSequenceExecutor(self._navigation)
+            executor = WaypointSequenceExecutor(self._navigation, self._on_waypoint_succeeded)
             executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
         elif task.executor == "staged_docking":
             executor = StagedDockingExecutor(
                 self._navigation, self._create_wait_timer, self.destroy_timer,
                 self._dock_target_for_navigation, self._on_docking_stage_succeeded,
+                stationary_gate=self._stationary_at_berth,
             )
             executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
@@ -816,20 +836,30 @@ class MissionManager(Node):
             executor = Task2MppiExecutor(self._set_task2_enabled)
             executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
-        elif task.executor == "task4_composite":
-            executor = Task4CompositeExecutor(
-                self._navigation,
-                lambda profile, complete: self._switch_task4_profile(execution_id, profile, complete),
-                lambda goals, complete: self._configure_task4_strict_goals(execution_id, goals, complete),
-                lambda policy, complete: self._configure_task4_docking_motion(execution_id, policy, complete),
-            )
-            executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
-                           self._executor_complete(execution_id))
         elif task.executor == "dummy":
             executor = DummyExecutor()
             executor.start(execution_id, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
         self._active_executor = executor
+
+    def _on_docking_odometry(self, message):
+        self._docking_odom_by_frame[message.header.frame_id] = (message, self.get_clock().now().nanoseconds)
+
+    def _stationary_at_berth(self, waypoint):
+        if self._active_route is None:
+            return False
+        message, received = self._docking_odom_by_frame.get(self._active_route.frame_id, (None, 0))
+        if message is None or self.get_clock().now().nanoseconds - received > 500_000_000:
+            return False
+        pose = message.pose.pose
+        q = pose.orientation
+        yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
+        yaw_error = math.atan2(math.sin(yaw-waypoint.yaw), math.cos(yaw-waypoint.yaw))
+        twist = message.twist.twist
+        return (math.hypot(pose.position.x-waypoint.x, pose.position.y-waypoint.y) <= 0.8
+                and abs(yaw_error) <= math.radians(10)
+                and math.hypot(twist.linear.x, twist.linear.y) <= 0.1
+                and abs(twist.angular.z) <= 0.05)
 
     def _on_dock_correction(self, berth: str, message: PoseStamped) -> None:
         if message.header.frame_id == "map":
@@ -864,118 +894,6 @@ class MissionManager(Node):
         nominal.pose.orientation.z, nominal.pose.orientation.w = math.sin(waypoint.yaw / 2.0), math.cos(waypoint.yaw / 2.0)
         self._dock_nominal_pub[waypoint.waypoint_id].publish(nominal)
 
-    def _switch_task4_profile(self, execution_id: str, profile: str, complete) -> None:
-        """Switch Task 4 profiles while its executor owns the next Nav2 goal."""
-        if not self._machine.is_current(execution_id):
-            return
-        if not self._configure_runtime_client.server_is_ready():
-            complete(False, "runtime manager /system/configure is unavailable")
-            return
-        goal = ConfigureSystem.Goal(parameter="nav2_profile", value=profile)
-
-        def sent(future) -> None:
-            with self._lock:
-                if not self._machine.is_current(execution_id):
-                    return
-                try:
-                    handle = future.result()
-                    if not handle.accepted:
-                        raise RuntimeError("runtime manager rejected profile switch")
-                    handle.get_result_async().add_done_callback(done)
-                except Exception as exc:
-                    complete(False, str(exc))
-
-        def done(future) -> None:
-            with self._lock:
-                if not self._machine.is_current(execution_id):
-                    return
-                try:
-                    result = future.result().result
-                    if not result.success:
-                        raise RuntimeError(result.message)
-                    self._active_nav2_profile = profile
-                    complete(True, result.message)
-                except Exception as exc:
-                    complete(False, str(exc))
-
-        self._configure_runtime_client.send_goal_async(goal).add_done_callback(sent)
-
-    def _configure_task4_strict_goals(self, execution_id: str, goals: tuple[Waypoint, ...], complete) -> None:
-        """Apply Task 3 heading checks only to the Task 4 docking target in flight."""
-        if not self._machine.is_current(execution_id):
-            return
-        if not self._task3_goal_checker_client.service_is_ready():
-            complete(False, "Task 3 goal checker parameter service is unavailable")
-            return
-        request = SetParameters.Request()
-        request.parameters = [
-            Parameter(
-                name="general_goal_checker.heading_required_goal_xs",
-                value=ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY,
-                                     double_array_value=[waypoint.x for waypoint in goals]),
-            ),
-            Parameter(
-                name="general_goal_checker.heading_required_goal_ys",
-                value=ParameterValue(type=ParameterType.PARAMETER_DOUBLE_ARRAY,
-                                     double_array_value=[waypoint.y for waypoint in goals]),
-            ),
-        ]
-
-        def done(future) -> None:
-            with self._lock:
-                if not self._machine.is_current(execution_id):
-                    return
-                try:
-                    response = future.result()
-                    if not all(result.successful for result in response.results):
-                        reason = next(result.reason for result in response.results if not result.successful)
-                        raise RuntimeError(reason or "controller rejected Task 3 strict-goal parameters")
-                    complete(True, "")
-                except Exception as exc:
-                    complete(False, f"unable to configure Task 3 strict goals: {exc}")
-
-        self._task3_goal_checker_client.call_async(request).add_done_callback(done)
-
-    def _configure_task4_docking_motion(self, execution_id: str, policy: str, complete) -> None:
-        if not self._machine.is_current(execution_id):
-            return
-        if not self._task3_goal_checker_client.service_is_ready():
-            complete(False, "controller parameter service is unavailable")
-            return
-        limits = {
-            "forward": (0.0, 0.5, 0.0, 0.0, 21, 1),
-            "sway_negative": (0.0, 0.0, -0.5, 0.0, 1, 21),
-            "omni": (-0.5, 0.5, -0.5, 0.5, 21, 21),
-        }
-        if policy not in limits:
-            complete(False, f"unknown Task 4 docking motion policy: {policy}")
-            return
-        min_x, max_x, min_y, max_y, samples_x, samples_y = limits[policy]
-        request = SetParameters.Request()
-        request.parameters = [
-            Parameter(name=f"FollowPath.{name}", value=ParameterValue(type=kind, **{field: value}))
-            for name, kind, field, value in (
-                ("min_vel_x", ParameterType.PARAMETER_DOUBLE, "double_value", min_x),
-                ("max_vel_x", ParameterType.PARAMETER_DOUBLE, "double_value", max_x),
-                ("min_vel_y", ParameterType.PARAMETER_DOUBLE, "double_value", min_y),
-                ("max_vel_y", ParameterType.PARAMETER_DOUBLE, "double_value", max_y),
-                ("vx_samples", ParameterType.PARAMETER_INTEGER, "integer_value", samples_x),
-                ("vy_samples", ParameterType.PARAMETER_INTEGER, "integer_value", samples_y),
-            )
-        ]
-
-        def done(future) -> None:
-            try:
-                response = future.result()
-                if not all(result.successful for result in response.results):
-                    reason = next(result.reason for result in response.results if not result.successful)
-                    raise RuntimeError(reason or "controller rejected docking motion parameters")
-                complete(True, "")
-            except Exception as exc:
-                complete(False, f"unable to configure Task 4 docking motion: {exc}")
-
-        self._task3_goal_checker_client.call_async(request).add_done_callback(done)
-
     def _set_task2_enabled(self, enabled: bool) -> None:
         self._task2_enabled_pub.publish(Bool(data=enabled))
 
@@ -989,7 +907,6 @@ class MissionManager(Node):
     def _configure_task1_cardinal_walls(self, task: TaskDefinition, route: Route) -> None:
         """Prepare the Task1 GPS3 stage gate from the validated route."""
         self._set_task1_cardinal_walls(False)
-        self._task1_wall_enable_after_remaining = None
         if task.features.get("cardinal_walls") is not True:
             return
         by_competition_id = {waypoint.competition_id: waypoint for waypoint in route.waypoints}
@@ -1002,18 +919,14 @@ class MissionManager(Node):
         if dx * dx + dy * dy < 1.0e-8:
             self.get_logger().error("Task1 GPS3 and GPS4 coincide; cardinal walls remain disabled")
             return
-        gps3_index = route.waypoints.index(gps3)
-        self._task1_wall_enable_after_remaining = len(route.waypoints) - gps3_index
         self._task1_cardinal_heading_pub.publish(Float64(data=math.atan2(dy, dx)))
 
-    def _on_task1_navigation_feedback(self, feedback) -> None:
-        """Latch virtual walls only after Nav2 reports competition GPS3 passed."""
-        threshold = self._task1_wall_enable_after_remaining
-        if self._task1_walls_enabled or threshold is None:
-            return
-        if int(feedback.number_of_poses_remaining) < threshold:
-            self._set_task1_cardinal_walls(True)
-            self.get_logger().info("GPS3 reached: enabled cardinal virtual walls")
+    def _on_waypoint_succeeded(self, waypoint) -> None:
+        # SequenceExecutor sends ONE pose per action: number_of_poses_remaining
+        # is not the number remaining in the mission. Gate by actual GPS3 success.
+        if self._active_task and self._active_task.features.get("cardinal_walls") is True:
+            if waypoint.competition_id == "3":
+                self._set_task1_cardinal_walls(True)
 
     def _set_task1_cardinal_walls(self, enabled: bool) -> None:
         self._task1_walls_enabled = enabled
@@ -1153,6 +1066,7 @@ class MissionManager(Node):
         self._navigation.set_feedback_callback(None)
         self._publish_status()
         self._publish_task_readiness(False, False, "")
+        self._last_result_pub.publish(self._status_message())
         self._machine.reset_to_idle(execution_id)
         self._publish_status()
 

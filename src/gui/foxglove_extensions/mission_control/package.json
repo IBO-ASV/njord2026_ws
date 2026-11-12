@@ -1,0 +1,1 @@
+{"name":"mission-control","displayName":"NJORD Mission Control","publisher":"KeioRoboticsAssociation","version":"0.1.0","description":"Mission selection, control permission, progress and freshness","license":"Apache-2.0","main":"./dist/extension.js"}

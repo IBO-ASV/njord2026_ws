@@ -35,9 +35,9 @@ def test_registry_exposes_supported_and_unimplemented_tasks():
     assert registry.get("move_to_exam_field").executor == "waypoint_sequence"
     assert registry.get("move_to_exam_field").frame_id == "odom"
     assert registry.get("back_to_birth_point").runnable
-    assert required_runtime_readiness(registry.get("task2")) == {"buoy_perception"}
-    assert registry.get("task1_2").availability == "not_implemented"
-    assert "Marker-driven" in registry.get("task1_2").reason
+    assert required_runtime_readiness(registry.get("task2")) == frozenset()
+    assert registry.get("task1_2").runnable
+    assert registry.get("task1_2").features["cardinal_walls"]
 
 
 def test_existing_task_routes_load_without_changing_waypoint_files():

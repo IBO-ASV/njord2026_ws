@@ -4,7 +4,6 @@ from .base import ExecutionResult, ExecutorStatus, TaskExecutor
 from .dummy import DummyExecutor
 from .staged_docking import StagedDockingExecutor
 from .task2_mppi import Task2MppiExecutor
-from .task4_composite import Task4CompositeExecutor
 from .waypoint_sequence import WaypointSequenceExecutor
 
 __all__ = [
@@ -14,6 +13,5 @@ __all__ = [
     "DummyExecutor",
     "StagedDockingExecutor",
     "Task2MppiExecutor",
-    "Task4CompositeExecutor",
     "WaypointSequenceExecutor",
 ]

@@ -535,7 +535,7 @@ class MPPItorch():
         return new_path
 
     def get_opt(self, x, y, psi, U, r, rudders, accs, own_loa, other_loa, others, path, col_cost_min, col_cost_max, div_cost, speed_cost, norm_cost, buoys=None, gate_center=None, buoy_cost_weight=120.0, gate_cost_weight=3.0, seed=None, straight_time=0, debug=False,
-                buoy_margin_m=1.0, buoy_longitudinal_sigma_m=8.0, ax_gains=None):
+                buoy_margin_m=1.0, buoy_longitudinal_sigma_m=8.0, ax_gains=None, starboard_bias_weight=0.0):
         # All new keyword defaults reproduce the previously hardcoded behavior:
         #   buoy_margin_m=1.0 / buoy_longitudinal_sigma_m=8.0 were literals in the
         #   buoy_outside_cost() call, and ax_gains=None falls back to the
@@ -612,6 +612,14 @@ class MPPItorch():
             cost_collision>0, col_cost_min+(col_cost_max-col_cost_min)*cost_collision, cost_collision
         )
 
+        cost_side = torch.zeros_like(cost_collision)
+        if starboard_bias_weight > 0 and any(
+            (oth.x > 0 and abs(oth.y) < max(2.0, 0.36*oth.x) and oth.vx < -0.1)
+            or (oth.y < 0 and oth.vy > 0.1) for oth in others
+        ):
+            cost_side = starboard_bias_weight * starboard_preference_cost(
+                predx, predy, path[0][:2], path[1][:2])
+
         # costs for diviation from course
         targ_u = torch.full_like(predU, self.targU)
 
@@ -674,6 +682,7 @@ class MPPItorch():
                 + speed_cost*speed_diff
                 + cost_buoy
                 + cost_gate
+                + cost_side
             )
             # norm costs
             norm_targ = ['input', 'min'][1]
@@ -720,6 +729,7 @@ class MPPItorch():
                 + speed_cost*speed_diff
                 + cost_buoy
                 + cost_gate
+                + cost_side
             )
             # norm costs
             norm_targ = ['input', 'min'][0]
@@ -770,6 +780,14 @@ class MPPItorch():
                 opt_rudder.cpu().numpy().copy(),
                 opt_acc.cpu().numpy().copy(),
             )
+
+
+def starboard_preference_cost(predx, predy, path_start, path_end, margin_m=1.5):
+    """Soft route-relative starboard preference for head-on/give-way cases."""
+    dx, dy = path_end[0]-path_start[0], path_end[1]-path_start[1]
+    length = max(float(math.hypot(dx, dy)), 1e-6)
+    lateral = (dx*(predy-path_start[1])-dy*(predx-path_start[0]))/length
+    return torch.square(torch.relu(lateral + margin_m)).mean(axis=-1, keepdim=True)
 
 
 class MPPIPlanner():
@@ -824,7 +842,9 @@ class MPPIPlanner():
         safe_distance_left_loa: float = 1.6,
         safe_distance_fore_loa: float = 6.4,
         safe_distance_aft_loa: float = 1.6,
+        starboard_bias_weight: float = 0.0,
     ):
+        self.starboard_bias_weight = starboard_bias_weight
         self.point_spacing = point_spacing
         self.avoid_radius = avoid_radius
         self.avoid_offset = avoid_offset
@@ -930,6 +950,7 @@ class MPPIPlanner():
             buoy_margin_m=self.buoy_margin_m,
             buoy_longitudinal_sigma_m=self.buoy_longitudinal_sigma_m,
             ax_gains=self.ax_gains,
+            starboard_bias_weight=self.starboard_bias_weight,
             debug=True
         )
 

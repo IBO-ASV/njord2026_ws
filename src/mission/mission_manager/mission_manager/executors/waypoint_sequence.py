@@ -9,6 +9,10 @@ from ..waypoint_config import Route
 
 
 class WaypointSequenceExecutor(TaskExecutor):
+    def __init__(self, navigation, waypoint_succeeded=None):
+        super().__init__(navigation)
+        self._waypoint_succeeded = waypoint_succeeded
+
     def start(
         self, execution_id: str, route: Route, feedback: FeedbackCallback, complete: CompletionCallback
     ) -> None:
@@ -56,6 +60,8 @@ class WaypointSequenceExecutor(TaskExecutor):
                 if self._cancel_requested:
                     self._finish(ExecutorStatus.CANCELED, "waypoint goal canceled")
                 elif status == ExecutorStatus.SUCCEEDED:
+                    if self._waypoint_succeeded is not None:
+                        self._waypoint_succeeded(waypoint)
                     waypoint_index += 1
                     send_next()
                 else:

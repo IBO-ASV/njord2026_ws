@@ -7,14 +7,20 @@ NODE_SOURCE = PACKAGE_ROOT / "mission_manager" / "mission_manager_node.py"
 REPO_ROOT = PACKAGE_ROOT.parents[2]
 
 
-def test_mission_manager_latches_cardinal_walls_from_nav2_feedback():
-    """Keep the normal Mission Manager path wired to the GPS3 wall gate."""
-    source = NODE_SOURCE.read_text(encoding="utf-8")
-    ast.parse(source)
-    assert '"/task1/cardinal_wall_enable"' in source
-    assert '"/task1/gps3_to_gps4_heading"' in source
-    assert "number_of_poses_remaining" in source
-    assert "competition_id" in source
+def test_wall_gate_requires_successful_gps3_not_per_goal_feedback():
+    from mission_manager.mission_manager_node import MissionManager
+    from mission_manager.task_registry import TaskDefinition
+    from mission_manager.waypoint_config import Waypoint
+    manager = object.__new__(MissionManager)
+    manager._active_task = TaskDefinition("task1", "Task1", "experimental", features={"cardinal_walls": True})
+    changes = []
+    manager._set_task1_cardinal_walls = changes.append
+    def waypoint(checkpoint):
+        return Waypoint(checkpoint, 0., 0., 0., checkpoint, "waypoint", competition_id=checkpoint)
+    manager._on_waypoint_succeeded(waypoint("2"))
+    assert changes == []
+    manager._on_waypoint_succeeded(waypoint("3"))
+    assert changes == [True]
 
 
 def test_coordinate_projection_has_a_bounded_failure_path():
