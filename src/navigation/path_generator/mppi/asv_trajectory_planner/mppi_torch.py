@@ -613,10 +613,7 @@ class MPPItorch():
         )
 
         cost_side = torch.zeros_like(cost_collision)
-        if starboard_bias_weight > 0 and any(
-            (oth.x > 0 and abs(oth.y) < max(2.0, 0.36*oth.x) and oth.vx < -0.1)
-            or (oth.y < 0 and oth.vy > 0.1) for oth in others
-        ):
+        if starboard_bias_weight > 0 and prefer_starboard(others, path[0][:2], path[1][:2]):
             cost_side = starboard_bias_weight * starboard_preference_cost(
                 predx, predy, path[0][:2], path[1][:2])
 
@@ -782,7 +779,20 @@ class MPPItorch():
             )
 
 
-def starboard_preference_cost(predx, predy, path_start, path_end, margin_m=1.5):
+def prefer_starboard(others, path_start, path_end):
+    """Classify give-way geometry in the fixed GPS course, not a turning bow."""
+    dx,dy=path_end[0]-path_start[0],path_end[1]-path_start[1]
+    length=max(math.hypot(dx,dy),1e-6); ex,ey=dx/length,dy/length
+    for other in others:
+        forward=other.x*ex+other.y*ey; lateral=-other.x*ey+other.y*ex
+        vx=other.vx*ex+other.vy*ey; vy=-other.vx*ey+other.vy*ex
+        head_on=forward>0 and abs(lateral)<max(2.0,.36*forward) and vx<-.5 and abs(vy)<abs(vx)*.5
+        crossing=lateral<0 and vy>.3 and abs(vx)<abs(vy)
+        if head_on or crossing: return True
+    return False
+
+
+def starboard_preference_cost(predx, predy, path_start, path_end, margin_m=3.0):
     """Soft route-relative starboard preference for head-on/give-way cases."""
     dx, dy = path_end[0]-path_start[0], path_end[1]-path_start[1]
     length = max(float(math.hypot(dx, dy)), 1e-6)

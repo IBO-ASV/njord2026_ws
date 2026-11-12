@@ -14,7 +14,8 @@ class StagedDockingExecutor(TaskExecutor):
 
     def __init__(self, navigation, create_wait_timer: Callable[[float, Callable[[], None]], object],
                  cancel_wait_timer: Callable[[object], None], dock_target_correction=None,
-                 stage_succeeded=None, stationary_gate=None, now=time.monotonic) -> None:
+                 stage_succeeded=None, stationary_gate=None, now=time.monotonic,
+                 settle_time_sec=2.0, stationary_wait_timeout_sec=120.0) -> None:
         super().__init__(navigation)
         self._create_wait_timer = create_wait_timer
         self._cancel_wait_timer = cancel_wait_timer
@@ -22,6 +23,8 @@ class StagedDockingExecutor(TaskExecutor):
         self._stage_succeeded = stage_succeeded
         self._stationary_gate = stationary_gate
         self._now = now
+        self._settle_time_sec = settle_time_sec
+        self._stationary_wait_timeout_sec = stationary_wait_timeout_sec
         self._route: Optional[Route] = None
         self._current_stage_poses = ()
         self._full_sequence = False
@@ -144,7 +147,7 @@ class StagedDockingExecutor(TaskExecutor):
             # continuous stationary interval, restarting after drift/stale odom.
             poses = self._current_stage_poses
             stationary_since = None
-            deadline = self._now() + 120.0 + seconds
+            deadline = self._now() + self._stationary_wait_timeout_sec + seconds
             def poll():
                 nonlocal stationary_since
                 if expected_id != self.execution_id or self._finished or self._cancel_requested:
@@ -160,7 +163,7 @@ class StagedDockingExecutor(TaskExecutor):
                     stationary_since = None
                 elif stationary_since is None:
                     stationary_since = now
-                elif now - stationary_since >= 2.0 + seconds:
+                elif now - stationary_since >= self._settle_time_sec + seconds:
                     elapsed()
             self._wait_timer = self._create_wait_timer(0.1, poll)
 

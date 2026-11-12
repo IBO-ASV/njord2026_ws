@@ -4,6 +4,7 @@ from njord_sim.scenario import (
     segment_hits_polygon,
     point_rectangle_clearance,
     inverse_enu,
+    dock_segments,
 )
 from mission_manager.geodesy import HomeDatum, wgs84_to_enu
 
@@ -27,3 +28,13 @@ def test_buoy_contact_uses_oriented_hull_not_a_point_or_large_disc():
     assert point_rectangle_clearance(0.8, 0.0, 0.0, 0.0, 0.0) < 0
     assert point_rectangle_clearance(0.0, 0.8, 0.0, 0.0, 0.0) > 0
     assert point_rectangle_clearance(0.0, 0.8, 0.0, 0.0, math.pi / 2) < 0
+
+
+def test_parallel_berth_can_open_on_its_long_side():
+    # A sideways approach must cross the mouth, not an invented closed wall.
+    dock = (0.0, 0.0, math.pi / 2, 4.0, 2.0, 0)
+    walls = dock_segments(dock)
+    approach_hull = rectangle(1.0, 0.0, math.pi / 2)
+    assert not any(segment_hits_polygon(a, b, approach_hull) for a, b in walls)
+    opposite_hull = rectangle(-1.0, 0.0, math.pi / 2)
+    assert any(segment_hits_polygon(a, b, opposite_hull) for a, b in walls)

@@ -74,6 +74,8 @@ class PlannerNode(Node):
         self.declare_parameter("require_other_ship", True)
         self.declare_parameter("other_twist_is_relative", True)
         self.declare_parameter("other_heading_from_velocity", False)
+        self.declare_parameter("path_guard_enabled", False)
+        self.path_permission_pub=self.create_publisher(Bool,'/mission/task2/path_safe',1)
         self.declare_parameter("reconnect_line_distance_m", 1.0)
         self.declare_parameter("reconnect_ahead_length_m", 8.0)
         self.declare_parameter("straight_path_spacing_m", 2.0)
@@ -214,6 +216,7 @@ class PlannerNode(Node):
             avoid_offset=avoid_offset,
             other_twist_is_relative=other_twist_is_relative,
             other_heading_from_velocity=bool(self.get_parameter("other_heading_from_velocity").value),
+            path_guard_enabled=bool(self.get_parameter("path_guard_enabled").value),
             opponent_use_distance_m=opponent_use_distance_m,
             opponent_passed_margin_m=opponent_passed_margin_m,
             reconnect_line_distance_m=reconnect_line_distance_m,
@@ -490,6 +493,9 @@ class PlannerNode(Node):
             pose.header.stamp = now
             pose.header.frame_id = self.frame_id
 
+        self.path_permission_pub.publish(Bool(data=self.trajectory_generator.path_guard_safe))
+        if self.get_parameter('path_guard_enabled').value:
+            self.get_logger().info('Path guard: '+self.trajectory_generator.path_guard_message,throttle_duration_sec=2.)
         self.path_pub.publish(path)
         own_position = self.latest_own_odom.pose.pose.position
         self.publish_mppi_crm_costmap(

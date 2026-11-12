@@ -127,7 +127,8 @@ class Evaluation(Node):
             and math.hypot(p.x - route[self.wp].x, p.y - route[self.wp].y) < 1.5
         ):
             self.wp += 1
-        for i, (x, y, axis, length, width) in enumerate(self.s.docks):
+        for i, dock in enumerate(self.s.docks):
+            x, y, axis, length, width = dock[:5]
             w = next(
                 w
                 for w in route
@@ -136,8 +137,15 @@ class Evaluation(Node):
             angle = abs(
                 math.atan2(math.sin(heading - w.yaw), math.cos(heading - w.yaw))
             )
+            inside = all(
+                abs((hx - x) * math.cos(axis) + (hy - y) * math.sin(axis)) <= length / 2
+                and abs(-(hx - x) * math.sin(axis) + (hy - y) * math.cos(axis))
+                <= width / 2
+                for hx, hy in rectangle(p.x, p.y, heading)
+            )
             stationary = (
-                math.hypot(p.x - x, p.y - y) <= 0.8
+                inside
+                and math.hypot(p.x - x, p.y - y) <= 0.8
                 and angle <= math.radians(10)
                 and speed <= 0.1
                 and abs(m.twist.twist.angular.z) <= 0.05
@@ -287,9 +295,6 @@ class Evaluation(Node):
                     and self.control is not None
                     and not self.control.auto_permitted
                 )
-        from .plotting import plot_run
-
-        plot_run(self.s, self.samples, out)
         summary = {
             "test_mode": fault_mode,
             "task": self.args.task,
@@ -334,6 +339,13 @@ class Evaluation(Node):
         (out / "evaluation.json").write_text(
             json.dumps(summary, indent=2, ensure_ascii=False)
         )
+        if self.args.plot:
+            try:
+                from .plotting import plot_run
+
+                plot_run(self.s, self.samples, out)
+            except Exception as error:
+                (out / "plot_error.txt").write_text(str(error))
         return passed
 
 
@@ -342,6 +354,7 @@ def main(args=None):
     parser.add_argument("--task", default="task1")
     parser.add_argument("--timeout", type=float, default=900)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--plot", action="store_true")
     parser.add_argument("--encounter", default="head_on")
     parser.add_argument("--cancel-after", type=float, default=0.0)
     parser.add_argument("--dropout-after", type=float, default=0.0)
@@ -408,6 +421,18 @@ def main(args=None):
                 terminal_at = terminal_at or time.monotonic()
                 if time.monotonic() - terminal_at > 4.0:
                     reason = "mission terminal"
+                    break
+            if opts.task == "task2" and node.execution and len(node.samples) > 2:
+                recent = [row for row in node.samples if row[0] >= elapsed - 45.0]
+                if (
+                    recent
+                    and elapsed - recent[0][0] >= 44.0
+                    and max(row[1] for row in recent) - min(row[1] for row in recent)
+                    < 0.2
+                    and max(row[2] for row in recent) - min(row[2] for row in recent)
+                    < 0.2
+                ):
+                    reason = "no physical progress for 45 seconds"
                     break
             if elapsed > 60 and not node.received:
                 reason = "no truth odometry"

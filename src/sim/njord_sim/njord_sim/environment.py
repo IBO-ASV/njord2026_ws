@@ -14,8 +14,10 @@ from geometry_msgs.msg import (
     TransformStamped,
     Quaternion,
     PoseWithCovarianceStamped,
+    PointStamped,
+    PoseStamped,
 )
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from nav2_msgs.action import NavigateThroughPoses
 from sensor_msgs.msg import NavSatFix, Imu, PointCloud2
 from sensor_msgs_py import point_cloud2
@@ -23,11 +25,13 @@ from std_msgs.msg import Bool, UInt8, Header, Float32
 from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
 from robot_localization.srv import FromLL
 from lifecycle_msgs.srv import GetState
+from visualization_msgs.msg import Marker, MarkerArray
 from njord_interfaces.msg import (
     BuoyDetection,
     BuoyDetectionArray,
     HealthState,
     HealthSignal,
+    MissionStatus,
 )
 from .scenario import scenario, dock_segments
 from mission_manager.geodesy import wgs84_to_enu
@@ -72,6 +76,7 @@ class Environment(Node):
         self.buoys = self.create_publisher(
             BuoyDetectionArray, "/buoy_detections_3d", 10
         )
+        self.buoy_points = self.create_publisher(PointStamped, "/buoy_detections", 10)
         self.cloud = self.create_publisher(PointCloud2, "/sim_obstacles", 10)
         self.lidar = self.create_publisher(PointCloud2, "/livox/lidar", 10)
         self.ready = self.create_publisher(Bool, "/autonomy/ready", 10)
@@ -80,7 +85,17 @@ class Environment(Node):
         )
         self.estop = self.create_publisher(UInt8, "/safety/emergency_stop", 10)
         self.health = self.create_publisher(HealthState, "/health/state", QOS)
-        self.battery = self.create_publisher(Float32, "/battery/percentage", 10)
+        self.battery = self.create_publisher(Float32, "/gui/battery_percent", 10)
+        self.ground_speed = self.create_publisher(Float32, "/gui/ground_speed_mps", 10)
+        self.actual_path = Path()
+        self.actual_path.header.frame_id = "odom"
+        self.path_pub = self.create_publisher(Path, "/sim/estimated_path", 10)
+        self.geo_markers = self.create_publisher(
+            MarkerArray, "/ground_waypoint_markers", QOS
+        )
+        self.create_subscription(
+            MissionStatus, "/mission/status", self.on_mission_status, QOS
+        )
         self.tf = TransformBroadcaster(self)
         self.static = StaticTransformBroadcaster(self)
         static = TransformStamped()
@@ -104,11 +119,40 @@ class Environment(Node):
         self.other_truth = self.create_publisher(Odometry, "/sim/truth/opponent", 10)
         self.create_subscription(Bool, "/mission/task2/enabled", self.on_enabled, QOS)
         self.filtered_cloud_at = None
+        self.planned_path_at = None
+        self.create_subscription(Path, "/planned_path_pruned", self.on_planned_path, 10)
         self.create_subscription(
             PointCloud2, "/task2/points_filtered", self.on_filtered_cloud, 10
         )
         self.tick_count = 0
         self.create_timer(0.05, self.tick)
+
+    def on_mission_status(self, message):
+        markers = MarkerArray()
+        if message.task_id != self.s.task.task_id or message.state not in range(1, 8):
+            markers.markers = [Marker(action=Marker.DELETEALL)]
+        else:
+            for i, w in enumerate(self.s.route.waypoints):
+                marker = Marker(
+                    id=i,
+                    ns=f"ground_waypoint_wgs84/{message.task_id}",
+                    type=Marker.SPHERE,
+                    action=Marker.ADD,
+                )
+                marker.header.frame_id = "wgs84"
+                marker.header.stamp = self.get_clock().now().to_msg()
+                marker.pose.position.x = w.longitude
+                marker.pose.position.y = w.latitude
+                marker.pose.orientation.w = 1.0
+                marker.text = w.name
+                marker.scale.x = marker.scale.y = marker.scale.z = 1.0
+                marker.color.a = 1.0
+                markers.markers.append(marker)
+        self.geo_markers.publish(markers)
+
+    def on_planned_path(self, message):
+        if len(message.poses) >= 2:
+            self.planned_path_at = time.monotonic()
 
     def on_filtered_cloud(self, message):
         if message.header.frame_id and (
@@ -239,6 +283,12 @@ class Environment(Node):
         imu.angular_velocity_covariance[8] = 0.003464**2
         self.imu.publish(imu)
         self.tick_count += 1
+        if self.tick_count % 10 == 0:
+            pose = PoseStamped(header=estimate.header, pose=estimate.pose.pose)
+            self.actual_path.poses.append(pose)
+            self.actual_path.poses = self.actual_path.poses[-2400:]
+            self.actual_path.header.stamp = stamp
+            self.path_pub.publish(self.actual_path)
         if self.tick_count % 2:
             return
         self.publish_sensors(stamp, now - self.started)
@@ -278,6 +328,8 @@ class Environment(Node):
                 d.position.x = x + (self.rng.gauss(0, 0.04) if self.noise else 0.0)
                 d.position.y = y + (self.rng.gauss(0, 0.04) if self.noise else 0.0)
                 detections.detections.append(d)
+                point = PointStamped(header=detections.header, point=d.position)
+                self.buoy_points.publish(point)
             points.extend(
                 (x + 0.175 * math.cos(a * 0.2), y + 0.175 * math.sin(a * 0.2), 0.3)
                 for a in range(32)
@@ -357,6 +409,11 @@ class Environment(Node):
         self.ready.publish(
             Bool(
                 data=self.nav.server_is_ready()
+                and (
+                    self.s.task.task_id != "task2"
+                    or self.planned_path_at is not None
+                    and time.monotonic() - self.planned_path_at < 5.0
+                )
                 and all(
                     self.lifecycle_states.get(n, (0, 0))[0] == 3
                     and time.monotonic() - self.lifecycle_states.get(n, (0, 0))[1] < 2.0
@@ -376,6 +433,7 @@ class Environment(Node):
         ]
         self.health.publish(health)
         self.battery.publish(Float32(data=80.0))
+        self.ground_speed.publish(Float32(data=math.hypot(self.u, self.v)))
 
 
 def main(args=None):

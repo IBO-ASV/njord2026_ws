@@ -58,3 +58,35 @@ def plot_run(scenario, samples, directory):
     fig.tight_layout()
     fig.savefig(directory / "trajectory.png", dpi=140)
     plt.close(fig)
+
+
+def main():
+    """Render saved geometry and truth without starting any ROS processes."""
+    import argparse
+    import csv
+    import json
+    from pathlib import Path
+    from types import SimpleNamespace
+
+    parser = argparse.ArgumentParser(description=main.__doc__)
+    parser.add_argument("directory", type=Path)
+    args = parser.parse_args()
+    directory = args.directory.resolve()
+    saved = json.loads((directory / "config/scenario.json").read_text())
+    scenario = SimpleNamespace(
+        task=SimpleNamespace(**saved["task"]),
+        route=SimpleNamespace(
+            waypoints=[SimpleNamespace(**w) for w in saved["route"]["waypoints"]]
+        ),
+        buoys=saved["buoys"],
+        docks=saved["docks"],
+    )
+    with (directory / "trajectory.csv").open() as source:
+        rows = csv.reader(source)
+        next(rows)
+        samples = [[float(value) for value in row] for row in rows]
+    plot_run(scenario, samples, directory)
+
+
+if __name__ == "__main__":
+    main()

@@ -37,3 +37,23 @@ Task2 `other_heading_from_velocity` and `mppi.starboard_bias_weight` are optiona
 new planner inputs. The latter defaults to zero; it is a scenario tuning
 experiment, not a claim of general COLREG compliance. `mppi.random_seed` defaults
 to -1 (unchanged random behavior) and is fixed to the run seed in simulation.
+
+| Final implementation / observed behavior | Change | Result / rationale |
+|---|---|---|
+| Docking could report success at a heading different from the requested berth heading | Refresh projected goal arrays and tolerances inside `SelectiveHeadingGoalChecker`; add a real plugin gtest | Previously initialization-only arrays ignored later Mission updates. C++ regression test passes, including unequal-array rejection |
+| `/task/plan` requested 0.4381 rad but ThetaStar produced a different final quaternion | Set sim `use_final_approach_orientation: false`; use the existing natural cubic spline docking smoother | Probe confirms task plan / planner / smoother preserve 0.4381 rad. This fixes orientation handling rather than relaxing scoring |
+| Normal dock structure had no surveyed orientation; invented walls conflicted with the waypoint yaw | In the private sim fixture derive normal axis from approach -> berth, align approach/berth/exit yaw; parallel dock opens toward approach on the nearest side | Live waypoint YAML remains intact. Whole-hull containment is now independently required in addition to zero contact |
+| Strict 0.35 m goals still permit a 1.5 x 1.0 m hull too near a 2 x 2 m berth edge | Tighten sim docking XY to 0.15 m and goal yaw to 5 degrees; keep stationary window 10 degrees and continuous dwell | Normal and parallel truth + seeds 2026/2027/2028: all eight passed with complete hull inside berth |
+| Task2 turning changed which side was classified as give-way when classification used the bow frame | Classify relative position and observed velocity against fixed GPS course; keep soft starboard margin 3 m | Rotated-course regression test passes. Production starboard weight still defaults to zero |
+| Combining real buoy inputs, moving target and noisy tracking still produced a 0.019 m hull gap in a port crossing despite Mission success | Keep that failure; enable optional CV observed-object path guard only in the new sim launch. Check buoy/gate bounds and 2.85 m predicted centre separation over plausible own speeds; try GPS-relative lanes, otherwise cancel FollowPath | First noisy port retest: both gates, minimum true hull gap 1.684 m, final stop; full encounter/seed matrix recorded separately |
+| RPP inherited Task1 rotate-in-place behavior for Task2, delaying progress while target continued | Use Task2 profile's `use_rotate_to_heading: false`, 1.5 s lookahead / max 8 m | Helps follow the moving avoidance path without repeated stationary rotations; sim-only override |
+| Path permission could close while a FollowPath acceptance was in flight | Cancel late accepted handles from older generations, as well as active goals; clear rejected path | Two behavioral regression tests pass; guard has no dependency on simulator truth |
+| Running many Nav2/PCL/MPPI processes together on this 8-core host caused action/TF timeouts and delayed plotting | Final suites use one berth worker + one Task2 worker maximum; JSON saved before opt-in plotting; runner grants 90 s startup/artifact watchdog margin | Overload failures remain under `/tmp/njord-night/{berths-release,crossing-release}` and are not treated as completed acceptance cases |
+| Broad robot static checks assert old networking/video configuration literals | Do not modify current platform settings to satisfy unrelated stale assertions | 162 passed / 7 failed in broad robot check; all seven concern baseline configuration. Focused mission/control/geometry/Task2 tests and new plugin gtest pass |
+
+The berth wait durations remain explicit provisional defaults: normal 10 s,
+parallel 5 s, both after 2 s settling. Sensor noise is synthetic and does not
+constitute a measured sensor error model. CPU MMG qualification currently
+covers Task1.2 only; the full task/seed matrix uses the kinematic model.
+The original MPPI-only failures are retained as evidence against deploying
+these simulation tuning overrides unchanged on the real vessel.

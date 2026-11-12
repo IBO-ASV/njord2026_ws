@@ -15,7 +15,9 @@ def main():
     p.add_argument("--tasks", default="task1,task1_2,task2,task3_1,task3_2,task4")
     p.add_argument("--seeds", default="2026,2027,2028")
     p.add_argument("--truth", action="store_true")
+    p.add_argument("--encounters", default="head_on")
     p.add_argument("--workers", type=int, default=2)
+    p.add_argument("--timeout", type=int, default=None)
     p.add_argument("--domain-base", type=int, default=100)
     p.add_argument("--output", required=True)
     a = p.parse_args()
@@ -26,14 +28,19 @@ def main():
         domains.put(a.domain_base + i)
     jobs = []
     for task in a.tasks.split(","):
-        if a.truth:
-            jobs.append((task, None))
-        jobs.extend((task, int(seed)) for seed in a.seeds.split(",") if seed)
+        encounters = a.encounters.split(",") if task == "task2" else ["head_on"]
+        for encounter in encounters:
+            if a.truth:
+                jobs.append((task, None, encounter))
+            jobs.extend(
+                (task, int(seed), encounter) for seed in a.seeds.split(",") if seed
+            )
 
     def run(job):
-        task, seed = job
+        task, seed, encounter = job
         domain = domains.get()
-        name = f"{task}-" + ("truth" if seed is None else f"noise{seed}")
+        prefix = f"{task}-{encounter}" if task == "task2" else task
+        name = prefix + "-" + ("truth" if seed is None else f"noise{seed}")
         command = [
             sys.executable,
             "scripts/run_mission_sim.py",
@@ -42,9 +49,11 @@ def main():
             "--domain",
             str(domain),
             "--timeout",
-            "1800" if task == "task4" else "900",
+            str(a.timeout or (1800 if task == "task4" else 900)),
             "--output",
             str(out / name),
+            "--encounter",
+            encounter,
         ]
         if seed is not None:
             command += ["--noise", "--seed", str(seed)]

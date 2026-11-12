@@ -187,6 +187,14 @@ class MissionManager(Node):
     def __init__(self) -> None:
         super().__init__("mission_manager")
         self.declare_parameter("registry_file", "")
+        self.declare_parameter("docking_stationary_position_tolerance_m", 0.8)
+        self.declare_parameter("docking_stationary_yaw_tolerance_rad", math.radians(10))
+        self.declare_parameter("docking_goal_yaw_tolerance_rad", math.radians(5))
+        self.declare_parameter("docking_stationary_speed_mps", 0.1)
+        self.declare_parameter("docking_stationary_yaw_rate_radps", 0.05)
+        self.declare_parameter("docking_odometry_timeout_sec", 0.5)
+        self.declare_parameter("docking_settle_time_sec", 2.0)
+        self.declare_parameter("docking_wait_timeout_sec", 120.0)
         self.declare_parameter("active_nav2_profile", "")
         self.declare_parameter("auto_permission_timeout_sec", 30.0)
         self.declare_parameter("coordinate_projection_timeout_sec", 30.0)
@@ -542,6 +550,9 @@ class MissionManager(Node):
         ]
         parameter_request = SetParameters.Request()
         parameter_request.parameters = [
+            Parameter(name="general_goal_checker.yaw_goal_tolerance", value=ParameterValue(
+                type=ParameterType.PARAMETER_DOUBLE,
+                double_value=float(self.get_parameter("docking_goal_yaw_tolerance_rad").value))),
             Parameter(
                 name="general_goal_checker.heading_required_goal_xs",
                 value=ParameterValue(
@@ -829,6 +840,8 @@ class MissionManager(Node):
                 self._navigation, self._create_wait_timer, self.destroy_timer,
                 self._dock_target_for_navigation, self._on_docking_stage_succeeded,
                 stationary_gate=self._stationary_at_berth,
+                settle_time_sec=float(self.get_parameter("docking_settle_time_sec").value),
+                stationary_wait_timeout_sec=float(self.get_parameter("docking_wait_timeout_sec").value),
             )
             executor.start(execution_id, self._active_route, self._feedback_update(execution_id),
                            self._executor_complete(execution_id))
@@ -849,17 +862,17 @@ class MissionManager(Node):
         if self._active_route is None:
             return False
         message, received = self._docking_odom_by_frame.get(self._active_route.frame_id, (None, 0))
-        if message is None or self.get_clock().now().nanoseconds - received > 500_000_000:
+        if message is None or self.get_clock().now().nanoseconds - received > int(float(self.get_parameter("docking_odometry_timeout_sec").value)*1e9):
             return False
         pose = message.pose.pose
         q = pose.orientation
         yaw = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
         yaw_error = math.atan2(math.sin(yaw-waypoint.yaw), math.cos(yaw-waypoint.yaw))
         twist = message.twist.twist
-        return (math.hypot(pose.position.x-waypoint.x, pose.position.y-waypoint.y) <= 0.8
-                and abs(yaw_error) <= math.radians(10)
-                and math.hypot(twist.linear.x, twist.linear.y) <= 0.1
-                and abs(twist.angular.z) <= 0.05)
+        return (math.hypot(pose.position.x-waypoint.x, pose.position.y-waypoint.y) <= float(self.get_parameter("docking_stationary_position_tolerance_m").value)
+                and abs(yaw_error) <= float(self.get_parameter("docking_stationary_yaw_tolerance_rad").value)
+                and math.hypot(twist.linear.x, twist.linear.y) <= float(self.get_parameter("docking_stationary_speed_mps").value)
+                and abs(twist.angular.z) <= float(self.get_parameter("docking_stationary_yaw_rate_radps").value))
 
     def _on_dock_correction(self, berth: str, message: PoseStamped) -> None:
         if message.header.frame_id == "map":

@@ -120,6 +120,8 @@ public:
     const std::string & plugin_name,
     const std::shared_ptr<nav2_costmap_2d::Costmap2DROS>) override
   {
+    parent_ = parent;
+    plugin_name_ = plugin_name;
     const auto node = parent.lock();
     if (!node) {
       throw std::runtime_error("goal checker lifecycle node expired");
@@ -153,6 +155,9 @@ public:
     const geometry_msgs::msg::Pose & goal_pose,
     const geometry_msgs::msg::Twist &) override
   {
+    if (!refreshParameters()) {
+      return false;
+    }
     const double dx = query_pose.position.x - goal_pose.position.x;
     const double dy = query_pose.position.y - goal_pose.position.y;
     if (!requires_heading(goal_pose)) {
@@ -168,6 +173,9 @@ public:
     geometry_msgs::msg::Pose & pose_tolerance,
     geometry_msgs::msg::Twist & velocity_tolerance) override
   {
+    if (!refreshParameters()) {
+      return false;
+    }
     pose_tolerance.position.x = xy_tolerance_;
     pose_tolerance.position.y = xy_tolerance_;
     pose_tolerance.position.z = 0.0;
@@ -182,6 +190,32 @@ public:
   }
 
 private:
+  bool refreshParameters()
+  {
+    const auto node = parent_.lock();
+    if (!node) {return false;}
+    // Mission Manager projects GPS goals after Nav2 has configured. Read
+    // runtime parameters instead of retaining initialization-only copies.
+    const auto values = node->get_parameters({
+      plugin_name_ + ".xy_goal_tolerance", plugin_name_ + ".position_only_xy_goal_tolerance",
+      plugin_name_ + ".yaw_goal_tolerance", plugin_name_ + ".heading_required_goal_xs",
+      plugin_name_ + ".heading_required_goal_ys", plugin_name_ + ".heading_required_goal_tolerance"});
+    xy_tolerance_ = values[0].as_double();
+    position_only_xy_tolerance_ = values[1].as_double();
+    yaw_tolerance_ = values[2].as_double();
+    required_xs_ = values[3].as_double_array();
+    required_ys_ = values[4].as_double_array();
+    required_tolerance_ = values[5].as_double();
+    return std::isfinite(xy_tolerance_) && xy_tolerance_ > 0.0 &&
+      std::isfinite(position_only_xy_tolerance_) && position_only_xy_tolerance_ >= xy_tolerance_ &&
+      std::isfinite(yaw_tolerance_) && yaw_tolerance_ >= 0.0 &&
+      std::isfinite(required_tolerance_) && required_tolerance_ >= 0.0 &&
+      required_xs_.size() == required_ys_.size();
+  }
+
+  rclcpp_lifecycle::LifecycleNode::WeakPtr parent_;
+  std::string plugin_name_;
+
   static double yaw(const geometry_msgs::msg::Pose & pose)
   {
     const auto & q = pose.orientation;

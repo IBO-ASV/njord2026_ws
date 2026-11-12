@@ -132,24 +132,55 @@ def scenario(task_id):
             # Dock mouth is at the previous approach. Axis points into the berth.
             index = route.waypoints.index(w)
             a = route.waypoints[index - 1]
-            axis = atan2(w.y - a.y, w.x - a.x)
-            docks.append(
-                (w.x, w.y, axis, 4.0 if "berth2" in w.waypoint_id else 2.0, 2.0)
-            )
+            parallel = "berth2" in w.waypoint_id
+            axis = w.yaw if parallel else atan2(w.y - a.y, w.x - a.x)
+            if not parallel:
+                # Dock orientation is not surveyed. For the normal-berth sim
+                # fixture, align the mouth and target with its approach line.
+                # Never rewrite the deployed geographic route.
+                updated = tuple(
+                    replace(item, yaw=axis)
+                    if item.waypoint_id == w.waypoint_id
+                    or (
+                        abs(item.x - a.x) < 1e-5
+                        and abs(item.y - a.y) < 1e-5
+                        and "turn" not in item.waypoint_id
+                    )
+                    else item
+                    for item in route.waypoints
+                )
+                route = replace(route, waypoints=updated)
+            length = 4.0 if parallel else 2.0
+            width = 2.0
+            dx, dy = a.x - w.x, a.y - w.y
+            u = dx * cos(axis) + dy * sin(axis)
+            v = -dx * sin(axis) + dy * cos(axis)
+            if abs(u) / (length / 2) >= abs(v) / (width / 2):
+                opening = 3 if u < 0 else 1
+            else:
+                opening = 0 if v < 0 else 2
+            docks.append((w.x, w.y, axis, length, width, opening))
     return Scenario(task, route, datum, buoys, docks, (first.x, first.y, yaw))
 
 
 def dock_segments(dock):
     """Open-mouth rectangular berth, never a closed obstacle over its goal."""
-    x, y, yaw, length, width = dock
+    x, y, yaw, length, width = dock[:5]
+    opening = dock[5] if len(dock) > 5 else 3
 
     def world(u, v):
         return (x + u * cos(yaw) - v * sin(yaw), y + u * sin(yaw) + v * cos(yaw))
 
+    corners = [
+        world(-length / 2, -width / 2),
+        world(length / 2, -width / 2),
+        world(length / 2, width / 2),
+        world(-length / 2, width / 2),
+    ]
     return [
-        (world(-length / 2, -width / 2), world(length / 2, -width / 2)),
-        (world(length / 2, -width / 2), world(length / 2, width / 2)),
-        (world(length / 2, width / 2), world(-length / 2, width / 2)),
+        (a, b)
+        for i, (a, b) in enumerate(zip(corners, corners[1:] + corners[:1]))
+        if i != opening
     ]
 
 

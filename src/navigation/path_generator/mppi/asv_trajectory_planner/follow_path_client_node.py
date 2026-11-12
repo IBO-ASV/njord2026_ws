@@ -31,6 +31,10 @@ class FollowPathClientNode(Node):
         self.declare_parameter("enable_replanning", True)
         self.declare_parameter("enabled_topic", "/mission/task2/enabled")
         self.declare_parameter("mission_gate_required", False)
+        permission_topic = str(self.declare_parameter("path_permission_topic", "").value)
+        self.path_permitted = not bool(permission_topic)
+        if permission_topic:
+            self.create_subscription(Bool, permission_topic, self.path_permission_callback, 10)
         self.declare_parameter("startup_hold_sec", 0.0)
         self.declare_parameter("goal_reached_topic", "/mission/task2/goal_reached")
         self.declare_parameter("final_goal_pose_topic", "/waypoint2_pose")
@@ -125,6 +129,16 @@ class FollowPathClientNode(Node):
             f"(endpoint tolerance {self.final_goal_endpoint_tolerance_m:.2f} m)"
         )
 
+    def path_permission_callback(self, message):
+        if not message.data and self.path_permitted:
+            self.latest_path = None
+            self.goal_generation += 1
+            if self.goal_handle is not None:
+                self.goal_handle.cancel_goal_async()
+            self.goal_active = False
+            self.goal_handle = None
+        self.path_permitted = message.data
+
     def path_callback(self, msg: Path):
         if len(msg.poses) < 2:
             self.get_logger().warn("Received path has fewer than 2 poses. Ignored.")
@@ -188,7 +202,7 @@ class FollowPathClientNode(Node):
         return False
 
     def timer_callback(self):
-        if not self.enabled or self.goal_completed or self.latest_path is None:
+        if not self.path_permitted or not self.enabled or self.goal_completed or self.latest_path is None:
             return
 
         if self.startup_hold_until is not None:
@@ -253,16 +267,19 @@ class FollowPathClientNode(Node):
         self.goal_active = True
 
     def goal_response_callback(self, future, generation):
-        if generation != self.goal_generation:
-            return
         goal_handle = future.result()
+        if generation != self.goal_generation:
+            # A gate can close before send_goal_async acknowledges acceptance.
+            if goal_handle.accepted:
+                goal_handle.cancel_goal_async()
+            return
 
         if not goal_handle.accepted:
             self.get_logger().warn("FollowPath goal was rejected.")
             self.goal_active = False
             return
 
-        if not self.enabled:
+        if not self.enabled or not self.path_permitted:
             # The gate can close while send_goal_async is in flight.  Do not
             # retain a goal that was accepted after Mission cancellation.
             goal_handle.cancel_goal_async()

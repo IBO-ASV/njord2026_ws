@@ -16,6 +16,7 @@ def main():
     p.add_argument("--timeout", type=int, default=900)
     p.add_argument("--domain", type=int, default=89)
     p.add_argument("--output", required=True)
+    p.add_argument("--plot", action="store_true")
     p.add_argument("--encounter", default="head_on")
     p.add_argument("--cancel-after", type=float, default=0.0)
     p.add_argument("--dropout-after", type=float, default=0.0)
@@ -96,6 +97,7 @@ def main():
                     a.encounter,
                     "--dropout-after",
                     str(a.dropout_after),
+                    *(["--plot"] if a.plot else []),
                 ],
                 env=env,
                 stdout=observer,
@@ -103,8 +105,20 @@ def main():
                 start_new_session=True,
             )
             children.append(check)
-            code = check.wait(timeout=a.timeout + 20)
-            return code
+            try:
+                return check.wait(timeout=a.timeout + 90)
+            except subprocess.TimeoutExpired:
+                if not (out / "evaluation.json").exists():
+                    (out / "evaluation.json").write_text(
+                        json.dumps(
+                            {
+                                "task": a.task,
+                                "passed": False,
+                                "reason": "observer watchdog expired including startup/artifact grace",
+                            }
+                        )
+                    )
+                return 124
     finally:
         for sig in (signal.SIGINT, signal.SIGTERM, signal.SIGKILL):
             for child in children:

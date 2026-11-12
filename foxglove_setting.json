@@ -153,6 +153,15 @@
           "colorField": "z",
           "colorMode": "colormap",
           "colorMap": "turbo"
+        },
+        "/mission/plan": {
+          "visible": true
+        },
+        "/sim/estimated_path": {
+          "visible": true
+        },
+        "/virtual_obstacle_markers": {
+          "visible": true
         }
       },
       "layers": {

@@ -80,6 +80,10 @@ install(FILES config/glim_config/config_ros_cpu.json
 )
 
 if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_selective_heading_goal_checker test/test_selective_heading_goal_checker.cpp)
+  ament_target_dependencies(test_selective_heading_goal_checker
+    geometry_msgs nav2_core nav2_costmap_2d pluginlib rclcpp rclcpp_lifecycle)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_livox_config test/test_livox_config.py)
   ament_add_pytest_test(test_launch_roles test/test_launch_roles.py)

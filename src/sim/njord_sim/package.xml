@@ -8,7 +8,7 @@
   <exec_depend>control_manager</exec_depend><exec_depend>task1_sim</exec_depend>
   <exec_depend>task3_sim</exec_depend><exec_depend>robot</exec_depend>
   <exec_depend>sensor_msgs_py</exec_depend><exec_depend>tf2_ros</exec_depend>
-  <exec_depend>robot_localization</exec_depend><exec_depend>lifecycle_msgs</exec_depend><exec_depend>njord_interfaces</exec_depend>
+  <exec_depend>natural_cubic_spline</exec_depend><exec_depend>robot_localization</exec_depend><exec_depend>lifecycle_msgs</exec_depend><exec_depend>njord_interfaces</exec_depend>
   <exec_depend>nav2_msgs</exec_depend><exec_depend>nav_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend><exec_depend>sensor_msgs</exec_depend>
   <exec_depend>visualization_msgs</exec_depend><exec_depend>std_msgs</exec_depend>

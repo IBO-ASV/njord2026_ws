@@ -108,6 +108,23 @@ def launch(context):
                 output="screen",
             )
         )
+    if LaunchConfiguration("foxglove").perform(context) == "true":
+        nodes.append(
+            Node(
+                package="foxglove_bridge",
+                executable="foxglove_bridge",
+                parameters=[
+                    {
+                        "port": int(
+                            LaunchConfiguration("foxglove_port").perform(context)
+                        ),
+                        "address": "127.0.0.1",
+                        "capabilities": ["services", "parameters", "connectionGraph"],
+                    }
+                ],
+                output="screen",
+            )
+        )
     if task == "task2":
         from njord_sim.task2 import nodes as task2_nodes
 
@@ -172,6 +189,10 @@ def generate_launch_description():
             DeclareLaunchArgument("disturbance", default_value="false"),
             DeclareLaunchArgument("encounter", default_value="head_on"),
             DeclareLaunchArgument("config_dir", default_value=""),
+            DeclareLaunchArgument(
+                "foxglove", default_value="false", choices=["true", "false"]
+            ),
+            DeclareLaunchArgument("foxglove_port", default_value="8767"),
             DeclareLaunchArgument("dropout_after", default_value="0.0"),
             OpaqueFunction(function=launch),
         ]

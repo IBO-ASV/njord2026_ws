@@ -67,6 +67,7 @@ def nodes(directory, seed):
                     "other_ship_twist_topic": "/other_ship/twist",
                     "other_twist_is_relative": False,
                     "other_heading_from_velocity": True,
+                    "path_guard_enabled": True,
                     "path_topic": "/planned_path_pruned",
                     "frame_id": "odom",
                     "other_ship_frame": "opponent_vessel",
@@ -74,7 +75,8 @@ def nodes(directory, seed):
                     "planning_frequency": 2.0,
                     "require_other_ship": False,
                     "require_opponent_detection_status": True,
-                    "use_detected_buoys": False,
+                    "use_detected_buoys": True,
+                    "mppi.buoy_cost_weight": 120.0,
                     "mppi.num_samples": 512,
                     "mppi.horizon": 150,
                     "mppi.dt": 0.15,
@@ -101,6 +103,7 @@ def nodes(directory, seed):
             parameters=[
                 {
                     "path_topic": "/planned_path_pruned",
+                    "path_permission_topic": "/mission/task2/path_safe",
                     "mission_gate_required": True,
                     "enabled_topic": "/mission/task2/enabled",
                     "goal_reached_topic": "/mission/task2/goal_reached",

@@ -1,6 +1,8 @@
 """Generate sim-only overrides without touching deployed vehicle configuration."""
 
 import math
+import json
+from dataclasses import asdict
 from pathlib import Path
 import yaml
 from ament_index_python.packages import get_package_share_directory as share
@@ -11,6 +13,7 @@ def configurations(task_id, directory):
     directory = Path(directory)
     directory.mkdir(parents=True, exist_ok=True)
     s = scenario(task_id)
+    (directory / "scenario.json").write_text(json.dumps(asdict(s), indent=2))
     docking = task_id in ("task3_1", "task3_2", "task4")
     base = (
         Path(share("robot")) / "config/nav2_params_task3_jazzy.yaml"
@@ -35,9 +38,9 @@ def configurations(task_id, directory):
     }
     if docking:
         c = controller["FollowPath"]
-        c.update(vx_samples=11, vy_samples=11, vtheta_samples=9, xy_goal_tolerance=0.35)
-        controller["general_goal_checker"]["xy_goal_tolerance"] = 0.35
-        controller["general_goal_checker"]["yaw_goal_tolerance"] = math.radians(10)
+        c.update(vx_samples=11, vy_samples=11, vtheta_samples=9, xy_goal_tolerance=0.15)
+        controller["general_goal_checker"]["xy_goal_tolerance"] = 0.15
+        controller["general_goal_checker"]["yaw_goal_tolerance"] = math.radians(5)
         strict = [
             w for w in s.route.waypoints if w.waypoint_type in ("dock", "dock_approach")
         ]
@@ -59,7 +62,15 @@ def configurations(task_id, directory):
         )
         controller["min_y_velocity_threshold"] = 0.001
         if task_id == "task2":
-            controller["FollowPath"]["desired_linear_vel"] = 1.0288888889
+            controller["FollowPath"].update(
+                desired_linear_vel=1.0288888889,
+                use_rotate_to_heading=False,
+                lookahead_time=1.5,
+                max_lookahead_dist=8.0,
+            )
+    nav["planner_server"]["ros__parameters"]["GridBased"][
+        "use_final_approach_orientation"
+    ] = False
     xs = [w.x for w in s.route.waypoints] + [x for x, y, _ in s.buoys]
     ys = [w.y for w in s.route.waypoints] + [y for x, y, _ in s.buoys]
     for name in ("local_costmap", "global_costmap"):
@@ -134,6 +145,7 @@ def configurations(task_id, directory):
         observation_sources=["physical"],
         polygons=["FootprintApproach"],
         source_timeout=1.0,
+        base_shift_correction=False,
     )
     collision["physical"] = {
         "type": "pointcloud",
@@ -169,6 +181,12 @@ def configurations(task_id, directory):
     nav["smoother_server"]["ros__parameters"]["natural_cubic_spline"] = nav[
         "smoother_server"
     ]["ros__parameters"].pop("simple_smoother")
+    if docking:
+        nav["smoother_server"]["ros__parameters"]["natural_cubic_spline"] = {
+            "plugin": "natural_cubic_spline::NaturalCubicSplineSmoother",
+            "path_point_spacing": 0.1,
+            "control_point_spacing": 0.5,
+        }
     navfile = directory / "nav2.yaml"
     navfile.write_text(yaml.safe_dump(nav))
     policy = yaml.safe_load(
