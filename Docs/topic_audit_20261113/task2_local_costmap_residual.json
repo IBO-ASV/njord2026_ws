@@ -1,0 +1,29 @@
+{
+  "mission": [
+    "",
+    0,
+    "Task 2 FollowPath goal reached"
+  ],
+  "own": [
+    -19.148727336662386,
+    -30.2886271669389
+  ],
+  "opponent": [
+    209.93819478008268,
+    332.8416710103184
+  ],
+  "map_origin": [
+    -27.10000000074511,
+    -38.30000000074514
+  ],
+  "resolution": 0.10000000149011612,
+  "size": [
+    160,
+    160
+  ],
+  "lethal_cells": 24,
+  "ghost_cells_farther_than_0_22m_from_current_physical_returns": 0,
+  "ghost_xy": [],
+  "current_point_count": 301,
+  "obstacle_grid_current_age_ms": 40.88473320007324
+}

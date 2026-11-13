@@ -1,0 +1,265 @@
+{
+  "topics": {
+    "/global_costmap/costmap": {
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 1,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "size": [
+        490,
+        600
+      ],
+      "occupied": 3765,
+      "hz": null,
+      "mean_age_ms": 211690.1525243451,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/costmap_raw": {
+      "type": "nav2_msgs/msg/Costmap",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 1,
+      "subscribers": [
+        "smoother_server"
+      ],
+      "hz": null,
+      "mean_age_ms": 211728.42788907274,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/costmap_raw_updates": {
+      "type": "nav2_msgs/msg/CostmapUpdate",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 21,
+      "subscribers": [
+        "smoother_server"
+      ],
+      "hz": 1.7421626801384453,
+      "mean_age_ms": 30.37287796887204,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/costmap_updates": {
+      "type": "map_msgs/msg/OccupancyGridUpdate",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 21,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "hz": 1.742031594814786,
+      "mean_age_ms": 30.770933596226254,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/obstacle_layer": {
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 1,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "size": [
+        490,
+        600
+      ],
+      "occupied": 125,
+      "hz": null,
+      "mean_age_ms": 211729.3032627976,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/obstacle_layer_raw": {
+      "type": "nav2_msgs/msg/Costmap",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 1,
+      "subscribers": [],
+      "hz": null,
+      "mean_age_ms": 211767.56826189917,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/obstacle_layer_raw_updates": {
+      "type": "nav2_msgs/msg/CostmapUpdate",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 20,
+      "subscribers": [],
+      "hz": 1.6652339293423448,
+      "mean_age_ms": 4.1493729366332746,
+      "mean_changed_cells": null
+    },
+    "/global_costmap/obstacle_layer_updates": {
+      "type": "map_msgs/msg/OccupancyGridUpdate",
+      "publisher": "/global_costmap/global_costmap",
+      "samples": 21,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "hz": 1.7480988814440457,
+      "mean_age_ms": 32.95351121028062,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/costmap": {
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 1,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "occupied": 1193,
+      "hz": null,
+      "mean_age_ms": 125622.04130189428,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/costmap_raw": {
+      "type": "nav2_msgs/msg/Costmap",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 1,
+      "subscribers": [
+        "behavior_server"
+      ],
+      "hz": null,
+      "mean_age_ms": 125625.3405396726,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/costmap_raw_updates": {
+      "type": "nav2_msgs/msg/CostmapUpdate",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 21,
+      "subscribers": [
+        "behavior_server"
+      ],
+      "hz": 1.6986166012780521,
+      "mean_age_ms": 13.75962730160664,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/costmap_updates": {
+      "type": "map_msgs/msg/OccupancyGridUpdate",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 21,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "hz": 1.6986133235907142,
+      "mean_age_ms": 14.174963608520473,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/obstacle_layer": {
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 1,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "size": [
+        160,
+        160
+      ],
+      "occupied": 24,
+      "hz": null,
+      "mean_age_ms": 125625.3337425149,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/obstacle_layer_raw": {
+      "type": "nav2_msgs/msg/Costmap",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 1,
+      "subscribers": [],
+      "hz": null,
+      "mean_age_ms": 213230.01720823094,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/obstacle_layer_raw_updates": {
+      "type": "nav2_msgs/msg/CostmapUpdate",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 20,
+      "subscribers": [],
+      "hz": 1.6674654962918223,
+      "mean_age_ms": 4.224322350219691,
+      "mean_changed_cells": null
+    },
+    "/local_costmap/obstacle_layer_updates": {
+      "type": "map_msgs/msg/OccupancyGridUpdate",
+      "publisher": "/local_costmap/local_costmap",
+      "samples": 21,
+      "subscribers": [
+        "onboard_foxglove_bridge"
+      ],
+      "hz": 1.6991347125882537,
+      "mean_age_ms": 15.138376710437566,
+      "mean_changed_cells": null
+    },
+    "/mppi/crm_costmap": {
+      "type": "nav_msgs/msg/OccupancyGrid",
+      "publisher": "//planner_node",
+      "samples": 24,
+      "subscribers": [],
+      "size": [
+        240,
+        120
+      ],
+      "occupied": 0,
+      "hz": 1.9991833214447534,
+      "mean_age_ms": 5.658591376983626,
+      "mean_changed_cells": 0.0
+    },
+    "/planned_path_pruned": {
+      "type": "nav_msgs/msg/Path",
+      "publisher": "//planner_node",
+      "samples": 24,
+      "subscribers": [
+        "onboard_foxglove_bridge",
+        "task2_follow_path_client",
+        "njord_sim_environment"
+      ],
+      "hz": 1.9995938951762953,
+      "mean_age_ms": 6.866043200525865,
+      "mean_changed_cells": null
+    },
+    "/sim/truth/opponent": {
+      "type": "nav_msgs/msg/Odometry",
+      "publisher": "//njord_sim_environment",
+      "samples": 121,
+      "subscribers": [],
+      "hz": 10.110040039010523,
+      "mean_age_ms": 13.649675491180645,
+      "mean_changed_cells": null
+    },
+    "/sim_obstacles": {
+      "type": "sensor_msgs/msg/PointCloud2",
+      "publisher": "//njord_sim_environment",
+      "samples": 120,
+      "subscribers": [
+        "local_costmap",
+        "global_costmap",
+        "collision_monitor"
+      ],
+      "hz": 10.024216939657016,
+      "mean_age_ms": 15.948253000317356,
+      "mean_changed_cells": null
+    }
+  },
+  "parameters": {
+    "global_costmap": {
+      "update_frequency": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=5.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "publish_frequency": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=2.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "always_send_full_costmap": "rcl_interfaces.msg.ParameterValue(type=1, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "rolling_window": "rcl_interfaces.msg.ParameterValue(type=1, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.observation_sources": "rcl_interfaces.msg.ParameterValue(type=4, bool_value=False, integer_value=0, double_value=0.0, string_value='physical walls', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.physical.clearing": "rcl_interfaces.msg.ParameterValue(type=1, bool_value=True, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.physical.observation_persistence": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.physical.min_obstacle_height": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=0.2, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.walls.observation_persistence": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])"
+    },
+    "local_costmap": {
+      "update_frequency": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=5.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "publish_frequency": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=2.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "always_send_full_costmap": "rcl_interfaces.msg.ParameterValue(type=1, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "rolling_window": "rcl_interfaces.msg.ParameterValue(type=1, bool_value=True, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.observation_sources": "rcl_interfaces.msg.ParameterValue(type=4, bool_value=False, integer_value=0, double_value=0.0, string_value='physical walls', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.physical.clearing": "rcl_interfaces.msg.ParameterValue(type=1, bool_value=True, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.physical.observation_persistence": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.physical.min_obstacle_height": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=0.2, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])",
+      "obstacle_layer.walls.observation_persistence": "rcl_interfaces.msg.ParameterValue(type=3, bool_value=False, integer_value=0, double_value=0.0, string_value='', byte_array_value=[], bool_array_value=[], integer_array_value=[], double_array_value=[], string_array_value=[])"
+    }
+  }
+}
