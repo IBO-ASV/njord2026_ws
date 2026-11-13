@@ -25,3 +25,36 @@ python3 scripts/simulation/run_sim_suite.py --help
 今回の整理では稼働中のサービスは更新・再起動していません。
 ROSパッケージ専用・CI専用スクリプトは各パッケージ・`.github/scripts/` に残します。
 8月10日専用スクリプトの処理条件・取得元は [GLIM検証](../docs/validation/glim_experiments.md) を参照してください。
+
+## AGX専用サービス
+
+Orin Nanoの `jetson` ロールとは別に、`agx` ロールを使用します。
+Jazzy・domain 126・CycloneDDSで `run_agx_pair.sh vessel` を起動します。
+
+```bash
+# ユーザーサービスとして登録・有効化（いまは起動しない）
+scripts/operations/install_bringup_service.sh --role agx --ros-distro jazzy --user-service --no-start
+systemctl --user status njord-agx-bringup.service
+# 実機を起動する際
+systemctl --user start njord-agx-bringup.service
+```
+
+ユーザーサービスはユーザーマネージャー起動時（通常はログイン時）に起動します。
+ログイン前のOS起動時から必要な場合は、管理者権限で `--user-service` を外して
+システムサービスを登録してください。同時に両方を有効化しないでください。
+`--output-dir artifacts/systemd` はunitの生成だけを行い、登録・起動は行いません。
+
+## 関連テスト
+
+package shareを参照するため、ROSとビルド済みworkspaceをsourceしてから実行します。
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="src/sim/njord_sim:${PYTHONPATH:-}" \
+  python3 -m pytest -p no:cacheprovider -q \
+  src/robot/test/test_launch_roles.py src/robot/test/test_platform_manifest.py \
+  src/robot/test/test_livox_config.py scripts/yolo/test/test_cusparselt_metadata.py \
+  src/sim/njord_sim/test/test_suite_reporting.py src/sim/njord_sim/test/test_dependencies.py \
+  scripts/operations/test/test_bringup_service.py
+```

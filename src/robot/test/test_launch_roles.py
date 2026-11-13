@@ -125,13 +125,13 @@ def test_robot_manifest_gates_jetson_only_task2_dependencies():
         assert conditions[package_name] == "$NJORD_ENABLE_GPU_SENSORS == 1"
 
 
-def test_minipc_bringup_keeps_h26x_and_jpeg_back_camera_paths_separate():
+def test_minipc_bringup_keeps_h26x_and_opt_in_jpeg_paths_separate():
     source = _read_launch_source("minipc_bringup.launch.py")
     assert 'back_cam_h26x_ground_video.launch.py' in source
     assert 'back_cam_jpeg_ground_video.launch.py' in source
     assert (
         '"enable_back_cam_jpeg_ground_video",\n'
-        '                default_value="true"'
+        '                default_value="false"'
     ) in source
 
 
@@ -431,7 +431,7 @@ def test_minipc_starts_um982_and_spatial_ntrip_clients_from_the_ground_caster():
 
 def test_minipc_video_defaults_are_safe():
     source = _read_launch_source("minipc_bringup.launch.py")
-    assert 'default_value="osw-Stealth-14-AI-Studio-A1VGG.local"' in source
+    assert '"back_cam_ground_video_host",\n                default_value="10.42.0.1"' in source
     assert '"back_cam_ground_video_fps", default_value="2.0"' in source
     assert '"back_cam_ground_video_width", default_value="360"' in source
     assert '"back_cam_ground_video_height", default_value="240"' in source
@@ -453,7 +453,33 @@ def test_local_ekf_is_opt_in_and_replaces_um982_feedback_ekf():
 
     assert '"use_ekf_local"' in minipc_source
     assert '"enable_local_ekf": use_ekf_local' in minipc_source
-    assert "condition=UnlessCondition(use_ekf_local)" in minipc_source
+    # The feedback filter also requires its own enable flag and the UM982 driver.
+    import ast
+    from launch import LaunchContext
+    from launch.conditions import IfCondition
+    from launch.substitutions import LaunchConfiguration, PythonExpression
+
+    tree = ast.parse(minipc_source)
+    assignment = next(
+        node for node in ast.walk(tree)
+        if isinstance(node, ast.Assign)
+        and any(isinstance(target, ast.Name) and target.id == "um982_feedback_launch"
+                for target in node.targets)
+    )
+    expression = ast.Expression(assignment.value.args[2])
+    condition = eval(compile(expression, "<feedback condition>", "eval"), {
+        "IfCondition": IfCondition, "PythonExpression": PythonExpression,
+        **{name: LaunchConfiguration(name) for name in
+           ("enable_feedback_filter", "enable_um982", "use_ekf_local")},
+    })
+    for feedback in ("true", "false"):
+        for driver in ("true", "false"):
+            for local in ("true", "false"):
+                context = LaunchContext()
+                context.launch_configurations.update(
+                    enable_feedback_filter=feedback, enable_um982=driver, use_ekf_local=local)
+                assert condition.evaluate(context) == (
+                    feedback == "true" and driver == "true" and local == "false")
     assert '"enable_local_ekf",\n        default_value="false"' in localization_source
     assert '"use_ekf_local": LaunchConfiguration("use_ekf_local")' in standalone_source
     assert '"use_ekf_local",\n                default_value="false"' in standalone_source
@@ -466,8 +492,7 @@ def test_standalone_does_not_restore_removed_or_unsafe_defaults():
     assert '"enable_drogger_rzs", default_value="false"' in source
     assert '"enable_glim",\n                default_value="false"' in source
     assert '"enable_pcl_buoy_detection", default_value="false"' in source
-    assert "enable_ground_video_h264" in source
-    assert "enable_ground_video_jpeg" in source
+    assert '"enable_ground_video": LaunchConfiguration("enable_ground_video")' in source
     assert '"enable_zenoh_bridge", default_value="false"' in source
     assert '"enable_critical_link", default_value="false"' in source
 
@@ -786,7 +811,10 @@ def test_task1_safety_cloud_is_compacted_on_jetson_and_bridged_to_minipc():
     )
     with open(zed_config, "r") as stream:
         zed_source = stream.read()
-    assert "publish_pointcloud: true" in zed_source
+    # Nano keeps the full ZED cloud opt-in; AGX enables it for the safety path.
+    assert "publish_pointcloud: false" in zed_source
+    agx_params = yaml.safe_load((Path(_THIS_DIR).parent / "config/zed2i_agx.yaml").read_text())
+    assert agx_params["/zed2i/zed2i"]["ros__parameters"]["publish_pointcloud"] is True
     assert "pointcloud_stride: 4" in zed_source
 
     for filename in ("bridge_jetson.json5", "bridge_minipc.json5"):
@@ -824,14 +852,14 @@ def test_zenoh_defaults_and_agx_critical_link_use_their_configured_networks():
     jetson_bridge = (root / "config" / "zenoh" / "bridge_jetson.json5").read_text(
         encoding="utf-8"
     )
-    assert '"tcp/10.42.0.2:7447"' in ground_bridge
+    assert '"tcp/10.42.0.196:7447"' in ground_bridge
     assert '"tcp/10.42.0.2:7447"' in jetson_bridge
 
     ground = (root / "src" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
     assert '"sensor_lan|192.168.1.72|192.168.1.5|45100"' in ground
     assert '"ops_lan|10.42.0.2|45100"' in vessel
-    assert '"tailscale|100.82.157.125|45101"' in vessel
+    assert '"tailscale|100.73.137.72|45101"' in vessel
 
     agx = (root / "src" / "robot" / "launch" / "agx_bringup.launch.py").read_text()
     assert "'sensor_lan|192.168.1.5|45100'" in agx
@@ -943,12 +971,15 @@ def test_ground_pc_is_the_unified_agx_and_minipc_station():
     assert '"role": "groundpc"' in source
     assert 'executable="runtime_parameter_sync.py"' in source
     assert '"/runtime_parameter_updates"' in bridge
-    for endpoint in ("tcp/10.42.0.2:7447", "tcp/100.73.137.72:7447"):
+    for endpoint in ("tcp/10.42.0.196:7447", "tcp/100.73.137.72:7447"):
         assert endpoint in bridge
     assert '"/agx/rosbag/set_recording"' in bridge
     assert '"/agx/rosbag/recording_status"' in bridge
-    assert not (root / "src" / "robot" / "launch" / "ground_jetson.launch.py").exists()
-    assert not (root / "config" / "zenoh" / "bridge_ground_jetson.json5").exists()
+    compat = (root / "src/robot/launch/ground_jetson.launch.py").read_text()
+    assert "'ground_pc.launch.py'" in compat
+    compat_bridge = (root / "config/zenoh/bridge_ground_jetson.json5").read_text()
+    assert '"tcp/100.73.137.72:7447"' in compat_bridge
+    assert '"domain": 6' in compat_bridge
 
 
 def test_foxglove_v3_telemetry_reaches_the_ground_pc():

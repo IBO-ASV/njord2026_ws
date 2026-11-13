@@ -4,7 +4,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 <jetson|minipc> <ros-distro>" >&2
+  echo "Usage: $0 <agx|jetson|minipc> <ros-distro>" >&2
   exit 64
 }
 
@@ -13,7 +13,7 @@ ROLE="$1"
 ROS_DISTRO_NAME="$2"
 
 case "${ROLE}" in
-  jetson|minipc) ;;
+  agx|jetson|minipc) ;;
   *) usage ;;
 esac
 
@@ -29,6 +29,12 @@ fi
 if [[ ! -r "${WORKSPACE_SETUP}" ]]; then
   echo "ERROR: workspace is not built: ${WORKSPACE_SETUP}" >&2
   exit 1
+fi
+
+# AGX is a separate vessel role, not the Orin Nano sensor-only role.
+if [[ "${ROLE}" == "agx" ]]; then
+  [[ "${ROS_DISTRO_NAME}" == "jazzy" ]] || { echo "AGX requires Jazzy" >&2; exit 64; }
+  exec "${SCRIPT_DIR}/run_agx_pair.sh" vessel
 fi
 
 # Keep the service's role deterministic even if CUDA/ZED detection changes.
