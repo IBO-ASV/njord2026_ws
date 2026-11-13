@@ -1,0 +1,2709 @@
+{
+  "collected_date_utc": "2026-11-13",
+  "ros_domain_id": 89,
+  "task": "task1",
+  "topic_audit": {
+    "elapsed_sec": 12.00025776802795,
+    "records": [
+      {
+        "topic": "/alert_lamp/command",
+        "types": [
+          "alert_lamp/msg/AlertLampCommand"
+        ],
+        "publishers": [
+          "/alert_lamp_manager_node"
+        ],
+        "subscribers": [
+          "/alert_lamp_driver_node",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 120,
+        "bytes_first": 73,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 10.0,
+        "estimated_bytes_per_second": 730
+      },
+      {
+        "topic": "/autonomy/ready",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/safety_supervisor"
+        ],
+        "samples": 99,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 8.25,
+        "estimated_bytes_per_second": 66
+      },
+      {
+        "topic": "/backup/_action/feedback",
+        "types": [
+          "nav2_msgs/action/BackUp_FeedbackMessage"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/backup/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/behavior_server/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/behavior_tree_log",
+        "types": [
+          "nav2_msgs/msg/BehaviorTreeLog"
+        ],
+        "publishers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2",
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/bond",
+        "types": [
+          "bond/msg/Status"
+        ],
+        "publishers": [
+          "/controller_server",
+          "/smoother_server",
+          "/planner_server",
+          "/behavior_server",
+          "/velocity_smoother",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/waypoint_follower",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation"
+        ],
+        "subscribers": [
+          "/controller_server",
+          "/smoother_server",
+          "/planner_server",
+          "/behavior_server",
+          "/velocity_smoother",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/waypoint_follower",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation",
+          "/lifecycle_manager_navigation"
+        ],
+        "samples": 987,
+        "bytes_first": 92,
+        "durability": [
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2"
+        ],
+        "sample_hz": 82.25,
+        "estimated_bytes_per_second": 7567
+      },
+      {
+        "topic": "/bt_navigator/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/bt_navigator"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/buoy_detections",
+        "types": [
+          "geometry_msgs/msg/PointStamped"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/buoy_detections_3d",
+        "types": [
+          "njord_interfaces/msg/BuoyDetectionArray"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/cardinal_wall_publisher"
+        ],
+        "samples": 108,
+        "bytes_first": 24,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 9.0,
+        "estimated_bytes_per_second": 216
+      },
+      {
+        "topic": "/cmd_vel",
+        "types": [
+          "geometry_msgs/msg/Twist"
+        ],
+        "publishers": [
+          "/command_arbiter"
+        ],
+        "subscribers": [
+          "/njord_sim_environment"
+        ],
+        "samples": 223,
+        "bytes_first": 52,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 18.58,
+        "estimated_bytes_per_second": 966
+      },
+      {
+        "topic": "/cmd_vel_manual",
+        "types": [
+          "geometry_msgs/msg/Twist"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/safety_supervisor",
+          "/command_arbiter"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/cmd_vel_nav",
+        "types": [
+          "geometry_msgs/msg/Twist"
+        ],
+        "publishers": [
+          "/collision_monitor"
+        ],
+        "subscribers": [
+          "/safety_supervisor",
+          "/command_arbiter"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/cmd_vel_nav_raw",
+        "types": [
+          "geometry_msgs/msg/Twist"
+        ],
+        "publishers": [
+          "/controller_server",
+          "/behavior_server",
+          "/behavior_server",
+          "/behavior_server",
+          "/behavior_server"
+        ],
+        "subscribers": [
+          "/velocity_smoother"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2",
+          "2",
+          "2",
+          "2",
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/cmd_vel_sbus",
+        "types": [
+          "geometry_msgs/msg/Twist"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/safety_supervisor",
+          "/command_arbiter"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/cmd_vel_smoothed",
+        "types": [
+          "geometry_msgs/msg/Twist"
+        ],
+        "publishers": [
+          "/velocity_smoother"
+        ],
+        "subscribers": [
+          "/collision_monitor"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/collision_monitor/collision_points_marker",
+        "types": [
+          "visualization_msgs/msg/MarkerArray"
+        ],
+        "publishers": [
+          "/collision_monitor"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/collision_monitor/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/collision_monitor"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/collision_monitor_state",
+        "types": [
+          "nav2_msgs/msg/CollisionMonitorState"
+        ],
+        "publishers": [
+          "/collision_monitor"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/compute_path_through_poses/_action/feedback",
+        "types": [
+          "nav2_msgs/action/ComputePathThroughPoses_FeedbackMessage"
+        ],
+        "publishers": [
+          "/planner_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/compute_path_through_poses/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/planner_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 1,
+        "bytes_first": 117,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 10
+      },
+      {
+        "topic": "/compute_path_to_pose/_action/feedback",
+        "types": [
+          "nav2_msgs/action/ComputePathToPose_FeedbackMessage"
+        ],
+        "publishers": [
+          "/planner_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/compute_path_to_pose/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/planner_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/control/requested_mode",
+        "types": [
+          "std_msgs/msg/UInt8"
+        ],
+        "publishers": [
+          "/mode_manager"
+        ],
+        "subscribers": [
+          "/safety_supervisor"
+        ],
+        "samples": 1,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/control/requirements",
+        "types": [
+          "std_msgs/msg/String"
+        ],
+        "publishers": [
+          "/safety_supervisor"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 213,
+        "bytes_first": 312,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 17.75,
+        "estimated_bytes_per_second": 5538
+      },
+      {
+        "topic": "/control/state",
+        "types": [
+          "njord_interfaces/msg/ControlState"
+        ],
+        "publishers": [
+          "/safety_supervisor"
+        ],
+        "subscribers": [
+          "/command_arbiter",
+          "/mission_manager",
+          "/alert_lamp_manager_node",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 213,
+        "bytes_first": 66,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 17.75,
+        "estimated_bytes_per_second": 1171
+      },
+      {
+        "topic": "/controller_server/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/curvature_lookahead_point",
+        "types": [
+          "geometry_msgs/msg/PointStamped"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/diagnostics",
+        "types": [
+          "diagnostic_msgs/msg/DiagnosticArray"
+        ],
+        "publishers": [
+          "/lifecycle_manager_navigation",
+          "/alert_lamp_manager_node",
+          "/alert_lamp_driver_node"
+        ],
+        "subscribers": [],
+        "samples": 436,
+        "bytes_first": 470,
+        "durability": [
+          "2",
+          "2",
+          "2"
+        ],
+        "sample_hz": 36.33,
+        "estimated_bytes_per_second": 17076
+      },
+      {
+        "topic": "/docking/berth1_corrected",
+        "types": [
+          "geometry_msgs/msg/PoseStamped"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/docking/berth1_nominal",
+        "types": [
+          "geometry_msgs/msg/PoseStamped"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/docking/berth2_corrected",
+        "types": [
+          "geometry_msgs/msg/PoseStamped"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/docking/berth2_nominal",
+        "types": [
+          "geometry_msgs/msg/PoseStamped"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/drive_on_heading/_action/feedback",
+        "types": [
+          "nav2_msgs/action/DriveOnHeading_FeedbackMessage"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/drive_on_heading/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/follow_gps_waypoints/_action/feedback",
+        "types": [
+          "nav2_msgs/action/FollowGPSWaypoints_FeedbackMessage"
+        ],
+        "publishers": [
+          "/waypoint_follower"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/follow_gps_waypoints/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/waypoint_follower"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/follow_path/_action/feedback",
+        "types": [
+          "nav2_msgs/action/FollowPath_FeedbackMessage"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/follow_path/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 1,
+        "bytes_first": 201,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 17
+      },
+      {
+        "topic": "/follow_waypoints/_action/feedback",
+        "types": [
+          "nav2_msgs/action/FollowWaypoints_FeedbackMessage"
+        ],
+        "publishers": [
+          "/waypoint_follower"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/follow_waypoints/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/waypoint_follower"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/global_costmap/costmap",
+        "types": [
+          "nav_msgs/msg/OccupancyGrid"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 576104,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 48008
+      },
+      {
+        "topic": "/global_costmap/costmap_raw",
+        "types": [
+          "nav2_msgs/msg/Costmap"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/smoother_server"
+        ],
+        "samples": 1,
+        "bytes_first": 576128,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 48010
+      },
+      {
+        "topic": "/global_costmap/costmap_raw_updates",
+        "types": [
+          "nav2_msgs/msg/CostmapUpdate"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/smoother_server"
+        ],
+        "samples": 21,
+        "bytes_first": 101156,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 177019
+      },
+      {
+        "topic": "/global_costmap/costmap_updates",
+        "types": [
+          "map_msgs/msg/OccupancyGridUpdate"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 21,
+        "bytes_first": 101156,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 177019
+      },
+      {
+        "topic": "/global_costmap/footprint",
+        "types": [
+          "geometry_msgs/msg/Polygon"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/global_costmap/global_costmap"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/global_costmap/global_costmap/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/global_costmap/obstacle_layer",
+        "types": [
+          "nav_msgs/msg/OccupancyGrid"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 576104,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 48008
+      },
+      {
+        "topic": "/global_costmap/obstacle_layer_raw",
+        "types": [
+          "nav2_msgs/msg/Costmap"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [],
+        "samples": 1,
+        "bytes_first": 576128,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 48010
+      },
+      {
+        "topic": "/global_costmap/obstacle_layer_raw_updates",
+        "types": [
+          "nav2_msgs/msg/CostmapUpdate"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [],
+        "samples": 21,
+        "bytes_first": 101156,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 177019
+      },
+      {
+        "topic": "/global_costmap/obstacle_layer_updates",
+        "types": [
+          "map_msgs/msg/OccupancyGridUpdate"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 21,
+        "bytes_first": 101156,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 177019
+      },
+      {
+        "topic": "/global_costmap/published_footprint",
+        "types": [
+          "geometry_msgs/msg/PolygonStamped"
+        ],
+        "publishers": [
+          "/global_costmap/global_costmap"
+        ],
+        "subscribers": [
+          "/smoother_server"
+        ],
+        "samples": 61,
+        "bytes_first": 76,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 5.08,
+        "estimated_bytes_per_second": 386
+      },
+      {
+        "topic": "/goal_pose",
+        "types": [
+          "geometry_msgs/msg/PoseStamped"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/bt_navigator"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/green",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/alert_lamp_driver_node"
+        ],
+        "subscribers": [],
+        "samples": 407,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 33.92,
+        "estimated_bytes_per_second": 271
+      },
+      {
+        "topic": "/ground_waypoint_markers",
+        "types": [
+          "visualization_msgs/msg/MarkerArray"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 118,
+        "bytes_first": 229,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 9.83,
+        "estimated_bytes_per_second": 2252
+      },
+      {
+        "topic": "/gui/battery_percent",
+        "types": [
+          "std_msgs/msg/Float32"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 99,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 8.25,
+        "estimated_bytes_per_second": 66
+      },
+      {
+        "topic": "/gui/ground_speed_mps",
+        "types": [
+          "std_msgs/msg/Float32"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 99,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 8.25,
+        "estimated_bytes_per_second": 66
+      },
+      {
+        "topic": "/health/state",
+        "types": [
+          "njord_interfaces/msg/HealthState"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/safety_supervisor",
+          "/alert_lamp_manager_node",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 99,
+        "bytes_first": 204,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 8.25,
+        "estimated_bytes_per_second": 1683
+      },
+      {
+        "topic": "/is_rotating_to_heading",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/livox/lidar",
+        "types": [
+          "sensor_msgs/msg/PointCloud2"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [],
+        "samples": 101,
+        "bytes_first": 1269,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 8.42,
+        "estimated_bytes_per_second": 10681
+      },
+      {
+        "topic": "/local_costmap/costmap",
+        "types": [
+          "nav_msgs/msg/OccupancyGrid"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 25704,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 2142
+      },
+      {
+        "topic": "/local_costmap/costmap_raw",
+        "types": [
+          "nav2_msgs/msg/Costmap"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/behavior_server"
+        ],
+        "samples": 1,
+        "bytes_first": 25728,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 2144
+      },
+      {
+        "topic": "/local_costmap/costmap_raw_updates",
+        "types": [
+          "nav2_msgs/msg/CostmapUpdate"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/behavior_server"
+        ],
+        "samples": 21,
+        "bytes_first": 10043,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 17575
+      },
+      {
+        "topic": "/local_costmap/costmap_updates",
+        "types": [
+          "map_msgs/msg/OccupancyGridUpdate"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 21,
+        "bytes_first": 10043,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 17575
+      },
+      {
+        "topic": "/local_costmap/footprint",
+        "types": [
+          "geometry_msgs/msg/Polygon"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/local_costmap/local_costmap"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/local_costmap/local_costmap/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/local_costmap/obstacle_layer",
+        "types": [
+          "nav_msgs/msg/OccupancyGrid"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 25704,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 2142
+      },
+      {
+        "topic": "/local_costmap/obstacle_layer_raw",
+        "types": [
+          "nav2_msgs/msg/Costmap"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [],
+        "samples": 1,
+        "bytes_first": 25728,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 2144
+      },
+      {
+        "topic": "/local_costmap/obstacle_layer_raw_updates",
+        "types": [
+          "nav2_msgs/msg/CostmapUpdate"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [],
+        "samples": 20,
+        "bytes_first": 9942,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.67,
+        "estimated_bytes_per_second": 16570
+      },
+      {
+        "topic": "/local_costmap/obstacle_layer_updates",
+        "types": [
+          "map_msgs/msg/OccupancyGridUpdate"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 21,
+        "bytes_first": 10043,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 1.75,
+        "estimated_bytes_per_second": 17575
+      },
+      {
+        "topic": "/local_costmap/published_footprint",
+        "types": [
+          "geometry_msgs/msg/PolygonStamped"
+        ],
+        "publishers": [
+          "/local_costmap/local_costmap"
+        ],
+        "subscribers": [
+          "/behavior_server",
+          "/collision_monitor"
+        ],
+        "samples": 61,
+        "bytes_first": 76,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 5.08,
+        "estimated_bytes_per_second": 386
+      },
+      {
+        "topic": "/lookahead_collision_arc",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/lookahead_point",
+        "types": [
+          "geometry_msgs/msg/PointStamped"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/mission/active_control_policy",
+        "types": [
+          "std_msgs/msg/String"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/safety_supervisor"
+        ],
+        "samples": 1,
+        "bytes_first": 9,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/mission/failsafe/return_home",
+        "types": [
+          "std_msgs/msg/Empty"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/mission/last_result",
+        "types": [
+          "njord_interfaces/msg/MissionStatus"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 159,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 13
+      },
+      {
+        "topic": "/mission/plan",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 828,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 69
+      },
+      {
+        "topic": "/mission/readiness/buoy_perception",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 99,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 8.25,
+        "estimated_bytes_per_second": 66
+      },
+      {
+        "topic": "/mission/run_task/_action/feedback",
+        "types": [
+          "njord_interfaces/action/RunTask_FeedbackMessage"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/mission/run_task/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/mission/status",
+        "types": [
+          "njord_interfaces/msg/MissionStatus"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/njord_sim_environment",
+          "/alert_lamp_manager_node",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 117,
+        "bytes_first": 143,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 9.75,
+        "estimated_bytes_per_second": 1394
+      },
+      {
+        "topic": "/mission/task2/enabled",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/njord_sim_environment"
+        ],
+        "samples": 1,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/mission/task2/goal_reached",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/mission/task_ready",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/safety_supervisor"
+        ],
+        "samples": 1,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/mission/task_requirements_ready",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/safety_supervisor"
+        ],
+        "samples": 1,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/mission/waypoint_markers",
+        "types": [
+          "visualization_msgs/msg/MarkerArray"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 549,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 46
+      },
+      {
+        "topic": "/navigate_through_poses/_action/feedback",
+        "types": [
+          "nav2_msgs/action/NavigateThroughPoses_FeedbackMessage"
+        ],
+        "publishers": [
+          "/bt_navigator"
+        ],
+        "subscribers": [
+          "/njord_sim_environment",
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/navigate_through_poses/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/bt_navigator"
+        ],
+        "subscribers": [
+          "/njord_sim_environment",
+          "/mission_manager"
+        ],
+        "samples": 1,
+        "bytes_first": 285,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 24
+      },
+      {
+        "topic": "/navigate_to_pose/_action/feedback",
+        "types": [
+          "nav2_msgs/action/NavigateToPose_FeedbackMessage"
+        ],
+        "publishers": [
+          "/bt_navigator"
+        ],
+        "subscribers": [
+          "/bt_navigator",
+          "/waypoint_follower"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/navigate_to_pose/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/bt_navigator"
+        ],
+        "subscribers": [
+          "/bt_navigator",
+          "/waypoint_follower"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/odom",
+        "types": [
+          "nav_msgs/msg/Odometry"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/controller_server"
+        ],
+        "samples": 211,
+        "bytes_first": 724,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 17.58,
+        "estimated_bytes_per_second": 12730
+      },
+      {
+        "topic": "/odometry/filtered/global",
+        "types": [
+          "nav_msgs/msg/Odometry"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 212,
+        "bytes_first": 716,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 17.67,
+        "estimated_bytes_per_second": 12649
+      },
+      {
+        "topic": "/odometry/filtered/local",
+        "types": [
+          "nav_msgs/msg/Odometry"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/mission_manager",
+          "/bt_navigator"
+        ],
+        "samples": 211,
+        "bytes_first": 724,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 17.58,
+        "estimated_bytes_per_second": 12730
+      },
+      {
+        "topic": "/parameter_events",
+        "types": [
+          "rcl_interfaces/msg/ParameterEvent"
+        ],
+        "publishers": [
+          "/njord_sim_environment",
+          "/mode_manager",
+          "/safety_supervisor",
+          "/command_arbiter",
+          "/mission_manager",
+          "/controller_server",
+          "/local_costmap/local_costmap",
+          "/smoother_server",
+          "/planner_server",
+          "/global_costmap/global_costmap",
+          "/behavior_server",
+          "/velocity_smoother",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node",
+          "/waypoint_follower",
+          "/lifecycle_manager_navigation",
+          "/alert_lamp_manager_node",
+          "/alert_lamp_driver_node",
+          "/cardinal_wall_publisher",
+          "/onboard_foxglove_bridge"
+        ],
+        "subscribers": [
+          "/controller_server",
+          "/local_costmap/local_costmap",
+          "/transform_listener_impl_aaaad8b11ca0",
+          "/smoother_server",
+          "/planner_server",
+          "/global_costmap/global_costmap",
+          "/transform_listener_impl_aaaaf67f7e50",
+          "/behavior_server",
+          "/velocity_smoother",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node",
+          "/waypoint_follower",
+          "/lifecycle_manager_navigation",
+          "/alert_lamp_manager_node",
+          "/alert_lamp_driver_node",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2",
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/plan",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/planner_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/plan_smoothed",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/smoother_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/planned_path_pruned",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/njord_sim_environment",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/planner_server/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/planner_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/received_global_plan",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/controller_server"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/red",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/alert_lamp_driver_node"
+        ],
+        "subscribers": [],
+        "samples": 407,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 33.92,
+        "estimated_bytes_per_second": 271
+      },
+      {
+        "topic": "/rosout",
+        "types": [
+          "rcl_interfaces/msg/Log"
+        ],
+        "publishers": [
+          "/njord_sim_environment",
+          "/mode_manager",
+          "/safety_supervisor",
+          "/command_arbiter",
+          "/mission_manager",
+          "/controller_server",
+          "/local_costmap/local_costmap",
+          "/transform_listener_impl_aaaad8b11ca0",
+          "/smoother_server",
+          "/planner_server",
+          "/global_costmap/global_costmap",
+          "/transform_listener_impl_aaaaf67f7e50",
+          "/behavior_server",
+          "/velocity_smoother",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node",
+          "/waypoint_follower",
+          "/lifecycle_manager_navigation",
+          "/alert_lamp_manager_node",
+          "/alert_lamp_driver_node",
+          "/cardinal_wall_publisher",
+          "/onboard_foxglove_bridge"
+        ],
+        "subscribers": [],
+        "samples": 2,
+        "bytes_first": 144,
+        "durability": [
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1",
+          "1"
+        ],
+        "sample_hz": 0.17,
+        "estimated_bytes_per_second": 24
+      },
+      {
+        "topic": "/runtime/nav2/status",
+        "types": [
+          "njord_interfaces/msg/Nav2RuntimeStatus"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/safety/emergency_stop",
+        "types": [
+          "std_msgs/msg/UInt8"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/safety_supervisor"
+        ],
+        "samples": 100,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 8.33,
+        "estimated_bytes_per_second": 67
+      },
+      {
+        "topic": "/sensor/vehicle_gnss/compass/raw",
+        "types": [
+          "geometry_msgs/msg/PoseWithCovarianceStamped"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/cardinal_wall_publisher",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 111,
+        "bytes_first": 372,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 9.25,
+        "estimated_bytes_per_second": 3441
+      },
+      {
+        "topic": "/sensor/vehicle_gnss/fix/raw",
+        "types": [
+          "sensor_msgs/msg/NavSatFix"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 114,
+        "bytes_first": 133,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 9.5,
+        "estimated_bytes_per_second": 1263
+      },
+      {
+        "topic": "/sim/estimated_path",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 24,
+        "bytes_first": 192028,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 2.0,
+        "estimated_bytes_per_second": 384048
+      },
+      {
+        "topic": "/sim/truth/odom",
+        "types": [
+          "nav_msgs/msg/Odometry"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [],
+        "samples": 211,
+        "bytes_first": 724,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 17.58,
+        "estimated_bytes_per_second": 12730
+      },
+      {
+        "topic": "/sim/truth/opponent",
+        "types": [
+          "nav_msgs/msg/Odometry"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/sim_obstacles",
+        "types": [
+          "sensor_msgs/msg/PointCloud2"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/local_costmap/local_costmap",
+          "/global_costmap/global_costmap",
+          "/collision_monitor"
+        ],
+        "samples": 96,
+        "bytes_first": 1645,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 8.0,
+        "estimated_bytes_per_second": 13160
+      },
+      {
+        "topic": "/smooth_path/_action/feedback",
+        "types": [
+          "nav2_msgs/action/SmoothPath_FeedbackMessage"
+        ],
+        "publishers": [
+          "/smoother_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/smooth_path/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/smoother_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 1,
+        "bytes_first": 117,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 10
+      },
+      {
+        "topic": "/smoother_server/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/smoother_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/speed_limit",
+        "types": [
+          "nav2_msgs/msg/SpeedLimit"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/controller_server"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/spin/_action/feedback",
+        "types": [
+          "nav2_msgs/action/Spin_FeedbackMessage"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/spin/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/system/configure/_action/feedback",
+        "types": [
+          "njord_interfaces/action/ConfigureSystem_FeedbackMessage"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/system/configure/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/mission_manager"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/system/control_status",
+        "types": [
+          "std_msgs/msg/String"
+        ],
+        "publishers": [
+          "/command_arbiter"
+        ],
+        "subscribers": [],
+        "samples": 212,
+        "bytes_first": 13,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 17.67,
+        "estimated_bytes_per_second": 230
+      },
+      {
+        "topic": "/system/operating_mode",
+        "types": [
+          "std_msgs/msg/String"
+        ],
+        "publishers": [
+          "/mode_manager"
+        ],
+        "subscribers": [
+          "/mode_manager"
+        ],
+        "samples": 1,
+        "bytes_first": 13,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/task/plan",
+        "types": [
+          "nav_msgs/msg/Path"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 1,
+        "bytes_first": 108,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 9
+      },
+      {
+        "topic": "/task1/cardinal_wall_enable",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/cardinal_wall_publisher"
+        ],
+        "samples": 1,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/task1/gps3_to_gps4_heading",
+        "types": [
+          "std_msgs/msg/Float64"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [
+          "/cardinal_wall_publisher"
+        ],
+        "samples": 1,
+        "bytes_first": 12,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/task2/points_filtered",
+        "types": [
+          "sensor_msgs/msg/PointCloud2"
+        ],
+        "publishers": [],
+        "subscribers": [
+          "/njord_sim_environment"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/task4/buoy_wall_enable",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 1,
+        "bytes_first": 8,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 1
+      },
+      {
+        "topic": "/task4/gps14_to_gps16_heading",
+        "types": [
+          "std_msgs/msg/Float64"
+        ],
+        "publishers": [
+          "/mission_manager"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/tf",
+        "types": [
+          "tf2_msgs/msg/TFMessage"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/transform_listener_impl_aaaad8b11ca0",
+          "/smoother_server",
+          "/transform_listener_impl_aaaaf67f7e50",
+          "/behavior_server",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/cardinal_wall_publisher",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 211,
+        "bytes_first": 100,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 17.58,
+        "estimated_bytes_per_second": 1758
+      },
+      {
+        "topic": "/tf_static",
+        "types": [
+          "tf2_msgs/msg/TFMessage"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [
+          "/transform_listener_impl_aaaad8b11ca0",
+          "/smoother_server",
+          "/transform_listener_impl_aaaaf67f7e50",
+          "/behavior_server",
+          "/collision_monitor",
+          "/bt_navigator",
+          "/cardinal_wall_publisher",
+          "/onboard_foxglove_bridge"
+        ],
+        "samples": 1,
+        "bytes_first": 92,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.08,
+        "estimated_bytes_per_second": 8
+      },
+      {
+        "topic": "/velocity_smoother/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/velocity_smoother"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/virtual_obstacle_markers",
+        "types": [
+          "visualization_msgs/msg/MarkerArray"
+        ],
+        "publishers": [
+          "/cardinal_wall_publisher"
+        ],
+        "subscribers": [],
+        "samples": 24,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 2.0,
+        "estimated_bytes_per_second": 16
+      },
+      {
+        "topic": "/virtual_obstacles",
+        "types": [
+          "sensor_msgs/msg/PointCloud2"
+        ],
+        "publishers": [
+          "/cardinal_wall_publisher"
+        ],
+        "subscribers": [
+          "/local_costmap/local_costmap",
+          "/global_costmap/global_costmap"
+        ],
+        "samples": 24,
+        "bytes_first": 113,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 2.0,
+        "estimated_bytes_per_second": 226
+      },
+      {
+        "topic": "/wait/_action/feedback",
+        "types": [
+          "nav2_msgs/action/Wait_FeedbackMessage"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/wait/_action/status",
+        "types": [
+          "action_msgs/msg/GoalStatusArray"
+        ],
+        "publishers": [
+          "/behavior_server"
+        ],
+        "subscribers": [
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_to_pose_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node",
+          "/bt_navigator_navigate_through_poses_rclcpp_node"
+        ],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "1"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/waypoint_follower/transition_event",
+        "types": [
+          "lifecycle_msgs/msg/TransitionEvent"
+        ],
+        "publishers": [
+          "/waypoint_follower"
+        ],
+        "subscribers": [],
+        "samples": 0,
+        "bytes_first": null,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 0.0,
+        "estimated_bytes_per_second": 0
+      },
+      {
+        "topic": "/wit/imu",
+        "types": [
+          "sensor_msgs/msg/Imu"
+        ],
+        "publishers": [
+          "/njord_sim_environment"
+        ],
+        "subscribers": [],
+        "samples": 211,
+        "bytes_first": 324,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 17.58,
+        "estimated_bytes_per_second": 5697
+      },
+      {
+        "topic": "/yellow",
+        "types": [
+          "std_msgs/msg/Bool"
+        ],
+        "publishers": [
+          "/alert_lamp_driver_node"
+        ],
+        "subscribers": [],
+        "samples": 397,
+        "bytes_first": 8,
+        "durability": [
+          "2"
+        ],
+        "sample_hz": 33.08,
+        "estimated_bytes_per_second": 265
+      }
+    ]
+  },
+  "critical_topics": {
+    "/control/state": {
+      "samples": 296,
+      "auto": false,
+      "source": 0,
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    "/control/requirements": {
+      "samples": 295,
+      "requirements": "{\"policy\": \"\", \"requirements\": {\"require_nav2_ready\": true, \"require_localization_heartbeat\": true, \"require_ground_station\": false, \"require_driver_heartbeat\": false, \"require_no_critical_health_fault\": false, \"require_rtk_fix\": false, \"require_task_ready\": true, \"require_emergency_stop_clear\": true}}"
+    },
+    "/cmd_vel": {
+      "samples": 295,
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "/mission/status": {
+      "samples": 147,
+      "task": "",
+      "state": 0,
+      "stage": "",
+      "message": "waypoint route complete"
+    },
+    "/mission/plan": {
+      "samples": 1
+    }
+  },
+  "payloads": {
+    "/buoy_detections_3d": {
+      "detections_count": 0
+    },
+    "/mission/last_result": {
+      "task": "task1",
+      "state": 8,
+      "message": "waypoint route complete"
+    },
+    "/mission/plan": {
+      "poses_count": 10
+    },
+    "/sim/estimated_path": {
+      "poses_count": 2400
+    },
+    "/task1/cardinal_wall_enable": {
+      "enabled": false
+    },
+    "/virtual_obstacles": {
+      "points_count": 0
+    },
+    "/virtual_obstacle_markers": {
+      "markers_count": 0
+    }
+  },
+  "bridge_load": {
+    "interval_sec": 5.024221441010013,
+    "bridge_cpu_percent_one_core": 49.6,
+    "tcp_bytes_sent_per_second": 813819,
+    "rss_mib": 142.0
+  }
+}
