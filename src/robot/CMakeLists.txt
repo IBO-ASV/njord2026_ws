@@ -15,6 +15,18 @@ find_package(sensor_msgs REQUIRED)
 find_package(nav2_core REQUIRED)
 find_package(nav2_costmap_2d REQUIRED)
 find_package(pluginlib REQUIRED)
+find_package(tf2_ros REQUIRED)
+find_package(tf2_geometry_msgs REQUIRED)
+
+add_library(se2_docking_controller SHARED src/se2_docking_controller.cpp)
+target_compile_features(se2_docking_controller PUBLIC cxx_std_17)
+target_include_directories(se2_docking_controller PRIVATE include)
+ament_target_dependencies(se2_docking_controller
+  geometry_msgs nav_msgs nav2_core nav2_costmap_2d pluginlib rclcpp
+  rclcpp_lifecycle tf2_ros tf2_geometry_msgs)
+pluginlib_export_plugin_description_file(nav2_core controller_plugin.xml)
+install(TARGETS se2_docking_controller LIBRARY DESTINATION lib)
+install(FILES controller_plugin.xml DESTINATION share/${PROJECT_NAME})
 
 add_executable(localization_input_guard src/localization_input_guard.cpp)
 ament_target_dependencies(localization_input_guard
@@ -81,6 +93,9 @@ install(FILES config/glim_config/config_ros_cpu.json
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_se2_tracking test/test_se2_tracking.cpp)
+  target_include_directories(test_se2_tracking PRIVATE include)
+  target_compile_features(test_se2_tracking PUBLIC cxx_std_17)
   ament_add_gtest(test_selective_heading_goal_checker test/test_selective_heading_goal_checker.cpp)
   ament_target_dependencies(test_selective_heading_goal_checker
     geometry_msgs nav2_core nav2_costmap_2d pluginlib rclcpp rclcpp_lifecycle)

@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<library path="se2_docking_controller">
+  <class type="robot::SE2DockingController" base_class_type="nav2_core::Controller">
+    <description>Holonomic position and bow-heading tracking for docking references.</description>
+  </class>
+</library>

@@ -38,6 +38,10 @@ class NavigationClient(Protocol):
     ) -> None:
         ...
 
+    def send_docking(self, target: Waypoint, accepted, completed) -> None:
+        """Follow a continuous position/bow-heading reference from the current pose."""
+        ...
+
     def cancel(self) -> None:
         ...
 

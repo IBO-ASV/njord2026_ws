@@ -13,7 +13,7 @@ from ament_index_python.packages import get_package_share_directory
 from action_msgs.msg import GoalStatus
 from geometry_msgs.msg import Point, PoseStamped
 from geographic_msgs.msg import GeoPoint
-from nav2_msgs.action import NavigateThroughPoses
+from nav2_msgs.action import FollowPath, NavigateThroughPoses
 from nav_msgs.msg import Path as NavPath, Odometry
 from rcl_interfaces.msg import Parameter, ParameterType, ParameterValue
 from rcl_interfaces.srv import SetParameters
@@ -32,6 +32,7 @@ from njord_interfaces.action import ConfigureSystem, RunTask
 from njord_interfaces.msg import ControlState, MissionStatus, Nav2RuntimeStatus, TaskInfo
 from njord_interfaces.srv import GetMissionStatus, ListTasks, SetControlMode, StartTask, StopTask
 
+from .docking_reference import docking_reference
 from .executors import (
     DummyExecutor,
     ExecutorStatus,
@@ -65,23 +66,45 @@ class _RosNavigationClient:
         self._path_publisher = path_publisher
         self._marker_publisher = marker_publisher
         self._client = ActionClient(node, NavigateThroughPoses, "/navigate_through_poses")
+        self._follow_client = ActionClient(node, FollowPath, "/follow_path")
+        self._cancel_pending = False
         self._goal_handle = None
         self._callbacks = None
         self._frame_id = "map"
         self._feedback_callback = None
 
     def send(self, poses: Sequence[Waypoint], accepted, completed) -> None:
-        self._callbacks = (accepted, completed)
-        if not self._client.server_is_ready():
-            accepted(False)
-            return
         messages = [self._pose(waypoint) for waypoint in poses]
         self._publish_path(messages)
         self._publish_markers(messages)
         goal = NavigateThroughPoses.Goal()
         goal.poses = messages
-        self._client.send_goal_async(goal, feedback_callback=self._on_feedback).add_done_callback(
-            self._on_goal_response
+        self._send_goal(self._client, goal, accepted, completed)
+
+    def send_docking(self, target: Waypoint, accepted, completed) -> None:
+        start = self._node._current_docking_pose(target)
+        if start is None:
+            accepted(False)
+            return
+        messages = [self._pose(w) for w in docking_reference(start, target)]
+        self._publish_path(messages)
+        self._publish_markers(messages)
+        goal = FollowPath.Goal()
+        goal.path = NavPath(header=messages[0].header, poses=messages)
+        goal.controller_id = "DockingSE2"
+        goal.goal_checker_id = "docking_goal_checker"
+        goal.progress_checker_id = "progress_checker"
+        self._send_goal(self._follow_client, goal, accepted, completed)
+
+    def _send_goal(self, client, goal, accepted, completed) -> None:
+        self._callbacks = (accepted, completed)
+        self._cancel_pending = False
+        callbacks = self._callbacks
+        if not client.server_is_ready():
+            accepted(False)
+            return
+        client.send_goal_async(goal, feedback_callback=self._on_feedback).add_done_callback(
+            lambda future: self._on_goal_response(future, callbacks)
         )
 
     def publish_preview(self, waypoints: Sequence[Waypoint]) -> None:
@@ -97,6 +120,7 @@ class _RosNavigationClient:
         self._feedback_callback = callback
 
     def cancel(self) -> None:
+        self._cancel_pending = True
         if self._goal_handle is not None:
             self._goal_handle.cancel_goal_async()
 
@@ -146,22 +170,29 @@ class _RosNavigationClient:
         markers.markers = [route, points]
         self._marker_publisher.publish(markers)
 
-    def _on_goal_response(self, future) -> None:
-        callbacks = self._callbacks
-        if callbacks is None:
-            return
+    def _on_goal_response(self, future, callbacks) -> None:
         try:
-            self._goal_handle = future.result()
+            handle = future.result()
         except Exception as exc:
-            callbacks[0](False)
-            self._node.get_logger().error(f"Nav2 goal send failed: {exc}")
+            if callbacks is self._callbacks:
+                callbacks[0](False)
+                self._node.get_logger().error(f"Nav2 goal send failed: {exc}")
             return
-        callbacks[0](self._goal_handle.accepted)
-        if self._goal_handle.accepted:
-            self._goal_handle.get_result_async().add_done_callback(self._on_result)
+        if callbacks is not self._callbacks:
+            if handle.accepted:
+                handle.cancel_goal_async()
+            return
+        self._goal_handle = handle
+        callbacks[0](handle.accepted)
+        if handle.accepted:
+            if self._cancel_pending:
+                handle.cancel_goal_async()
+            handle.get_result_async().add_done_callback(
+                lambda future: self._on_result(future, callbacks))
 
-    def _on_result(self, future) -> None:
-        callbacks = self._callbacks
+    def _on_result(self, future, callbacks) -> None:
+        if callbacks is not self._callbacks:
+            return
         self._goal_handle = None
         if callbacks is None:
             return
@@ -860,6 +891,19 @@ class MissionManager(Node):
 
     def _on_docking_odometry(self, message):
         self._docking_odom_by_frame[message.header.frame_id] = (message, self.get_clock().now().nanoseconds)
+
+    def _current_docking_pose(self, target):
+        if self._active_route is None:
+            return None
+        message, received = self._docking_odom_by_frame.get(self._active_route.frame_id, (None, 0))
+        now = self.get_clock().now().nanoseconds
+        timeout = float(self.get_parameter("docking_odometry_timeout_sec").value)
+        if message is None or now - received > int(timeout * 1e9):
+            return None
+        pose = message.pose.pose
+        q = pose.orientation
+        heading = math.atan2(2*(q.w*q.z+q.x*q.y), 1-2*(q.y*q.y+q.z*q.z))
+        return replace(target, x=pose.position.x, y=pose.position.y, yaw=heading)
 
     def _stationary_at_berth(self, waypoint):
         if self._active_route is None:

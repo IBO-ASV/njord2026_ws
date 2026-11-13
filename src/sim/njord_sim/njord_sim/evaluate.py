@@ -12,7 +12,7 @@ from rclpy.action import ActionClient
 from njord_interfaces.action import RunTask
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from nav_msgs.msg import Odometry
-from geometry_msgs.msg import Twist
+from geometry_msgs.msg import Twist, PoseStamped
 from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2
 from njord_interfaces.msg import MissionStatus, ControlState
@@ -38,6 +38,12 @@ class Evaluation(Node):
         self.s = scenario(args.task)
         self.samples = []
         self.events = []
+        self.docking_samples = []
+        self.docking_reference = None
+        self.docking_overlap = {"stage_2": 0, "stage_3": 0}
+        self.create_subscription(
+            PoseStamped, "/controller_server/docking_reference",
+            lambda m: setattr(self, "docking_reference", m), 10)
         self.nav_ready = False
         self.state = None
         self.control = None
@@ -141,6 +147,20 @@ class Evaluation(Node):
         speed = math.hypot(m.twist.twist.linear.x, m.twist.twist.linear.y)
         self.samples.append((t, p.x, p.y, heading, speed, m.twist.twist.angular.z))
         route = self.s.route.waypoints
+        stage = self.state.stage if self.state else ""
+        if self.args.task == "task3_2" and stage in self.docking_overlap:
+            if speed > 0.03 and abs(m.twist.twist.angular.z) > 0.01:
+                self.docking_overlap[stage] += 1
+            if self.docking_reference is not None:
+                ref = self.docking_reference.pose
+                hull = rectangle(p.x, p.y, heading)
+                clearance = min(
+                    min(segment_distance(v, a, b) for v in hull)
+                    for dock in self.s.docks for a, b in dock_segments(dock))
+                self.docking_samples.append((
+                    t, stage, ref.position.x, ref.position.y, yaw(ref.orientation),
+                    p.x, p.y, heading, self.command.linear.x, self.command.linear.y,
+                    self.command.angular.z, speed, m.twist.twist.angular.z, clearance))
         if (
             self.wp < len(route)
             and math.hypot(p.x - route[self.wp].x, p.y - route[self.wp].y) < 1.5
@@ -258,6 +278,13 @@ class Evaluation(Node):
             writer = csv.writer(f, lineterminator="\n")
             writer.writerow(("time_s", "x", "y", "yaw", "speed", "yaw_rate"))
             writer.writerows(self.samples)
+        if self.args.task == "task3_2":
+            with (out / "docking_tracking.csv").open("w") as f:
+                writer = csv.writer(f, lineterminator="\n")
+                writer.writerow(("time_s", "stage", "reference_x", "reference_y", "reference_yaw",
+                                 "x", "y", "yaw", "cmd_surge", "cmd_sway", "cmd_yaw_rate",
+                                 "speed", "yaw_rate", "hull_corner_wall_distance_m"))
+                writer.writerows(self.docking_samples)
         required = [
             10.0 if i == 0 and self.args.task != "task3_2" else 5.0
             for i in range(len(self.s.docks))
@@ -280,6 +307,7 @@ class Evaluation(Node):
                     encounter_ok = encounter_ok and self.cpa_astern is True
         passed = (
             encounter_ok
+            and (self.args.task != "task3_2" or all(n >= 5 for n in self.docking_overlap.values()))
             and (not self.args.task.startswith("task1") or self.enabled_wall_cloud_seen)
             and self.result == 8
             and self.action_result == 0
@@ -349,6 +377,8 @@ class Evaluation(Node):
             "maximum_wall_points": self.max_wall_points,
             "enabled_wall_cloud_seen": self.enabled_wall_cloud_seen,
             "dock_contact_samples": self.contacts,
+            "docking_simultaneous_translation_yaw_samples": self.docking_overlap
+            if self.args.task == "task3_2" else None,
             "cardinal_passages": self.cardinal,
             "final_stationary_s": self.stop_duration,
             "samples": len(self.samples),

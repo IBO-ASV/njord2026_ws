@@ -31,12 +31,13 @@ task3_2_config:
   scenario: "parallel_docking_surveyed"
   waypoints:
     - {id: 10, latitude: 63.4411333333, longitude: 10.4242305556, yaw: -1.8732, type: "start", name: "GPS 10 - Task 3.2 Start", tolerance_m: 1.5}
-    # GPS11 -> GPS12 heading.
-    - {id: 11, latitude: 63.4410138889, longitude: 10.4241472222, yaw: 2.9119, type: "dock_approach", name: "GPS 11 - Berth 2 Approach", tolerance_m: 0.8}
+    # GPS11 -> berth2 entry heading; rotate clockwise while translating inside.
+    - {id: 11, latitude: 63.4410138889, longitude: 10.4241472222, yaw: -2.0140, type: "dock_approach", name: "GPS 11 - Berth 2 Approach", tolerance_m: 0.8}
     - {id: "berth2", latitude: 63.4409890500, longitude: 10.4241208500, yaw: 2.9119, type: "dock", name: "Berth 2 - Inside Dock", tolerance_m: 0.8, dock_type: "parallel"}
     # GPS12 is the Task 3.2 final goal.
     - {id: 12, latitude: 63.4410361111, longitude: 10.4239361111, yaw: 2.9119, type: "goal", name: "GPS 12 - Final Goal", tolerance_m: 1.5}
   constraints:
+    se2_docking_stages: ["stage_2", "stage_3"]
     impact_minimization: true
     wait_time_s: 5
     wait_condition: "after_docking_stationary"

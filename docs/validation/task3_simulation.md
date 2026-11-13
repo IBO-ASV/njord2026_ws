@@ -1,7 +1,8 @@
 # Task3 Navigation and Simulation
 
 Mission Manager経由のセンサなし完遂試験は [新しい共通sim手順](../../src/sim/njord_sim/README.md)
-と [実行結果](simulation_acceptance.md) を参照してください。以下は既存のTask3単体起動の説明です。
+と [実行結果](simulation_acceptance.md) を参照してください。Mission Manager経由のTask3.2の進入・退出制御は
+[SE(2)追従](task3_se2_tracking.md)を参照してください。以下は既存のTask3単体起動の説明です。
 
 ## Run
 
@@ -24,7 +25,7 @@ ros2 launch task3_sim task3_sim.launch.py \
 ```mermaid
 flowchart LR
     WP["waypoint_publisher"] -->|NavigateThroughPoses| Nav2
-    Nav2["Theta* -> cubic spline -> RPP"] -->|cmd_vel| Kin["X4 kinematics"]
+    Nav2["Theta* -> cubic spline -> DWB"] -->|cmd_vel| Kin["X4 kinematics"]
     Kin -->|thruster_command| Physics["MMG dynamics + disturbance"]
     Physics -->|odom + TF| Sensors["GNSS / IMU noise simulation"]
     Sensors --> EKF["local/global EKF + navsat"]
@@ -56,7 +57,7 @@ Task3 uses a dedicated Nav2 configuration:
 
 - `ThetaStarPlanner` for holonomic planning;
 - natural cubic spline smoothing;
-- Regulated Pure Pursuit without rotate-to-heading;
+- DWB with holonomic velocity sampling and terminal heading alignment;
 - X4 kinematics with surge, sway, and yaw commands;
 - dynamic buoy obstacles from TF frames.
 

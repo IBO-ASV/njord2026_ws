@@ -103,7 +103,13 @@ class StagedDockingExecutor(TaskExecutor):
                 else:
                     self._advance_stage()
 
-        self._navigation.send(poses, accepted, completed)
+        if stage_name in self._route.constraints.get("se2_docking_stages", ()):
+            if len(poses) != 1:
+                self._finish(ExecutorStatus.INTERNAL_ERROR, "SE2 docking stage requires one target")
+                return
+            self._navigation.send_docking(poses[0], accepted, completed)
+        else:
+            self._navigation.send(poses, accepted, completed)
 
     def _needs_berth_wait(self) -> bool:
         """Wait only after a stage which actually ends at a docking berth.

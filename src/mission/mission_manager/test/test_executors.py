@@ -255,3 +255,94 @@ def test_service_stop_cannot_request_an_invalid_ros_action_transition():
         assert handle.terminal=='abort'
     finally:
         if owned:rclpy.shutdown()
+
+
+def test_se2_docking_routes_only_configured_stages_and_keeps_berth_wait():
+    from dataclasses import replace
+
+    class Navigation(FakeNavigation):
+        def send_docking(self, target, accepted, completed):
+            self.sent.append(([target], accepted, completed))
+            self.se2.append(target.waypoint_id)
+
+    nav = Navigation()
+    nav.se2 = []
+    timers, results = [], []
+    route = replace(_route(), constraints={
+        "attempts": 2, "wait_time_s": 1,
+        "se2_docking_stages": ["stage_1", "stage_2"],
+    })
+    corrected = replace(route.waypoints[1], x=1.1, yaw=0.2)
+    executor = StagedDockingExecutor(
+        nav, lambda _seconds, cb: timers.append(cb) or cb, lambda _: None,
+        dock_target_correction=lambda _: corrected)
+    executor.start("execution", route, lambda *_: None, results.append)
+    assert nav.se2 == []
+    nav.sent[-1][2](ExecutorStatus.SUCCEEDED, "gate")
+    assert nav.se2 == ["dock"]
+    assert nav.sent[-1][0][0] == corrected
+    # Rejection retries the same SE2 stage, not normal navigation.
+    nav.sent[-1][1](False)
+    assert nav.se2 == ["dock", "dock"]
+    nav.sent[-1][2](ExecutorStatus.SUCCEEDED, "dock")
+    assert len(timers) == 1
+    assert nav.se2 == ["dock", "dock"]
+    timers[0]()
+    assert nav.se2[-1] == "exit"
+    executor.cancel("execution")
+    assert nav.cancelled
+    nav.sent[-1][2](ExecutorStatus.CANCELED, "cancel")
+    assert results[-1].status == ExecutorStatus.CANCELED
+
+
+def test_follow_path_adapter_keeps_bow_reference_and_controller_selection():
+    from nav2_msgs.action import FollowPath
+
+    client = object.__new__(_RosNavigationClient)
+    start, target = _route().waypoints[:2]
+    client._node = _MarkerNode()
+    client._node._current_docking_pose = lambda _: start
+    client._frame_id = "odom"
+    client._path_publisher = _MarkerPublisher()
+    client._marker_publisher = _MarkerPublisher()
+    client._follow_client = object()
+    sent = []
+    client._send_goal = lambda *args: sent.append(args)
+    client.send_docking(target, lambda _: None, lambda *_: None)
+    server, goal, *_ = sent[0]
+    assert server is client._follow_client
+    assert isinstance(goal, FollowPath.Goal)
+    assert goal.controller_id == "DockingSE2"
+    assert goal.goal_checker_id == "docking_goal_checker"
+    assert goal.path.header.frame_id == "odom"
+    assert len(goal.path.poses) > 2
+    assert goal.path.poses[0].pose.position.x == start.x
+    assert goal.path.poses[-1].pose.position.x == target.x
+    client._node._current_docking_pose = lambda _: None
+    accepted = []
+    client.send_docking(target, accepted.append, lambda *_: None)
+    assert accepted == [False]
+    assert len(sent) == 1
+
+
+def test_cancel_before_acceptance_cancels_follow_path_and_stale_result_is_ignored():
+    from concurrent.futures import Future
+    from types import SimpleNamespace
+    from action_msgs.msg import GoalStatus
+
+    client = object.__new__(_RosNavigationClient)
+    client._goal_handle = None
+    client._callbacks = (lambda _: None, lambda *_: None)
+    client.cancel()
+    canceled, completions = [], []
+    result = Future()
+    handle = SimpleNamespace(accepted=True, cancel_goal_async=lambda: canceled.append(True),
+                             get_result_async=lambda: result)
+    response = Future()
+    response.set_result(handle)
+    client._on_goal_response(response, client._callbacks)
+    assert canceled == [True]
+    # Simulate a new dispatch before the old result arrives.
+    client._callbacks = (lambda _: None, lambda *args: completions.append(args))
+    result.set_result(SimpleNamespace(status=GoalStatus.STATUS_CANCELED))
+    assert completions == []
