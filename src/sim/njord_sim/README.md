@@ -144,3 +144,44 @@ cancellation and zero final command, rather than a successful mission.
 
 See `Docs/simulation_tuning_log.md` and `Docs/simulation_acceptance.md` for
 observations, changes, measured results and remaining limitations.
+
+## Task-specific ROS endpoints and course bounds
+
+The common Foxglove layout is shared by all tasks. Task2 processors were already
+launched only for `task:=task2`; its sensor stand-in now also registers
+`/planned_path_pruned`, `/task2/points_filtered`, `/mission/task2/enabled`,
+`/sim/truth/opponent` and the PointStamped `/buoy_detections` only in Task2.
+Other tasks retain the BuoyDetectionArray used by cardinal-wall perception.
+Mission Manager creates Task2 enable/completion endpoints when Task2 starts,
+removes its completion subscription when stopped, and retains the disabled
+publisher after first use so late Task2 clients receive `false`. Completion
+uses volatile durability to avoid replaying a prior run's retained success.
+The Mission Control panel subscribes to `/mission/task2/path_safe` only while
+Task2 is active; use the rebuilt `mission-control-0.1.0.foxe` with this change.
+A private registry with no staged docking tasks also omits dock correction
+subscriptions and nominal berth publishers.
+
+This does not impose a blanket publisher-present rule. Manual/SBUS inputs,
+failsafe triggers, Nav2 optional inputs and runtime status can have publishers
+that join later. Their subscriptions remain available. Waiting for a publisher
+on every topic can also break producers that start publishing only after a
+subscriber appears. The running launch must be restarted to apply endpoint
+construction changes; an already running process is not changed by editing files.
+
+The legacy `task1_sim` rectangular boundary became visualization-only in
+commit `55c5982e` (2026-08-02 JST). Its old lethal obstacle perimeter at y=15
+crossed waypoints 9 to 10 and prevented navigation; that commit removed
+`_append_course_boundary(points)` from `build_sim_obstacle_points`. The legacy
+sim still publishes `/sim/boundary_markers`; its current configured bounds are
+`[-30, 30, -55, 15]` metres. This new `njord_sim` does not currently reproduce
+that display or enforce a rectangular geofence. Its cardinal-wall
+`course_bounds=[-150,150,-150,150]` only bounds generated virtual walls (also
+capped at 13 m); it is not a boat operating-area constraint. Restoring an
+operating-area constraint requires an explicit polygon and checking that the
+surveyed route and avoidance space lie within it; the former synthetic obstacle
+perimeter has not been reinstated as part of endpoint cleanup.
+
+Validation: ROS endpoint construction for Task1/Task2, Task2 stop/restart and
+rejection of retained completion from a previous run are covered by
+`test_task_endpoints.py`. GUI tests cover switching Task1 -> Task2 -> Task1,
+Task2 restart and completion using the same panel.

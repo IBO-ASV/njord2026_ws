@@ -76,7 +76,10 @@ class Environment(Node):
         self.buoys = self.create_publisher(
             BuoyDetectionArray, "/buoy_detections_3d", 10
         )
-        self.buoy_points = self.create_publisher(PointStamped, "/buoy_detections", 10)
+        self.buoy_points = (
+            self.create_publisher(PointStamped, "/buoy_detections", 10)
+            if self.s.task.task_id == "task2" else None
+        )
         self.cloud = self.create_publisher(PointCloud2, "/sim_obstacles", 10)
         self.lidar = self.create_publisher(PointCloud2, "/livox/lidar", 10)
         self.ready = self.create_publisher(Bool, "/autonomy/ready", 10)
@@ -116,14 +119,15 @@ class Environment(Node):
         if self.model == "mmg":
             self.create_subscription(Odometry, "/sim/physics/odom", self.on_physics, 10)
         self.create_service(FromLL, "/fromLL", self.from_ll)
-        self.other_truth = self.create_publisher(Odometry, "/sim/truth/opponent", 10)
-        self.create_subscription(Bool, "/mission/task2/enabled", self.on_enabled, QOS)
         self.filtered_cloud_at = None
         self.planned_path_at = None
-        self.create_subscription(Path, "/planned_path_pruned", self.on_planned_path, 10)
-        self.create_subscription(
-            PointCloud2, "/task2/points_filtered", self.on_filtered_cloud, 10
-        )
+        if self.s.task.task_id == "task2":
+            self.other_truth = self.create_publisher(Odometry, "/sim/truth/opponent", 10)
+            self.create_subscription(Bool, "/mission/task2/enabled", self.on_enabled, QOS)
+            self.create_subscription(Path, "/planned_path_pruned", self.on_planned_path, 10)
+            self.create_subscription(
+                PointCloud2, "/task2/points_filtered", self.on_filtered_cloud, 10
+            )
         self.tick_count = 0
         self.create_timer(0.05, self.tick)
 
@@ -328,8 +332,9 @@ class Environment(Node):
                 d.position.x = x + (self.rng.gauss(0, 0.04) if self.noise else 0.0)
                 d.position.y = y + (self.rng.gauss(0, 0.04) if self.noise else 0.0)
                 detections.detections.append(d)
-                point = PointStamped(header=detections.header, point=d.position)
-                self.buoy_points.publish(point)
+                if self.buoy_points is not None:
+                    point = PointStamped(header=detections.header, point=d.position)
+                    self.buoy_points.publish(point)
             points.extend(
                 (x + 0.175 * math.cos(a * 0.2), y + 0.175 * math.sin(a * 0.2), 0.3)
                 for a in range(32)

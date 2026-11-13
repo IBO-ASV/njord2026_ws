@@ -257,8 +257,8 @@ class MissionManager(Node):
         self._active_policy_pub = self.create_publisher(
             String, "/mission/active_control_policy", _STATUS_QOS
         )
-        self._task2_enabled_pub = self.create_publisher(Bool, "/mission/task2/enabled", _STATUS_QOS)
-        self.create_subscription(Bool, "/mission/task2/goal_reached", self._on_task2_goal_reached, _STATUS_QOS)
+        self._task2_enabled_pub = None
+        self._task2_goal_sub = None
         self._task1_cardinal_wall_enable_pub = self.create_publisher(
             Bool, "/task1/cardinal_wall_enable", _STATUS_QOS
         )
@@ -285,12 +285,15 @@ class MissionManager(Node):
         )
         self._dock_nominal_pub = {
             berth: self.create_publisher(PoseStamped, f"/docking/{berth}_nominal", _STATUS_QOS)
-            for berth in ("berth1", "berth2")
+            for berth in (("berth1", "berth2") if any(
+                task.executor == "staged_docking" for task in self._registry.all()
+            ) else ())
         }
         self._dock_corrections: dict[str, PoseStamped] = {}
         self._docking_odom_by_frame = {}
-        self.create_subscription(Odometry, "/odometry/filtered/local", self._on_docking_odometry, 10)
-        self.create_subscription(Odometry, "/odometry/filtered/global", self._on_docking_odometry, 10)
+        if self._dock_nominal_pub:
+            self.create_subscription(Odometry, "/odometry/filtered/local", self._on_docking_odometry, 10)
+            self.create_subscription(Odometry, "/odometry/filtered/global", self._on_docking_odometry, 10)
         for berth in self._dock_nominal_pub:
             self.create_subscription(PoseStamped, f"/docking/{berth}_corrected",
                                      lambda message, berth=berth: self._on_dock_correction(berth, message), 10)
@@ -908,7 +911,25 @@ class MissionManager(Node):
         self._dock_nominal_pub[waypoint.waypoint_id].publish(nominal)
 
     def _set_task2_enabled(self, enabled: bool) -> None:
-        self._task2_enabled_pub.publish(Bool(data=enabled))
+        # Task2 may start later in the same multi-task process. Register its
+        # endpoints on activation, before publishing the latched enable signal.
+        if enabled:
+            if self._task2_enabled_pub is None:
+                self._task2_enabled_pub = self.create_publisher(
+                    Bool, "/mission/task2/enabled", _STATUS_QOS
+                )
+            # Completion belongs to this run; do not replay a previous run's
+            # retained True when subscribing again.
+            if self._task2_goal_sub is None:
+                self._task2_goal_sub = self.create_subscription(
+                    Bool, "/mission/task2/goal_reached",
+                    self._on_task2_goal_reached, 10
+                )
+        if self._task2_enabled_pub is not None:
+            self._task2_enabled_pub.publish(Bool(data=enabled))
+        if not enabled and self._task2_goal_sub is not None:
+            self.destroy_subscription(self._task2_goal_sub)
+            self._task2_goal_sub = None
 
     def _on_task2_goal_reached(self, message: Bool) -> None:
         if not message.data:

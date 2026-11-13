@@ -6,10 +6,12 @@ test('Mission controls use task discovery, execution IDs and freshness',async()=
  global.document={createElement:tag=>new Element(tag)};
  const originalInterval=global.setInterval;global.setInterval=f=>{timer=f;return 1;};const originalClear=global.clearInterval;global.clearInterval=()=>{};
  let panel;activate({registerPanel:p=>panel=p});const calls=[];
- const context={panelElement:new Element('root'),subscribe:()=>{},watch:()=>{},callService:async(service,request)=>{calls.push([service,request]);return service==='/mission/list_tasks'?{tasks:[{task_id:'task1',display_name:'Task1',availability:1}]}:{accepted:true,message:'accepted'};}};
+ const subscriptions=[];
+ const context={panelElement:new Element('root'),subscribe:topics=>subscriptions.push(topics.map(t=>t.topic)),watch:()=>{},callService:async(service,request)=>{calls.push([service,request]);return service==='/mission/list_tasks'?{tasks:[{task_id:'task1',display_name:'Task1',availability:1}]}:{accepted:true,message:'accepted'};}};
  let cleanup;
  try{
   cleanup=panel.initPanel(context);await new Promise(resolve=>setImmediate(resolve));
+  assert(!subscriptions.at(-1).includes('/mission/task2/path_safe'));
   const start=elements.find(e=>e.textContent==='AUTOで開始');const stop=elements.find(e=>e.textContent==='停止・MANUALへ');assert.equal(start.disabled,true);
   const render=(mission,control)=>context.onRender({currentFrame:[{topic:'/mission/status',message:mission},{topic:'/control/state',message:control}]},()=>{});
   render({state:0},{requested_mode:0,effective_source:0,auto_permitted:false});assert.equal(start.disabled,false);
@@ -30,6 +32,13 @@ test('Mission controls use task discovery, execution IDs and freshness',async()=
   assert(elements.some(e=>String(e.textContent).includes('thrust command stale: timeout 0.5 s')));
   context.onRender({currentFrame:[{topic:'/mission/status',message:{state:5,execution_id:'execution-2',task_id:'task2'}},{topic:'/mission/task2/path_safe',message:{data:false}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('避航経路の安全条件未成立')));
+  assert(subscriptions.at(-1).includes('/mission/task2/path_safe'));
+  render({state:5,task_id:'task1'},{requested_mode:1,effective_source:0,auto_permitted:false});
+  assert(!subscriptions.at(-1).includes('/mission/task2/path_safe'));
+  render({state:5,task_id:'task2'},{requested_mode:1,effective_source:0,auto_permitted:false});
+  assert(subscriptions.at(-1).includes('/mission/task2/path_safe'));
+  render({state:8,task_id:'task2'},{requested_mode:0,effective_source:0,auto_permitted:false});
+  assert(!subscriptions.at(-1).includes('/mission/task2/path_safe'));
   time+=4000;timer();assert.equal(start.disabled,true);assert(elements.some(e=>String(e.textContent).includes('STALE')));
   context.onRender({currentFrame:[{topic:'/mission/last_result',message:{task_id:'task1',state:9,message:'navigation failed'}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('FAILED')));
