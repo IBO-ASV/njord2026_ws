@@ -89,7 +89,7 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             os.path.join(pkg_robot, "launch", "nav2.launch.py")),
         launch_arguments={
-            "params_file": os.path.join(pkg_robot, "config", "nav2_params_task2_humble.yaml"),
+            "params_file": os.path.join(pkg_robot, "config", "nav2_params_task2_jazzy.yaml"),
             "enable_diagnostics": enable_diagnostics,
         }.items()
     )

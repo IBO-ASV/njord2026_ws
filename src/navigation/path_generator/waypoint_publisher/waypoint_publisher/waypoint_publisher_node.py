@@ -218,8 +218,7 @@ class WaypointPublisher(Node):
         """Enable Task1 cardinal walls only after Nav2 reports GPS3 passed."""
         if self.cardinal_wall_enabled or self.cardinal_wall_enable_goal_index is None:
             return
-        # NavigateThroughPoses feedback in Humble does not expose the active
-        # waypoint index.  It does expose the number of poses still pending;
+        # Use NavigateThroughPoses feedback to count poses still pending;
         # it decreases only after the current pose is passed.  This works both
         # for the complete Task1 route and for the route sliced to start at
         # competition WP3.

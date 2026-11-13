@@ -24,6 +24,8 @@ def main():
     args = parser.parse_args()
     prefix = args.prefix.resolve()
     distro = os.environ.get("ROS_DISTRO", "jazzy")
+    if distro != "jazzy":
+        parser.error("this workspace requires ROS 2 Jazzy")
     system_marker = (
         Path("/opt/ros")
         / distro

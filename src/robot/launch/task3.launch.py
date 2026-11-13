@@ -56,7 +56,7 @@ def generate_launch_description():
         'robot',
         'nav2.launch.py',
         {
-            'params_file': os.path.join(robot_share, 'config', 'nav2_params_task3_humble.yaml'),
+            'params_file': os.path.join(robot_share, 'config', 'nav2_params_task3_jazzy.yaml'),
             'enable_diagnostics': LaunchConfiguration('enable_nav2_diagnostics'),
         },
     )

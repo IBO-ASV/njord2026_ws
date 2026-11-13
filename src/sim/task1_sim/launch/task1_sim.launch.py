@@ -130,11 +130,7 @@ def generate_launch_description():
     pkg_thruster = get_package_share_directory("thruster_driver")
 
     config = os.path.join(pkg_share, "config", "task1_params.yaml")
-    ros_distro = os.environ.get("ROS_DISTRO", "").lower()
-    nav2_params_name = (
-        "task1_nav2_params_jazzy.yaml" if ros_distro == "jazzy"
-        else "task1_nav2_params_humble.yaml"
-    )
+    nav2_params_name = "task1_nav2_params_jazzy.yaml"
     nav2_params = os.path.join(pkg_share, "config", nav2_params_name)
     nav_through_poses_bt_xml = os.path.join(
         pkg_share,

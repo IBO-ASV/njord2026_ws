@@ -15,7 +15,7 @@ def test_expected_test_launches_are_present():
 
 
 def test_nav2_configs_exist_for_supported_distros():
-    for distro in ("humble", "jazzy"):
+    for distro in ("jazzy",):
         assert (PACKAGE_ROOT / "config" / f"nav2_mintest_{distro}.yaml").is_file()
 
 

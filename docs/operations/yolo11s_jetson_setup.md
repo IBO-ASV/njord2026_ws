@@ -8,7 +8,7 @@ and does not change that node or its environment.
 ## AGX Orin / JetPack 7.2 / ROS Jazzy
 
 For the current AGX, use the reproducible `uv` profile rather than the older
-Nano/Humble instructions below:
+Nano-specific dependency notes below. All current machines use ROS Jazzy:
 
 ```bash
 bash scripts/setup/setup_python_uv.sh jetson
@@ -41,7 +41,7 @@ The minimal venv package list is `src/detection/yolo/requirements_jetson_yolo11.
 
 ```bash
 # 1. Source the system ROS 2 first
-source /opt/ros/humble/setup.bash
+source /opt/ros/jazzy/setup.bash
 
 # 2. Create the dedicated venv with --system-site-packages
 #    (makes system packages like cv_bridge visible inside the venv)
@@ -109,7 +109,7 @@ python3 scripts/yolo/export_yolo11s_tensorrt.py \
 ## Launching the node
 
 ```bash
-source /opt/ros/humble/setup.bash
+source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 source ~/venvs/yolo11/bin/activate    # required: the launch file has a venv guard
 

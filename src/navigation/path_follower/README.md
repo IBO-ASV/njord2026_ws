@@ -15,7 +15,7 @@ $ tree -d
     ├── driver
     │   ├── camera
     │   │   ├── README.md
-    │   │   └── zed-ros2-wrapper
+    │   │   └── zed2i_driver
     │   ├── gnss
     │   │   ├── drogger_bt
     │   │   ├── drogger_rws // septentorio

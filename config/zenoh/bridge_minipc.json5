@@ -1,5 +1,5 @@
 {
-  // zenoh-bridge-ros2dds : miniPC (Humble) 側
+  // zenoh-bridge-ros2dds : miniPC (Jazzy) 側
   //   ROS_DOMAIN_ID=5 のローカル DDS と zenoh を橋渡しする。
   //   Jetson とは DDS discovery を一切共有しないため、distro 混在による
   //   ParticipantEntitiesInfo のデシリアライズ失敗（sequence size exceeds

@@ -12,7 +12,7 @@ heartbeat試験の手順は[about_networktest.md](about_networktest.md)を参照
 | Launch | Purpose |
 |---|---|
 | `critical_link_loopback.launch.py` | critical-linkのUDP sender/receiverを安全なtest topicでloopbackする |
-| `nav2_mintest.launch.py` | Nav2を最小構成で起動する。`ROS_DISTRO`に応じてHumble/Jazzy設定を選ぶ |
+| `nav2_mintest.launch.py` | Nav2を最小構成で起動する。Jazzy専用設定を使う |
 | `soft_emg_alert_lamp_test.launch.py` | joy、soft-EMG、Micon、alert lampの実機試験 |
 | `um982_ekf_bag_playback.launch.py` | UM982とglobal EKFをrosbagの時刻で再生検証する |
 

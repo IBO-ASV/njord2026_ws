@@ -4,12 +4,9 @@
 
   Default RMW config for the Jetson / miniPC split (NJORD_RMW=fastrtps).
 
-  Why FastRTPS (rmw_fastrtps_cpp) is the default here: the Jetson runs
-  ROS 2 Jazzy and the miniPC runs ROS 2 Humble. FastDDS is a stable,
-  wire-compatible DDS implementation across both distros, so it is the
-  known-good choice for cross-distro (Humble <-> Jazzy) interoperability
-  between the two machines. rmw_zenoh_cpp (see config/zenoh/) is an
-  opt-in alternative - see the warnings in that directory before using it.
+  Both machines run ROS 2 Jazzy. FastRTPS is the default for the split
+  deployment; the AGX/Ground pair uses its dedicated CycloneDDS profile.
+  rmw_zenoh_cpp remains an opt-in alternative.
 
   scripts/setup/njord_env.sh points FASTRTPS_DEFAULT_PROFILES_FILE at this file
   when NJORD_RMW=fastrtps (the default).

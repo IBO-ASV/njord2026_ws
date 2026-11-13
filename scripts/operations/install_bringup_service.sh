@@ -68,6 +68,7 @@ if [[ -z "${ROS_DISTRO_NAME}" ]]; then
   fi
   ROS_DISTRO_NAME="${DISTROS[0]}"
 fi
+[[ "${ROS_DISTRO_NAME}" == jazzy ]] || { echo "This workspace requires ROS Jazzy" >&2; exit 64; }
 [[ -r "/opt/ros/${ROS_DISTRO_NAME}/setup.bash" ]] || { echo "ROS distro not installed: ${ROS_DISTRO_NAME}" >&2; exit 1; }
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
@@ -86,10 +87,6 @@ DOMAIN_ESCAPED="$(escape_sed "${ROS_DOMAIN}")"
 RMW_ESCAPED="$(escape_sed "${NJORD_RMW_NAME}")"
 UNIT_NAME="njord-${ROLE}-bringup.service"
 
-if [[ "${ROLE}" == agx && "${ROS_DISTRO_NAME}" != jazzy ]]; then
-  echo "AGX pair bringup requires ROS Jazzy" >&2
-  exit 64
-fi
 if [[ "${USER_SERVICE}" == 1 && "${RUN_AS_USER}" != "$(id -un)" ]]; then
   echo "--user-service must run as the service owner" >&2
   exit 64

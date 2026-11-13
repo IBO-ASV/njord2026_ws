@@ -1,5 +1,7 @@
 # ドキュメント
 
+現行の対応環境は **ROS 2 Jazzyのみ**です。旧ディストリビューションとの混在運用手順は廃止しました。
+
 | 用途 | 入口 |
 |---|---|
 | 環境構築・端末別運用 | [2台構成](operations/two_machine_split.md)、[AGX起動](operations/agx_ground_jetson_startup.md) |

@@ -12,6 +12,8 @@ usage() {
 ROLE="$1"
 ROS_DISTRO_NAME="$2"
 
+[[ "${ROS_DISTRO_NAME}" == jazzy ]] || { echo "This workspace requires ROS Jazzy" >&2; exit 64; }
+
 case "${ROLE}" in
   agx|jetson|minipc) ;;
   *) usage ;;
@@ -33,7 +35,6 @@ fi
 
 # AGX is a separate vessel role, not the Orin Nano sensor-only role.
 if [[ "${ROLE}" == "agx" ]]; then
-  [[ "${ROS_DISTRO_NAME}" == "jazzy" ]] || { echo "AGX requires Jazzy" >&2; exit 64; }
   exec "${SCRIPT_DIR}/run_agx_pair.sh" vessel
 fi
 
@@ -43,7 +44,7 @@ export NJORD_ROLE="${ROLE}"
 export ROS_DISTRO="${ROS_DISTRO_NAME}"
 export ROS_LOCALHOST_ONLY=0
 
-# Keep Humble on the miniPC isolated from the Jazzy machines.  Do not inherit
+# Keep role-specific DDS domains isolated. Do not inherit
 # an interactive shell's ROS_DOMAIN_ID: zenoh-bridge-ros2dds gives that value
 # precedence over its JSON5 `plugins/ros2dds/domain` setting.
 case "${ROLE}" in

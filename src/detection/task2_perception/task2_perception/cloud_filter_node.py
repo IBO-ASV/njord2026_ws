@@ -59,7 +59,7 @@ def cloud_to_array(msg: PointCloud2) -> np.ndarray:
         want.append("intensity")
     data = point_cloud2.read_points(msg, field_names=want, skip_nans=False)
     arr = np.asarray(data)
-    if arr.dtype.names:  # structured array (Humble and later)
+    if arr.dtype.names:  # structured array
         stacked = np.column_stack(
             [np.asarray(arr[n], dtype=np.float64) for n in want])
     else:  # generator fallback (older sensor_msgs_py)

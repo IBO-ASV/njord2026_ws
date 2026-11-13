@@ -41,3 +41,14 @@ def test_agx_rejects_nano_domain_before_installing(tmp_path):
     ], capture_output=True, text=True)
     assert result.returncode == 64
     assert not list(tmp_path.iterdir())
+
+
+@pytest.mark.parametrize("role", ["agx", "jetson", "minipc"])
+def test_unsupported_ros_distro_is_rejected_before_install(tmp_path, role):
+    result = subprocess.run([
+        str(INSTALLER), "--role", role, "--ros-distro", "humble",
+        "--output-dir", str(tmp_path),
+    ], capture_output=True, text=True)
+    assert result.returncode == 64
+    assert "requires ROS Jazzy" in result.stderr
+    assert not list(tmp_path.iterdir())

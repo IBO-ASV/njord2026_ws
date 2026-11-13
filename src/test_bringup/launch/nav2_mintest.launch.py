@@ -10,12 +10,10 @@ from launch.substitutions import LaunchConfiguration
 def generate_launch_description():
     pkg_nav2_bringup = get_package_share_directory('nav2_bringup')
 
-    ros_distro = os.environ.get('ROS_DISTRO', 'humble')
-    config_distro = ros_distro if ros_distro in ('humble', 'jazzy') else 'humble'
     default_params_file = os.path.join(
         get_package_share_directory('test_bringup'),
         'config',
-        f'nav2_mintest_{config_distro}.yaml',
+        'nav2_mintest_jazzy.yaml',
     )
     params_file = LaunchConfiguration('params_file')
     use_sim_time = LaunchConfiguration('use_sim_time')
@@ -24,7 +22,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             'params_file',
             default_value=default_params_file,
-            description='Nav2 minimum-test parameters. Defaults to the active ROS distro.',
+            description='Nav2 minimum-test parameters. Defaults to ROS 2 Jazzy.',
         ),
         DeclareLaunchArgument('use_sim_time', default_value='false'),
         IncludeLaunchDescription(

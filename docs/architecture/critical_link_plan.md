@@ -8,7 +8,7 @@ Ground PCからminiPCへ送る次の2 topicを、通常の可視化・sensor通�
 - `/joy`
 - `/heartbeat/ground_station`
 
-Jetson Jazzy、Ground PC Jazzy、miniPC HumbleのDDS domainは直接混在させず、
+全端末をJazzyに統一し、役割ごとのDDS domainを分離して、
 既存の`zenoh-bridge-ros2dds`を役割別に使用する。
 
 - `config/zenoh/bridge_groundpc.json5`: Ground PCのDDS domainとZenohの境界

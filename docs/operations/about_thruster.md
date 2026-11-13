@@ -10,7 +10,7 @@ thruster_id_check手順
 
 できなかったときの確認
 - [ ] コントローラーをBluetoothでつないでいるか
-- [ ] ```echo $RMWIMPLEMENTATION ; echo $ROS_DOMAIN_ID ; echo $ROS_LOCALHOST_ONLY``` で陸上PCとjetson両方同じになっているか。特にfastrtpsになってないとubuntu22.04,24.04間で通信できないので注意
+- [ ] ```echo $RMWIMPLEMENTATION ; echo $ROS_DOMAIN_ID ; echo $ROS_LOCALHOST_ONLY``` で陸上PCとjetson両方同じになっているか。両端のRMWと通信設定を起動プロファイルに合わせる（2台構成はFastRTPS、AGX/GroundはCycloneDDS）
 - [ ] 陸上PCで```ros2 run joy joy_node```を実行し、```ros2 topic echo /joy```で値が取れるか
 - [ ] jetsonと陸上PCは同じwifiにつながっているか
 - [ ] 緊急停止を上げているか、esp32に電源が入っているか、緊急停止スイッチを押して解除したらﾄｩﾙﾙﾝするか

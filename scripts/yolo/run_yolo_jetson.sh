@@ -6,10 +6,11 @@ WS_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 # shellcheck disable=SC1091
 source "${WS_DIR}/scripts/setup/export_python_path.sh"
 
-if [[ -n "${ROS_DISTRO:-}" && -f "/opt/ros/${ROS_DISTRO}/setup.bash" ]]; then
-    # shellcheck disable=SC1091
-    source "/opt/ros/${ROS_DISTRO}/setup.bash"
-fi
+[[ "${ROS_DISTRO:-jazzy}" == jazzy ]] || { echo "ROS Jazzy is required" >&2; exit 64; }
+# ROS setup scripts may reference unset variables.
+set +u
+source /opt/ros/jazzy/setup.bash
+set -u
 
 if [[ -f "${WS_DIR}/install/setup.bash" ]]; then
     # shellcheck disable=SC1091

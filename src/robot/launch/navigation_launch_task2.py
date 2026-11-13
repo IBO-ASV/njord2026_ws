@@ -44,7 +44,7 @@ def generate_launch_description():
             default_value=os.path.join(
                 get_package_share_directory("robot"),
                 "config",
-                "nav2_params_task2_humble.yaml",
+                "nav2_params_task2_jazzy.yaml",
             ),
         ),
         DeclareLaunchArgument("use_sim_time", default_value="false"),

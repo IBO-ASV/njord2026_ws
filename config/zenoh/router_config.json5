@@ -4,9 +4,7 @@
 // opt-in only; fastrtps is the default -- see config/dds/fastdds_profile.xml).
 //
 // !! IMPORTANT - READ BEFORE USING !!
-// rmw_zenoh is mainline (binary-installable) from ROS 2 Jazzy onward; on
-// Humble (this miniPC) it currently requires building rmw_zenoh_cpp and its
-// zenoh-c/zenoh-pico dependencies from source. In addition, the two
+// All machines use ROS 2 Jazzy. The two
 // machines MUST run matching rmw_zenoh_cpp revisions and a compatible
 // zenoh wire protocol version, or they will simply fail to discover each
 // other with no obvious error. Validate the whole bringup with FastRTPS

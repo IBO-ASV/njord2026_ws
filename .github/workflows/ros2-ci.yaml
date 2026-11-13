@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   static-checks:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
         with:
@@ -23,7 +23,7 @@ jobs:
 
       - uses: actions/setup-python@v6
         with:
-          python-version: "3.10"
+          python-version: "3.12"
 
       - name: Install static-check dependencies
         run: python -m pip install PyYAML pytest
@@ -58,9 +58,9 @@ jobs:
         run: node --test src/gui/foxglove_extensions/mission_control/test/panel.test.cjs
 
   core-simulation-build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     container:
-      image: ros:humble-ros-base-jammy
+      image: ros:jazzy-ros-base-noble
     env:
       # colcon must not discover robot's SDK/hardware exec_depends (e.g. zed2i_driver): it requires discovered deps to be built.
       CORE_PACKAGE_PATHS: >-
@@ -98,17 +98,17 @@ jobs:
             python3-rosdep
           rosdep update
           rosdep install --from-paths $CORE_PACKAGE_PATHS \
-            --ignore-src --rosdistro humble -r -y
+            --ignore-src --rosdistro jazzy -r -y
 
       - name: Build core simulation packages
         run: |
-          source /opt/ros/humble/setup.bash
+          source /opt/ros/jazzy/setup.bash
           source scripts/setup/njord_env.sh
           colcon build --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS
 
       - name: Test core simulation packages
         run: |
-          source /opt/ros/humble/setup.bash
+          source /opt/ros/jazzy/setup.bash
           source install/setup.bash
           colcon test --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS --packages-select \
             njord_platform \

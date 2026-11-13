@@ -43,16 +43,10 @@ macro(njord_detect_platform)
 
   string(TOLOWER "$ENV{ROS_DISTRO}" NJORD_ROS_DISTRO)
 
-  set(NJORD_ROS_DISTRO_IS_FOXY OFF)
-  set(NJORD_ROS_DISTRO_IS_HUMBLE OFF)
-  set(NJORD_ROS_DISTRO_IS_JAZZY OFF)
-  if(NJORD_ROS_DISTRO STREQUAL "foxy")
-    set(NJORD_ROS_DISTRO_IS_FOXY ON)
-  elseif(NJORD_ROS_DISTRO STREQUAL "humble")
-    set(NJORD_ROS_DISTRO_IS_HUMBLE ON)
-  elseif(NJORD_ROS_DISTRO STREQUAL "jazzy")
-    set(NJORD_ROS_DISTRO_IS_JAZZY ON)
+  if(NOT NJORD_ROS_DISTRO STREQUAL "jazzy")
+    message(FATAL_ERROR "This workspace requires ROS_DISTRO=jazzy")
   endif()
+  set(NJORD_ROS_DISTRO_IS_JAZZY ON)
 
   # ---------------------------------------------------------------------
   # CUDA
@@ -232,19 +226,13 @@ endmacro()
 # njord_distro_header(<out_var> <pkg>/<stem>)
 #
 # Generalization of the um982_driver tf2_geometry_msgs header shim: picks
-# ".h" for foxy and ".hpp" for humble/jazzy.
+# ".hpp" for the supported Jazzy environment.
 macro(njord_distro_header out_var pkg_stem)
   if(NOT DEFINED NJORD_ROS_DISTRO)
     message(FATAL_ERROR "njord_distro_header() called before njord_detect_platform()")
   endif()
 
-  if(NJORD_ROS_DISTRO STREQUAL "foxy")
-    set(${out_var} "${pkg_stem}.h")
-  elseif(NJORD_ROS_DISTRO STREQUAL "humble" OR NJORD_ROS_DISTRO STREQUAL "jazzy")
-    set(${out_var} "${pkg_stem}.hpp")
-  else()
-    message(FATAL_ERROR "Unsupported ROS_DISTRO: ${NJORD_ROS_DISTRO}. Expected one of: foxy, humble, jazzy.")
-  endif()
+  set(${out_var} "${pkg_stem}.hpp")
 endmacro()
 
 # njord_find_header(<out_var> <hint_dirs> <candidate1> [<candidate2> ...])
@@ -272,8 +260,8 @@ macro(njord_find_header out_var hint_dirs)
   set(_njord_find_header_found_candidate "")
 
   # A package's exported <pkg>_INCLUDE_DIRS does not always contain the
-  # directory holding its own headers -- cv_bridge 3.2.1 on Humble, for
-  # example, exports only its dependencies' include dirs.  So always search
+  # directory holding its own headers. Some builds export only their
+  # dependencies' include dirs. So always search
   # the include/ directory of every ament prefix on top of the caller's
   # hints.
   # AMENT_PREFIX_PATH is colon-separated; turn it into a CMake list first.

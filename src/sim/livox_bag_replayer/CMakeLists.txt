@@ -12,25 +12,12 @@ find_package(rosbag2_cpp REQUIRED)
 find_package(rosbag2_storage REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-# SerializedBagMessage gained recv_timestamp in ROS 2 Jazzy.  Humble only
-# exposes time_stamp, so select the member at configure time rather than
-# relying on a rosbag2 version number (which is not consistently exported by
-# all ROS binary packages).
-string(TOLOWER "$ENV{ROS_DISTRO}" LIVOX_BAG_REPLAYER_ROS_DISTRO)
-if(LIVOX_BAG_REPLAYER_ROS_DISTRO STREQUAL "humble")
-  set(LIVOX_BAG_REPLAYER_HAS_RECV_TIMESTAMP 0)
-elseif(LIVOX_BAG_REPLAYER_ROS_DISTRO STREQUAL "jazzy")
-  set(LIVOX_BAG_REPLAYER_HAS_RECV_TIMESTAMP 1)
-else()
-  message(FATAL_ERROR
-    "livox_bag_replayer supports ROS_DISTRO=humble or jazzy; got "
-    "'${LIVOX_BAG_REPLAYER_ROS_DISTRO}'")
+if(NOT "$ENV{ROS_DISTRO}" STREQUAL "jazzy")
+  message(FATAL_ERROR "livox_bag_replayer requires ROS_DISTRO=jazzy")
 endif()
 
 add_library(bag_replayer_component SHARED src/bag_replayer_node.cpp)
 target_compile_features(bag_replayer_component PUBLIC cxx_std_17)
-target_compile_definitions(bag_replayer_component PRIVATE
-  LIVOX_BAG_REPLAYER_HAS_RECV_TIMESTAMP=${LIVOX_BAG_REPLAYER_HAS_RECV_TIMESTAMP})
 ament_target_dependencies(
   bag_replayer_component
   rclcpp

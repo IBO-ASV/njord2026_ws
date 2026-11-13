@@ -747,7 +747,7 @@ class MissionManager(Node):
         projection_request.ll_point = GeoPoint(
             latitude=point.latitude, longitude=point.longitude, altitude=point.altitude
         )
-        # The Humble /fromLL service can lose an individual DDS response
+        # The /fromLL service can lose an individual DDS response
         # while remaining available for the next request.  Associate every
         # request with a serial so a late reply from a timed-out attempt is
         # ignored rather than being appended as a duplicate waypoint.

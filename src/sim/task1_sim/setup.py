@@ -20,7 +20,6 @@ setup(
         ]),
         ("share/" + package_name + "/config", [
             "config/task1_params.yaml",
-            "config/task1_nav2_params_humble.yaml",
             "config/task1_nav2_params_jazzy.yaml",
             "config/task1_ekf_local.yaml",
         ]),

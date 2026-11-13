@@ -208,22 +208,22 @@ def test_resident_nav2_profile_is_selected_by_role_bringup():
     nav2_source = _read_launch_source("nav2.launch.py")
 
     assert '"profile": LaunchConfiguration("active_nav2_profile")' in minipc_source
-    assert "'task1': 'nav2_params_humble.yaml'" in nav2_source
-    assert "'task2': 'nav2_params_task2_humble.yaml'" in nav2_source
-    assert "'task3': 'nav2_params_task3_humble.yaml'" in nav2_source
+    assert "'task1': 'nav2_params_jazzy.yaml'" in nav2_source
+    assert "'task2': 'nav2_params_task2_jazzy.yaml'" in nav2_source
+    assert "'task3': 'nav2_params_task3_jazzy.yaml'" in nav2_source
     assert "changed by Mission Manager" in nav2_source
 
 
 def test_task1_navfn_plugin_uses_jazzy_pluginlib_type_name():
     params = yaml.safe_load(
-        (Path(_LAUNCH_DIR).parents[0] / "config" / "nav2_params_humble.yaml").read_text()
+        (Path(_LAUNCH_DIR).parents[0] / "config" / "nav2_params_jazzy.yaml").read_text()
     )
     planner = params["planner_server"]["ros__parameters"]["GridBased"]
 
     assert planner["plugin"] == "nav2_navfn_planner::NavfnPlanner"
 
 
-@pytest.mark.parametrize("filename", ["nav2_params_task3_humble.yaml", "nav2_params_task3_jazzy.yaml"])
+@pytest.mark.parametrize("filename", ["nav2_params_task3_jazzy.yaml"])
 def test_task3_requires_goal_heading_alignment(filename):
     params = yaml.safe_load((Path(_LAUNCH_DIR).parents[0] / "config" / filename).read_text())
     controller = params["controller_server"]["ros__parameters"]
@@ -234,12 +234,8 @@ def test_task3_requires_goal_heading_alignment(filename):
     assert checker["plugin"] == "robot::SelectiveHeadingGoalChecker"
     assert checker["yaw_goal_tolerance"] == pytest.approx(0.35)
     assert checker["position_only_xy_goal_tolerance"] == pytest.approx(1.5)
-    if filename.endswith("jazzy.yaml"):
-        assert checker["heading_required_goal_xs"] == []
-        assert checker["heading_required_goal_ys"] == []
-    else:
-        assert "heading_required_goal_xs" not in checker
-        assert "heading_required_goal_ys" not in checker
+    assert checker["heading_required_goal_xs"] == []
+    assert checker["heading_required_goal_ys"] == []
     assert checker["heading_required_goal_tolerance"] == pytest.approx(1.0)
 
 
@@ -270,7 +266,7 @@ def test_task2_uses_only_follow_path_controller_and_its_readiness_owner():
     supervisor_source = (Path(_LAUNCH_DIR).parents[1] / "diagnostics" /
                          "diagnostic_monitors" / "src" / "autonomy_supervisor.cpp").read_text()
     task2_params = (Path(_LAUNCH_DIR).parents[0] / "config" /
-                    "nav2_params_task2_humble.yaml").read_text()
+                    "nav2_params_task2_jazzy.yaml").read_text()
 
     assert '"navigation_launch_task2.py"' in minipc_source
     assert '"task2_mission_adapter.launch.py"' not in minipc_source
@@ -620,7 +616,7 @@ def test_task1_uses_only_the_odom_to_base_link_navigation_tree():
         encoding="utf-8",
     ) as stream:
         local_ekf = yaml.safe_load(stream)["um982_feedback_ekf"]["ros__parameters"]
-    with open(os.path.join(robot_config_dir, "nav2_params_humble.yaml"), encoding="utf-8") as stream:
+    with open(os.path.join(robot_config_dir, "nav2_params_jazzy.yaml"), encoding="utf-8") as stream:
         nav2 = yaml.safe_load(stream)
 
     assert local_ekf["publish_tf"] is True
@@ -641,7 +637,7 @@ def test_task1_uses_only_the_odom_to_base_link_navigation_tree():
     assert local_obstacle_layer["virtual_wall"]["topic"] == "/virtual_obstacles"
 
 
-@pytest.mark.parametrize("filename", ["nav2_params_task3_humble.yaml", "nav2_params_task3_jazzy.yaml"])
+@pytest.mark.parametrize("filename", ["nav2_params_task3_jazzy.yaml"])
 def test_task3_uses_the_single_local_odom_source(filename):
     with open(os.path.join(_THIS_DIR, "..", "config", filename), encoding="utf-8") as stream:
         nav2 = yaml.safe_load(stream)

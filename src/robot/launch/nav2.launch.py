@@ -38,9 +38,9 @@ def _launch_nav2(context, pkg_robot):
     params_file = LaunchConfiguration('params_file').perform(context)
     if not params_file:
         profile_files = {
-            'task1': 'nav2_params_humble.yaml',
-            'task2': 'nav2_params_task2_humble.yaml',
-            'task3': 'nav2_params_task3_humble.yaml',
+            'task1': 'nav2_params_jazzy.yaml',
+            'task2': 'nav2_params_task2_jazzy.yaml',
+            'task3': 'nav2_params_task3_jazzy.yaml',
         }
         try:
             params_file = os.path.join(pkg_robot, 'config', profile_files[profile])

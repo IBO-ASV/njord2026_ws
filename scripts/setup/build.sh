@@ -3,8 +3,8 @@
 #
 # Thin wrapper: sources njord_env.sh (platform detection) and runs
 # colcon build with a Release build type. Build artifacts are isolated by
-# ROS distro and hardware profile so CMake never reuses Humble/Jazzy (or
-# miniPC/Jetson) configuration results. Extra arguments are forwarded to
+# Jazzy and hardware profile so CMake never reuses miniPC/Jetson
+# configuration results. Extra arguments are forwarded to
 # colcon build, e.g.:
 #   scripts/setup/build.sh --packages-select njord_platform
 set -euo pipefail

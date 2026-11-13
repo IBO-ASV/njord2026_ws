@@ -28,11 +28,7 @@ namespace livox_bag_replayer
 
 int64_t bagMessageTimestamp(const rosbag2_storage::SerializedBagMessage & message)
 {
-#if LIVOX_BAG_REPLAYER_HAS_RECV_TIMESTAMP
   return message.recv_timestamp;
-#else
-  return message.time_stamp;
-#endif
 }
 
 class BagReplayerNode : public rclcpp::Node

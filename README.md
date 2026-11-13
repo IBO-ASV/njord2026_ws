@@ -30,7 +30,12 @@ minIPC プロファイルでは `scripts/setup/njord_env.sh` が Livox 関連と
 配線図・ノード配置・帯域の注意・ネットワーク設定（FastRTPS / Zenoh）・時刻同期・検証手順は **`docs/operations/two_machine_split.md`** にまとめてある。
 
 ## 環境構築
-まずはros2 humbleが入っているubuntu22.04を起動し、以下のコマンドでこのワークスペースをクローンしてください。
+
+対応するROSディストリビューションは **Jazzyのみ**です。全端末でJazzyを使用します。
+JetsonのOS・CUDA・ZED SDKは機種ごとに適合する構成を使い、ROSはJazzyに揃えてください。
+旧環境のinstallをsourceせず、Jazzyで再ビルドしてください。
+
+ROS 2 Jazzy の環境（標準構成は Ubuntu 24.04）を用意し、以下のコマンドでこのワークスペースをクローンしてください。
 
 ```shell
 # githubのsshを通していない場合
@@ -62,7 +67,7 @@ cd njord2026_ws && colcon build --symlink-install
 でなくてもlaunchするときにエラーが出ると思うので入れましょう。
 
 ```shell
-sudo apt install ros-humble-ecl* ros-humble-robot-localization
+sudo apt install ros-jazzy-ecl* ros-jazzy-robot-localization
 ```
 
 ビルドが成功したら環境構築はうまく行っていると思います。
@@ -105,9 +110,7 @@ $ tree -d
     ├── driver
     │   ├── camera
     │   │   ├── usb_camera_driver   # logicool c270用
-    │   │   └── zed-ros2-wrapper/ # zed 2i用
-    │   │       ├── zed_ros2
-    │   │       └── zed_wrapper/
+    │   │   └── zed2i_driver/ # 現行ZED SDKドライバ
     │   ├── gnss
     │   │   ├── drogger_bt  # drogger gnss moduleとblue toothで接続する用
     │   │   ├── drogger_rws # drogger gnss moduleの中身がublox ZED-F9Pのやつ
@@ -143,7 +146,7 @@ https://foxglove.dev/download
 
 ros2ネットワークにそのままアクセスできるようにするため、
 ```shell
-sudo apt install ros-humble-foxglove-bridge
+sudo apt install ros-jazzy-foxglove-bridge
 ```
 をしてください。
 
@@ -282,14 +285,14 @@ sudo tcpdump -ni any udp port 5600 -c 20
 ```
 
 ## YOLOについて
-Jetson Nano + Ubuntu 20.04 + ROS2 Foxy では、ZED/ROS系とYOLO系を同じPython環境に混ぜないでください。
+Jazzyでも、ZED/ROS系とYOLO系のPython依存は分離して管理してください。
 `numpy` の競合で `cv_bridge` が壊れることがあります。
 
-YOLOノードが使用する ROS メッセージ定義は別途必要である。Humble 環境では、初回に
+YOLOノードが使用する ROS メッセージ定義は別途必要である。Jazzy 環境では、初回に
 次を実行する。
 
 ```shell
-sudo apt install ros-humble-vision-msgs
+sudo apt install ros-jazzy-vision-msgs
 ```
 
 運用ルール:
@@ -359,7 +362,6 @@ ros2 launch yolo yolo.launch.py
 * Jetsonで `pip install torch torchvision` を実行する
 * `numpy>=2.0` に上がった状態で ROS Python ノードを起動する
 
-Foxy + ZED 既知の注意点として、`image_transport` は `v3.0.0` 系を使ってください（`zed_wrapper` の README 参照）。
 
 
 #　座標系について
@@ -403,25 +405,24 @@ for wit motion
 * ros-${ROS_DISTRO}-ecl*
 
 for usb camera
-* opencv(ubuntu22.04にあったものを入れてください)
-* ros-humble-cv-bridge
-* ros-humble-image-pipeline
+* OpenCV（ROS Jazzyのcv_bridgeとABI互換のあるもの）
+* ros-jazzy-cv-bridge
+* ros-jazzy-image-pipeline
 * gstreamer系の諸々(mjpg経由は動くけどgstreamer経由はうまく動かない可能性が高いが、依存の中に入れてしまってるので入れてください。すみません)
 
 for zed 2i
 * CUDA 12.x/13.x に対応する Stereolabs ZED SDK（colcon build 時に CMake が検出します）
 * CUDA 13.1 環境では CUDA 13.x 対応の ZED SDK を入れてから rebuild してください
-* ROS2 Foxyなら [scripts/setup/setup_foxy_image_transport.sh](scripts/setup/setup_foxy_image_transport.sh) で image_transport v3 系を source から固定する
 
 for localization
-* ros-humble-robot-localization
+* ros-jazzy-robot-localization
 
 for navigation
-* ros-humble-navigation2
-* ros-humble-nav2-bringup
+* ros-jazzy-navigation2
+* ros-jazzy-nav2-bringup
 
 for simulation
-* ros-humble-tf-transformations
+* ros-jazzy-tf-transformations
 
 about topic network
 
@@ -627,7 +628,7 @@ DroggerとWIT IMUは意図的に起動していない。Nav2へ目標は送信�
   変更前のReliable subscriberではQoS不一致となり、前方YOLOが画像を受信できなかった。
 - `src/sim/task1_sim/config/task1_nav2_params.yaml`のTheta* plugin名を
   `nav2_theta_star_planner::ThetaStarPlanner`へ変更した。
-- 同ファイルからHumble用の`plugin_lib_names`明示リストを削除した。JazzyではBT
+- 同ファイルから旧構成の`plugin_lib_names`明示リストを削除した。JazzyではBT
   pluginが自動ロードされ、明示リストがあると`ComputePathToPose already registered`
   でBT Navigatorが停止したため。
 
@@ -776,7 +777,7 @@ ros2 run yolo yolo_cuda_node --ros-args \
   -p enable_virtual_wall:=false
 ```
 
-Jazzy標準の`navigation_launch.py`はHumbleのTask1設定に存在しないRoute Server、
+Jazzy標準の`navigation_launch.py`は旧Task1設定に存在しないRoute Server、
 Collision Monitor、Docking Serverも無条件起動する。この試験ではTask1で使用する
 従来のNav2ノードだけを、同じparameter fileで個別起動した。BT XMLはリポジトリ内の
 ファイルを実行時指定した。

@@ -29,7 +29,7 @@ export RMW_IMPLEMENTATION=rmw_zenoh_cpp
 
 # ROS setup scripts reference unset variables; -u must be off while sourcing.
 set +u
-source /opt/ros/humble/setup.bash
+source /opt/ros/jazzy/setup.bash
 source "$WS/install/setup.bash"
 set -u
 

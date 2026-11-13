@@ -1,3 +1,5 @@
+> 過去の異なるROSディストリビューション間での調査記録です。現行運用は全端末Jazzyです。以下の障害をJazzy同士で再現確認したという意味ではありません。
+
 # ROS 2 Humble/Jazzy 間で Service/Action が通らないとき、認証済み UDP topic 経路を作った
 
 Ground PC は ROS 2 Jazzy、船載 miniPC は ROS 2 Humble という構成で、Zenoh bridge を介してミッション操作を試した。

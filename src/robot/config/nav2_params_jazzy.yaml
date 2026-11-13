@@ -56,7 +56,7 @@ controller_server:
       plugin: "robot::PassThroughGoalChecker"
       xy_goal_tolerance: 0.5   # ゴール判定の誤差許容範囲 [m] (船なので広めに)
       yaw_goal_tolerance: 0.5  # 向きの許容範囲 [rad]
-      exit_margin_m: 0.05
+      exit_margin_m: 0.05      # 一度半径に入り、外へ抜けたら次WPへ
 
 planner_server:
   ros__parameters:
@@ -79,8 +79,12 @@ local_costmap:
       robot_base_frame: base_link
       use_sim_time: false
       rolling_window: true
-      width: 10
-      height: 10
+      # The Task 1 navigation profile is also used to reach the exam field.
+      # Keep this costmap centered on the vessel, but give its obstacle
+      # raytracing sources enough margin while the vessel is outside the
+      # original Task 1 test area.
+      width: 30
+      height: 30
       resolution: 0.1
       # ロボットの半径 (円形近似) または footprint (矩形)
       robot_radius: 0.8
@@ -89,16 +93,26 @@ local_costmap:
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        # LiDARの設定
-        observation_sources: livox
-        livox:
-          topic: /livox/lidar
+        # LiDAR と Task 1 cardinal mark から生成する仮想壁。仮想壁は
+        # odom frame で publish されるため、local costmap と同じ TF tree
+        # (odom -> base_link) だけで取り込める。
+        observation_sources: safety_points virtual_wall
+        safety_points:
+          topic: /task1/safety_points
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "PointCloud2"
-          raytrace_max_range: 3.0
-          obstacle_max_range: 2.5
+          raytrace_max_range: 8.0
+          obstacle_max_range: 8.0
+        virtual_wall:
+          topic: /virtual_obstacles
+          max_obstacle_height: 2.0
+          clearing: True
+          marking: True
+          data_type: "PointCloud2"
+          raytrace_max_range: 10.0
+          obstacle_max_range: 9.0
 
       inflation_layer:
         plugin: "nav2_costmap_2d::InflationLayer"
@@ -117,27 +131,30 @@ global_costmap:
       resolution: 0.1
       track_unknown_space: true
 
-      # Map Serverを使わないための設定 (Rolling Window)
-      # GPS走行の場合、巨大なローカルマップのように扱う
-      rolling_window: true
-      width: 200 # m
-      height: 200 # m
-      origin_x: -100.0
-      origin_y: -100.0
+      # Exam-field navigation area, fixed in the odom frame.  The four
+      # specified WGS84 corners resolve through /fromLL to approximately
+      # x=-113.01..39.45 m and y=-219.10..41.81 m.  Keep a 20 m margin.
+      # A fixed odom-frame costmap prevents a legitimate distant GPS goal
+      # from falling outside a rolling odom-frame window.
+      rolling_window: false
+      width: 200 # x=-135..65 m
+      height: 310 # y=-240..70 m
+      origin_x: -135.0
+      origin_y: -240.0
 
       plugins: ["obstacle_layer", "inflation_layer"]
       obstacle_layer:
         plugin: "nav2_costmap_2d::ObstacleLayer"
         enabled: True
-        observation_sources: livox virtual_wall
-        livox:
-          topic: /livox/lidar
+        observation_sources: safety_points virtual_wall
+        safety_points:
+          topic: /task1/safety_points
           max_obstacle_height: 2.0
           clearing: True
           marking: True
           data_type: "PointCloud2"
-          raytrace_max_range: 3.0
-          obstacle_max_range: 2.5
+          raytrace_max_range: 8.0
+          obstacle_max_range: 8.0
         # 新しく追加: YOLOが生成した仮想壁
         virtual_wall:
           topic: /virtual_obstacles
@@ -188,10 +205,17 @@ collision_monitor:
       min_points: 6
       visualize: false
       enabled: true
-    observation_sources: ["livox"]
-    livox:
+    observation_sources: ["safety_points", "virtual_wall"]
+    safety_points:
       type: "pointcloud"
-      topic: "/livox/lidar"
+      topic: "/task1/safety_points"
+      min_height: -0.5
+      max_height: 2.0
+      use_global_height: false
+      enabled: true
+    virtual_wall:
+      type: "pointcloud"
+      topic: "/virtual_obstacles"
       min_height: -0.5
       max_height: 2.0
       use_global_height: false

@@ -28,9 +28,7 @@ include(CheckLanguage)
 find_package(njord_platform REQUIRED)
 njord_detect_platform()
 
-# cv_bridge's C++ header was renamed from cv_bridge.h to cv_bridge.hpp partway
-# through the Humble lifecycle (via a patch release), so a distro-name-based
-# guess is not reliable here. Probe for whichever header actually exists.
+# Probe the installed cv_bridge headers, including locally built variants.
 njord_find_header(ZED2I_DRIVER_CV_BRIDGE_HEADER "${cv_bridge_INCLUDE_DIRS}"
   cv_bridge/cv_bridge.hpp
   cv_bridge/cv_bridge.h

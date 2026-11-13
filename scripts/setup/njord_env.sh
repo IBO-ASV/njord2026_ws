@@ -21,6 +21,11 @@ if [[ -z "${ROS_DISTRO:-}" ]]; then
   return 1
 fi
 
+if [[ "${ROS_DISTRO}" != "jazzy" ]]; then
+  echo "[njord_env] ERROR: this workspace requires ROS 2 Jazzy." >&2
+  return 1
+fi
+
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 WS_DIR="$(cd -- "${SCRIPT_DIR}/../.." && pwd)"
 
@@ -145,13 +150,12 @@ unset _njord_dir
 # 7. RMW selection.
 #
 #    fastrtps (default): points FASTRTPS_DEFAULT_PROFILES_FILE at
-#    config/dds/fastdds_profile.xml. Used for Humble<->Jazzy interop
-#    between the two machines.
+#    config/dds/fastdds_profile.xml for the two-machine Jazzy deployment.
 #
 #    zenoh (opt-in): points ZENOH_ROUTER_CONFIG_URI / ZENOH_SESSION_CONFIG_URI
 #    at config/zenoh/*.json5. See those files for important caveats
-#    (Humble needs a source build of rmw_zenoh_cpp, and both machines must
-#    run matching rmw_zenoh_cpp/zenoh-protocol revisions) before relying on
+#    (both machines must run matching rmw_zenoh_cpp/zenoh-protocol
+#    revisions) before relying on
 #    this for a real run.
 # ---------------------------------------------------------------------------
 NJORD_RMW="${NJORD_RMW:-fastrtps}"

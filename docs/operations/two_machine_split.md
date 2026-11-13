@@ -120,10 +120,10 @@ colcon build --symlink-install --cmake-args -DCMAKE_BUILD_TYPE=Release
 
 ZED SDK の探索は、`zed-config.cmake` に記録された CUDA メジャーバージョンが検出済み CUDA Toolkit と一致した場合にのみ `find_package(zed)` を呼ぶ。SDK の config が内部で `find_package(CUDA <major> REQUIRED)` するため、不一致のまま呼ぶと CPU フォールバックすら configure できなくなるため。
 
-### ヘッダ名の distro 差異
+### ヘッダ探索
 
-- `njord_distro_header()` — foxy は `.h`、humble/jazzy は `.hpp`（`tf2_geometry_msgs` 用）
-- `njord_find_header()` — 実際にヘッダが存在するかを probe する。`cv_bridge` は Humble のパッチリリース途中で `.h` → `.hpp` に変わったため、distro 名からは決められない
+- `njord_distro_header()` — Jazzy の `.hpp`（`tf2_geometry_msgs` 用）
+- `njord_find_header()` — 実際のインストール先でヘッダを探索する。
 
 ## 起動
 
@@ -137,7 +137,7 @@ ros2 launch robot jetson_bringup.launch.py
 
 miniPC:
 ```bash
-source /opt/ros/humble/setup.bash && source scripts/setup/njord_env.sh && source install/$ROS_DISTRO/$NJORD_PROFILE/setup.bash
+source /opt/ros/jazzy/setup.bash && source scripts/setup/njord_env.sh && source install/$ROS_DISTRO/$NJORD_PROFILE/setup.bash
 ros2 launch robot minipc_bringup.launch.py active_nav2_profile:=task1
 ```
 
@@ -177,10 +177,10 @@ systemd 常駐にできる。workspace をビルドした後、それぞれの�
 
 ```bash
 # Jetson（Jazzy の例）
-scripts/operations/install_bringup_service.sh --role jetson --ros-distro jazzy --domain-id 0
+scripts/operations/install_bringup_service.sh --role jetson --ros-distro jazzy --domain-id 6
 
-# miniPC（Humble の例）
-scripts/operations/install_bringup_service.sh --role minipc --ros-distro humble --domain-id 0
+# miniPC（Jazzy）
+scripts/operations/install_bringup_service.sh --role minipc --ros-distro jazzy --domain-id 5
 ```
 
 このスクリプトは通常ユーザーで ROS プロセスを実行する
@@ -256,7 +256,7 @@ source scripts/setup/njord_env.sh
 
 `RMW_IMPLEMENTATION=rmw_fastrtps_cpp` と `FASTRTPS_DEFAULT_PROFILES_FILE=config/dds/fastdds_profile.xml` が設定される。
 
-**Jetson が Jazzy、miniPC が Humble という distro 混在では FastRTPS が必須**（`docs/operations/about_thruster.md` 参照）。
+全端末をJazzyに統一する。2台構成の既定RMWはFastRTPS、AGX/Groundの専用起動はCycloneDDSを使用する。
 
 `config/dds/fastdds_profile.xml` の `interfaceWhiteList` は既定でコメントアウトしてある。Wi-Fi 経由のディスカバリを排除したい場合は、有線 NIC の IP を書いて有効化する。
 
@@ -281,7 +281,7 @@ Jetson 側のセッションは `client` モードで router に接続するの�
 
 **注意点**:
 
-- `rmw_zenoh` は Jazzy 以降が本流。Humble 版はソースビルドが必要
+- `rmw_zenoh` はJazzy用の同一バージョンを両端末へ導入する。
 - 両機の `rmw_zenoh` リビジョン / zenoh プロトコルバージョンが揃っていないと接続できない
 - **実機投入前に必ず FastRTPS で通してから切り替え検証すること**
 
@@ -290,7 +290,7 @@ Jetson 側のセッションは `client` モードで router に接続するの�
 ### miniPC でのビルド回帰
 
 ```bash
-source /opt/ros/humble/setup.bash && source scripts/setup/njord_env.sh
+source /opt/ros/jazzy/setup.bash && source scripts/setup/njord_env.sh
 rosdep install --from-paths src --ignore-src -y   # glim_ros / livox_ros_driver2 を要求しないこと
 colcon build --symlink-install
 colcon test --packages-select robot && colcon test-result --verbose
@@ -300,7 +300,7 @@ colcon test --packages-select robot && colcon test-result --verbose
 
 `src/robot/test/test_platform_manifest.py` は `platform.yaml` の妥当性を検証する。
 
-CI（`.github/workflows/ros2-ci.yaml`）の `core-simulation-build` ジョブは `ros:humble-ros-base-jammy` = CUDA 無しなので、miniPC プロファイルの回帰テストとしてそのまま機能する。
+CI（`.github/workflows/ros2-ci.yaml`）の `core-simulation-build` ジョブは `ros:jazzy-ros-base-noble` = CUDA 無しなので、miniPC プロファイルの回帰テストとしてそのまま機能する。
 
 ### 実機での確認
 

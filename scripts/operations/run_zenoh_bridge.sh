@@ -10,7 +10,7 @@ usage() {
 
 [[ $# -ge 1 && $# -le 2 ]] || usage
 ROLE="$1"
-ROS_DISTRO_NAME="${2:-${ROS_DISTRO:-}}"
+ROS_DISTRO_NAME="${2:-${ROS_DISTRO:-jazzy}}"
 
 case "${ROLE}" in
   groundpc) ROS_DOMAIN=6 ;;
@@ -19,8 +19,8 @@ case "${ROLE}" in
   *) usage ;;
 esac
 
-if [[ -z "${ROS_DISTRO_NAME}" || ! -r "/opt/ros/${ROS_DISTRO_NAME}/setup.bash" ]]; then
-  echo "Pass a ROS distribution installed under /opt/ros (for example: humble or jazzy)." >&2
+if [[ "${ROS_DISTRO_NAME}" != jazzy || ! -r "/opt/ros/${ROS_DISTRO_NAME}/setup.bash" ]]; then
+  echo "Pass a ROS distribution installed under /opt/ros (jazzy only)." >&2
   exit 1
 fi
 

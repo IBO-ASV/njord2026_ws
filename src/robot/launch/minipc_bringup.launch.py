@@ -1,6 +1,6 @@
 """miniPC-side bringup: vessel control and non-GPU sensors.
 
-x86_64 Ubuntu 22.04 / ROS 2 Humble, no CUDA / no ZED SDK. Owns every USB
+x86_64 / ROS 2 Jazzy, no CUDA / no ZED SDK. Owns every USB
 serial device that is enabled here (Micon and UM982 by default), the CPU-only
 ZED 2i driver and its H.264 ground-video path, localization
 (robot_state_publisher, TF, the selected local filter, global EKF, and navsat_transform via
@@ -511,7 +511,7 @@ def generate_launch_description():
         ])),
         {
             "params_file": PathJoinSubstitution(
-                [FindPackageShare("robot"), "config", "nav2_params_task2_humble.yaml"]
+                [FindPackageShare("robot"), "config", "nav2_params_task2_jazzy.yaml"]
             ),
             "use_sim_time": use_sim_time,
         },
