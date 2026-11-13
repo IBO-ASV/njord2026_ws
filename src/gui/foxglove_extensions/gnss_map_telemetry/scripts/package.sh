@@ -11,6 +11,7 @@ generated_file="$(mktemp)"
     '  const exports = leafletModule.exports;'
   cat "${package_dir}/vendor/leaflet.js"
   printf '%s\n' '  return leafletModule.exports;' '})();' ''
+  cat "${package_dir}/src/course_editor.js"
   cat "${package_dir}/src/extension.js"
 } > "${generated_file}"
 

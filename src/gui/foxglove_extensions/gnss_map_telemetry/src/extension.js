@@ -3,6 +3,7 @@ const SPEED_TOPIC = "/gui/ground_speed_mps";
 const BATTERY_PERCENT_TOPIC = "/gui/battery_percent";
 const TF_TOPIC = "/tf";
 const TF_STATIC_TOPIC = "/tf_static";
+const COURSE_EDITOR_TOPIC = "/course_editor/state";
 const GROUND_WAYPOINT_MARKERS_TOPIC = "/ground_waypoint_markers";
 const WORLD_FRAME = "odom";
 const VESSEL_FRAME = "base_link";
@@ -37,6 +38,11 @@ const PANEL_CSS = `
 .gnss-telemetry{position:absolute;right:12px;top:12px;z-index:1100;min-width:225px;padding:10px 12px;border:1px solid #526375;border-radius:6px;background:rgba(12,18,28,.92);color:#f4f7fb;font:14px/1.5 system-ui,sans-serif;pointer-events:none}
 .gnss-telemetry-title{color:#a9c7e8;font-size:12px;font-weight:700;letter-spacing:.06em}.gnss-telemetry-separator{border-top:1px solid #526375;margin-top:5px;padding-top:5px}
 .gnss-map-error{display:none;position:absolute;left:50%;bottom:34px;z-index:1100;transform:translateX(-50%);padding:7px 10px;border-radius:4px;background:rgba(137,28,28,.92);color:#fff;font:13px system-ui,sans-serif;pointer-events:none}.gnss-map-error.visible{display:block}
+.course-map-marker,.leaflet-marker-icon.leaflet-interactive{pointer-events:auto}
+.course-editor{position:absolute;bottom:10px;left:10px;right:10px;z-index:1200;padding:8px;border:1px solid #526375;border-radius:6px;background:rgba(12,18,28,.94);color:#f4f7fb;font:12px/1.5 system-ui;max-height:38%;overflow:auto}
+.course-editor-controls,.course-editor-choice{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.course-editor button,.course-editor select{padding:5px 7px;background:#223342;color:#fff;border:1px solid #8396a8;border-radius:4px;font:inherit}.course-editor button:disabled,.course-editor select:disabled{opacity:.45}
+.course-editor-info{white-space:pre-wrap;overflow-wrap:anywhere;margin:5px 0}.map-buoy{width:32px;height:32px;box-sizing:border-box;border:3px solid #fff;border-radius:50%;color:#fff;text-align:center;font:bold 11px/26px system-ui;box-shadow:0 1px 4px #111}
 .waypoint-pin{position:relative;width:24px;height:24px;border:2px solid #003b4a;border-radius:50%;background:#00e5ff;color:#00303b;font:800 11px/20px system-ui,sans-serif;text-align:center;box-sizing:border-box;box-shadow:0 1px 3px rgba(0,0,0,.85)}
 .waypoint-pin-leader{position:absolute;left:21px;top:10px;width:10px;border-top:2px solid #00e5ff;filter:drop-shadow(0 1px 1px rgba(0,0,0,.85))}
 .waypoint-pin-label{position:absolute;left:31px;top:0;padding:2px 5px;border:1px solid #00e5ff;border-radius:3px;background:rgba(5,25,35,.92);color:#fff;font:600 11px/1.3 system-ui,sans-serif;box-shadow:0 1px 3px rgba(0,0,0,.85);white-space:nowrap}
@@ -178,6 +184,13 @@ function initGnssMapTelemetry(context) {
   let centered = false;
   let waypointSignature = "";
 
+  const editor = createCourseEditor(context,L,map,root,()=>{
+    for(const item of waypointMarkers.values())map.removeLayer(item);
+    waypointMarkers.clear();
+    if(waypointRoute)map.removeLayer(waypointRoute);
+    waypointRoute=undefined;
+  });
+
   function updateTransforms(message) {
     for (const stamped of message?.transforms || []) {
       const parent = normalizeFrame(stamped.header?.frame_id);
@@ -191,6 +204,7 @@ function initGnssMapTelemetry(context) {
   }
 
   function updateWaypointMarkers(message) {
+    if(editor.hasCourse())return;
     for (const waypoint of message?.markers || []) {
       if (waypoint.action === 3) {
         for (const marker of waypointMarkers.values()) map.removeLayer(marker);
@@ -217,7 +231,7 @@ function initGnssMapTelemetry(context) {
             className: "",
             iconSize: [220, 24],
             iconAnchor: [12, 12],
-            html: `<div class="waypoint-pin">${order}<span class="waypoint-pin-leader"></span><span class="waypoint-pin-label">${order} · ${name}</span></div>`,
+            html: `<div class="waypoint-pin">${order}<span class="waypoint-pin-leader"></span><span class="waypoint-pin-label">${order} · ${escapeMapText(name)}</span></div>`,
           }),
           interactive: false,
         });
@@ -229,7 +243,7 @@ function initGnssMapTelemetry(context) {
           className: "",
           iconSize: [220, 24],
           iconAnchor: [12, 12],
-          html: `<div class="waypoint-pin">${order}<span class="waypoint-pin-leader"></span><span class="waypoint-pin-label">${order} · ${name}</span></div>`,
+          html: `<div class="waypoint-pin">${order}<span class="waypoint-pin-leader"></span><span class="waypoint-pin-label">${order} · ${escapeMapText(name)}</span></div>`,
         }));
       }
     }
@@ -239,7 +253,7 @@ function initGnssMapTelemetry(context) {
     if (orderedWaypoints.length > 1) {
       waypointRoute = L.polyline(
         orderedWaypoints.map(([, item]) => item.getLatLng()),
-        {color: "#00e5ff", weight: 2, opacity: 0.8, dashArray: "6 5", interactive: false},
+        {color: "#1644a6", weight: 4, opacity: 1, dashArray: "7 5", interactive: false},
       ).addTo(map);
     }
     const nextWaypointSignature = [...waypointMarkers.entries()].map(([id, item]) => {
@@ -252,7 +266,7 @@ function initGnssMapTelemetry(context) {
       // A waypoint-only view has no vessel fix; center on the route itself.
       const positions = [...waypointMarkers.values()].map((item) => item.getLatLng());
       if (marker) positions.unshift(marker.getLatLng());
-      map.fitBounds(L.latLngBounds(positions), {padding: [40, 40], maxZoom: 17, animate: false});
+      map.fitBounds(L.latLngBounds(positions), {padding: [40, 40], maxZoom: 19, animate: false});
     }
     waypointSignature = nextWaypointSignature;
   }
@@ -263,7 +277,7 @@ function initGnssMapTelemetry(context) {
     if (!marker) marker = L.marker(position, {icon: vesselIcon(), interactive: false}).addTo(map);
     else marker.setLatLng(position);
     if (!centered) {
-      map.setView(position, 16, {animate: false});
+      if (!editor.hasCourse()) map.setView(position, 16, {animate: false});
       centered = true;
     }
 
@@ -289,21 +303,23 @@ function initGnssMapTelemetry(context) {
       `SOG&nbsp;&nbsp; ${format(state.speedMps, 2, " m/s")}</div>`,
       `BAT&nbsp;&nbsp; ${format(state.batteryPercent, 0, " %")}</div>`,
       '<div class="gnss-telemetry-separator">',
-      `TASK&nbsp; ${activeWaypointTask || "--"}</div>`,
-      `WP&nbsp;&nbsp;&nbsp; ${waypointMarkers.size}</div>`,
+      `TASK&nbsp; ${editor.stats().task || activeWaypointTask || "--"}</div>`,
+      `WP&nbsp;&nbsp;&nbsp; ${editor.hasCourse()?editor.stats().count:waypointMarkers.size}</div>`,
     ].join("");
   }
 
   context.subscribe([
     {topic: FIX_TOPIC}, {topic: SPEED_TOPIC}, {topic: BATTERY_PERCENT_TOPIC},
-    {topic: TF_TOPIC}, {topic: TF_STATIC_TOPIC}, {topic: GROUND_WAYPOINT_MARKERS_TOPIC},
+    {topic: TF_TOPIC}, {topic: TF_STATIC_TOPIC}, {topic: GROUND_WAYPOINT_MARKERS_TOPIC}, {topic: COURSE_EDITOR_TOPIC},
   ]);
   context.watch("currentFrame");
   context.onRender = (renderState, done) => {
     try {
       for (const event of renderState.currentFrame || []) {
         const message = event.message || {};
-        if (event.topic === FIX_TOPIC) {
+        if (event.topic === COURSE_EDITOR_TOPIC) {
+          editor.receive(message);
+        } else if (event.topic === FIX_TOPIC) {
           if (typeof message.latitude === "number") state.latitude = message.latitude;
           if (typeof message.longitude === "number") state.longitude = message.longitude;
         } else if (event.topic === SPEED_TOPIC && typeof message.data === "number") {
@@ -334,6 +350,7 @@ function initGnssMapTelemetry(context) {
 
   return () => {
     resizeObserver.disconnect();
+    editor.destroy();
     map.remove();
     root.replaceChildren();
   };

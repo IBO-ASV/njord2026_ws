@@ -193,3 +193,14 @@ points, numbered labels and a route line for the standard 3D display. Both are
 published at 1 Hz with transient-local durability for late-joining viewers. The
 common layout enables the latter and `/mission/waypoint_markers`. The previous
 sim behavior deleted geographic markers outside active mission states.
+
+
+## Editing a simulated course on the GNSS map
+
+The launch includes `mission_manager/course_editor_node` with the selected
+`sim_task`. GNSS Map Telemetry offers waypoint/buoy dragging, buoy type selection,
+addition/removal and explicit YAML save while MANUAL/IDLE. Edits persist per task
+in `config/course_overrides.yaml`; restart the sim after saving to apply the same
+geometry to environment, generated mission route, costmaps and scoring. This is
+separate from the real waypoint YAML editor. See the
+[map editor instructions](../../gui/foxglove_extensions/gnss_map_telemetry/README.md).

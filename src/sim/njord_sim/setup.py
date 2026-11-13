@@ -9,6 +9,7 @@ setup(
         ("share/ament_index/resource_index/packages", ["resource/njord_sim"]),
         ("share/njord_sim", ["package.xml"]),
         ("share/njord_sim/launch", glob("launch/*.py")),
+        ("share/njord_sim/config", glob("config/*.yaml")),
     ],
     install_requires=["setuptools"],
     maintainer="IBO-ASV",

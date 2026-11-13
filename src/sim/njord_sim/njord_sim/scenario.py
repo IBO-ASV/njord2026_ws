@@ -1,13 +1,14 @@
 """Survey-derived geometry shared by simulation, mission projection and scoring."""
 
-from dataclasses import dataclass, replace
-from math import atan2, cos, sin, hypot
 import json
-import yaml
+from dataclasses import dataclass, replace
+from math import atan2, cos, hypot, sin
 from pathlib import Path
+
+import yaml
 from mission_manager.geodesy import HomeDatum, wgs84_to_enu
 from mission_manager.task_registry import TaskRegistry
-from mission_manager.waypoint_config import WaypointConfigLoader, Waypoint, Route
+from mission_manager.waypoint_config import Route, Waypoint, WaypointConfigLoader
 
 TASKS = ("task1", "task1_2", "task2", "task3_1", "task3_2", "task4")
 
@@ -160,7 +161,27 @@ def scenario(task_id):
             else:
                 opening = 0 if v < 0 else 2
             docks.append((w.x, w.y, axis, length, width, opening))
-    return Scenario(task, route, datum, buoys, docks, (first.x, first.y, yaw))
+    result = Scenario(task, route, datum, buoys, docks, (first.x, first.y, yaw))
+    override_path = Path(get_package_share_directory("njord_sim")) / "config/course_overrides.yaml"
+    if override_path.exists():
+        saved = yaml.safe_load(override_path.read_text()).get("tasks", {}).get(task_id)
+        if saved:
+            from mission_manager.course_editing import validate_edit
+            original = {"waypoints": [{"id": w.waypoint_id} for w in route.waypoints]}
+            validate_edit(original, saved)
+            updated = []
+            for waypoint, point in zip(route.waypoints, saved["waypoints"]):
+                x, y = wgs84_to_enu(point["latitude"], point["longitude"], datum)
+                updated.append(replace(waypoint, x=x, y=y, latitude=point["latitude"], longitude=point["longitude"]))
+            # Preserve docking orientation and route metadata; only position is edited.
+            result.route = replace(route, waypoints=tuple(updated))
+            result.buoys = [(*wgs84_to_enu(b["latitude"], b["longitude"], datum), b["type"]) for b in saved["buoys"]]
+            # Translate each synthetic dock with its edited target.
+            targets = [(before, after) for before, after in zip(route.waypoints, updated) if before.waypoint_type == "dock"]
+            result.docks = [(dock[0]+after.x-before.x, dock[1]+after.y-before.y, *dock[2:]) for dock, (before, after) in zip(docks, targets)]
+            a, b = updated[:2]
+            result.initial = (a.x, a.y, atan2(b.y-a.y, b.x-a.x))
+    return result
 
 
 def dock_segments(dock):

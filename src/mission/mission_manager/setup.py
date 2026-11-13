@@ -24,6 +24,7 @@ setup(
     tests_require=["pytest"],
     entry_points={
         "console_scripts": [
+            "course_editor_node = mission_manager.course_editor_node:main",
             "mission_manager_node = mission_manager.mission_manager_node:main",
             "dock_wall_correction_node = mission_manager.dock_wall_correction_node:main",
             "ground_link_return_monitor_node = mission_manager.ground_link_return_node:main",

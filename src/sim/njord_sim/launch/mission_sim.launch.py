@@ -35,6 +35,8 @@ def launch(context):
         )
 
     nodes = [
+        Node(package="mission_manager", executable="course_editor_node",
+             parameters=[{"sim_task": task}], output="screen"),
         Node(
             package="njord_sim",
             executable="environment",

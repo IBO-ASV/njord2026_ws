@@ -27,6 +27,7 @@ def generate_launch_description():
                 "restart_on_configure": LaunchConfiguration("force_runtime_reconfigure"),
             }],
         ),
+        Node(package="mission_manager", executable="course_editor_node", output="screen"),
         Node(package="mission_manager", executable="operator_dispatcher_node", name="operator_dispatcher", output="screen"),
         Node(
             package="mission_manager",
