@@ -1,3 +1,21 @@
+# ドキュメント案内
+
+| 用途 | 文書 |
+|---|---|
+| 起動・環境構築の入口 | [ワークスペース README](../README.md) |
+| launch・設定の配置と使い分け | [robot](../src/robot/README.md) |
+| 端末構成・ネットワーク | [2台構成](two_machine_split.md) |
+| AGX と Ground Jetson | [起動手順](agx_ground_jetson_startup.md) |
+| シミュレーションの検証 | [受入基準](simulation_acceptance.md) |
+| スラスター通信仕様 | [PROTOCOL](PROTOCOL.md) |
+| ESP32 ファームウェア | 下記の概要、[firm1](firm1/README.md) |
+
+日付付きの実験記録や `simulation_results/`、`topic_audit_20261113/` は
+検証時の証跡です。運用時は上記の入口から参照し、過去の記録を現在の既定設定と
+取り違えないようにしてください。
+
+---
+
 # ESP32 Thruster Firmware
 
 ESP32で4基のスラスター、非常停止用FET、状態表示LEDを制御するArduinoファームウェアです。PCからUARTで単方向のスラスター指令を受信します。

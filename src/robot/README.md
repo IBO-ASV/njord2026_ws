@@ -1,4 +1,29 @@
-this pkg is for launch and visualization
+# robot
+
+実機の launch、共有設定、可視化をまとめるパッケージです。
+
+## launch・設定の配置
+
+| 用途 | 入口・配置 |
+|---|---|
+| 端末別の起動 | `launch/ground_pc.launch.py`、`jetson_bringup.launch.py`、`minipc_bringup.launch.py` |
+| AGX と Ground PC の起動 | ワークスペースの `scripts/run_agx_pair.sh` |
+| ミッションの実行 | `njord-task`。下記のロール別 bringup を参照 |
+| 旧タスクの回帰比較 | `launch/task1.launch.py`、`task2.launch.py`、`task3.launch.py` と番号付き wrapper |
+| EKF・Nav2・センサ設定 | `config/`。利用する launch が選択する設定を編集する |
+| 動的パラメータ | `runtime_params/runtime_parameters.yaml` |
+| 通信設定 | ワークスペースの `config/dds/`、`config/zenoh/` |
+| ミッション設定 | `src/mission/mission_manager/config/` |
+| シミュレーション | `src/sim/` 配下の各パッケージ |
+
+`launch/` と `config/` は CMake で package share にインストールされます。
+launch 名や設定パスは他パッケージ・運用コマンドから参照されるため、移動時は
+include、インストール規則、テスト、運用手順を合わせて更新してください。
+Zenoh 設定はワークスペースの `config/zenoh/` を正本とし、ビルド時に
+`robot/config/zenoh/` へインストールします。
+
+未使用の汎用サンプル `ekf_original.yaml` は削除しました。EKF の変更は
+対象 launch が参照する `ekf_*.yaml` に対して行ってください。
 
 ## ロール別 bringup(Jetson / miniPC 2台構成)
 
