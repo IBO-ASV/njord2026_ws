@@ -17,3 +17,10 @@ rosbag2*
 
 # Local git worktrees used by Codex and other agents.
 _worktrees/
+
+# Reproducible local caches and experiment outputs.
+.pytest_cache/
+.ruff_cache/
+/CMakeFiles/
+/CMakeCache.txt
+/artifacts/
