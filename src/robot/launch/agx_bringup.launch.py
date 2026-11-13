@@ -20,6 +20,7 @@ def generate_launch_description():
     um982 = '/dev/serial/by-id/usb-1a86_USB_Serial-if00-port0'
     camera = '/dev/v4l/by-id/usb-Technologies__Inc._ZED_2i_OV0001-video-index0'
     defaults = {
+        'enable_foxglove_bridge': 'true', 'foxglove_address': '0.0.0.0', 'foxglove_port': '8767',
         'task': 'task1', 'enable_glim': 'true', 'enable_task_perception': 'true',
         'use_sim_time': 'false', 'glim_acc_scale': '1.0',
         'enable_lidar': 'true',  # uses the configured Livox model (MID360S by default)
@@ -55,6 +56,9 @@ def generate_launch_description():
         SetEnvironmentVariable('ROS_DOMAIN_ID', '126'),
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
         include('robot', 'minipc_bringup.launch.py', core_args),
+        include('robot', 'foxglove_bridge.launch.py', {
+            'foxglove_address': cfg('foxglove_address'), 'foxglove_port': cfg('foxglove_port'),
+        }, IfCondition(cfg('enable_foxglove_bridge'))),
         Node(package='robot', executable='agx_rosbag_record_manager', name='agx_rosbag_record_manager', output='screen'),
         include('robot','onboard_localization.launch.py',{'use_sim_time':cfg('use_sim_time'),'glim_acc_scale':cfg('glim_acc_scale'),'enable_gnss_map':cfg('enable_um982')},IfCondition(cfg('enable_glim'))),
         include('robot','onboard_perception.launch.py',{'task':cfg('task'),'use_sim_time':cfg('use_sim_time'),'start_planner':cfg('enable_nav2')},IfCondition(cfg('enable_task_perception'))),

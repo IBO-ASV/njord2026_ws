@@ -26,3 +26,11 @@ called over the bridge using typed CDR request/response. SDK-based bridges negot
 `foxglove.sdk.v1`; legacy bridges negotiate `foxglove.websocket.v1`.
 Custom test clients should offer both (see the [official SDK handshake source](https://docs.rs/foxglove/latest/src/foxglove/websocket/handshake.rs.html)).
 This does not replace checking the installed panel in an operator's Foxglove UI.
+
+The health display lists local odometry, GNSS reception and driver heartbeat
+individually, including signal state, age, rate and monitor message. The active
+policy and ON/OFF gates come from retained `/control/requirements`, not a
+hardcoded GUI assumption. Missing driver-heartbeat signals remain visible.
+GNSS frequency health is explicitly labelled separately from RTK FIX quality.
+The serial writer's independent command-watchdog reason comes from
+`/micon/thruster_command_status`.

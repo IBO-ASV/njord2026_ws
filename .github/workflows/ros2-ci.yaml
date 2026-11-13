@@ -74,6 +74,7 @@ jobs:
         src/navigation/buoy_obstacle_publisher
         src/diagnostics/diagnostic_monitors
         src/driver/micon/thruster_driver
+        src/driver/micon/micon_driver_fd
         src/robot
         src/sim/dutyed_tf_pub_with_disturbance
         src/sim/sensor_sim_with_noise
@@ -118,7 +119,7 @@ jobs:
             task3_sim
           ROS_DOMAIN_ID=70 ROS_LOCALHOST_ONLY=1 RMW_IMPLEMENTATION=rmw_fastrtps_cpp \
             colcon test --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS \
-            --packages-select robot --ctest-args -R test_selective_heading_goal_checker
+            --packages-select robot micon_driver_fd --ctest-args -R "test_selective_heading_goal_checker|test_serial_writer"
           colcon test-result --verbose
 
   mission-simulation-smoke:

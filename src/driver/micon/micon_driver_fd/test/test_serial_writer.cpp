@@ -9,6 +9,9 @@
 #include <cmath>
 #include <cstring>
 #include <memory>
+#include <functional>
+#include <limits>
+#include <stdexcept>
 #include <thread>
 #include <vector>
 
@@ -219,5 +222,150 @@ TEST(SerialWriterIntegration, WritesRosInputsToPseudoTerminal)
   executor.remove_node(writer);
   writer.reset();
   publisher_node.reset();
+  rclcpp::shutdown();
+}
+
+namespace
+{
+class CommandWatchdogTest : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    ASSERT_EQ(openpty(&master_, &slave_, name_, nullptr, nullptr), 0);
+    close(slave_);
+    fcntl(master_, F_SETFL, fcntl(master_, F_GETFL, 0) | O_NONBLOCK);
+    if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+    rclcpp::NodeOptions options;
+    options.parameter_overrides({
+      rclcpp::Parameter("serial_port", std::string(name_)),
+      rclcpp::Parameter("command_timeout_sec", 0.12),
+      rclcpp::Parameter("ground_station_heartbeat_timeout_sec", 0.1),
+      rclcpp::Parameter("use_sim_time", true),  // No /clock: watchdog must still expire.
+    });
+    writer_ = std::make_shared<micon_driver_fd::SerialWriter>(options);
+    producer_ = std::make_shared<rclcpp::Node>("watchdog_test_producer");
+    thrust_ = producer_->create_publisher<std_msgs::msg::Float32MultiArray>("/thruster_command", 10);
+    soft_ = producer_->create_publisher<std_msgs::msg::Bool>("/soft_emg", 10);
+    green_ = producer_->create_publisher<std_msgs::msg::Bool>("/green", 10);
+    sbus_ = producer_->create_publisher<geometry_msgs::msg::Twist>("/cmd_vel_sbus", 10);
+    executor_ = std::make_unique<rclcpp::executors::SingleThreadedExecutor>();
+    executor_->add_node(writer_);
+    executor_->add_node(producer_);
+    const auto deadline = std::chrono::steady_clock::now() + 2s;
+    while (thrust_->get_subscription_count() == 0 && std::chrono::steady_clock::now() < deadline) {
+      executor_->spin_some();
+      std::this_thread::sleep_for(5ms);
+    }
+    ASSERT_GT(thrust_->get_subscription_count(), 0U);
+  }
+
+  void TearDown() override
+  {
+    executor_->remove_node(writer_);
+    executor_->remove_node(producer_);
+    writer_.reset();
+    producer_.reset();
+    close(master_);
+    executor_.reset();
+    rclcpp::shutdown();
+  }
+
+  void spin_for(std::chrono::milliseconds duration, const std::function<void()> & tick = {})
+  {
+    const auto deadline = std::chrono::steady_clock::now() + duration;
+    while (std::chrono::steady_clock::now() < deadline) {
+      // Ground/SBUS traffic must never refresh the independent thrust watchdog.
+      sbus_->publish(geometry_msgs::msg::Twist{});
+      if (tick) {tick();}
+      executor_->spin_some();
+      std::this_thread::sleep_for(5ms);
+    }
+  }
+
+  micon_driver_fd::Packet last_packet()
+  {
+    std::vector<uint8_t> all;
+    uint8_t buffer[4096];
+    ssize_t n;
+    while ((n = read(master_, buffer, sizeof(buffer))) > 0) {
+      all.insert(all.end(), buffer, buffer + n);
+    }
+    auto last = std::find(all.rbegin(), all.rend(), 0);
+    if (last == all.rend()) {return {};}
+    const auto end = last.base();
+    auto begin = end - 1;
+    while (begin != all.begin() && *(begin - 1) != 0) {--begin;}
+    return {begin, end};
+  }
+
+  void send(const std::vector<float> & values)
+  {
+    std_msgs::msg::Float32MultiArray message;
+    message.data = values;
+    thrust_->publish(message);
+  }
+
+  int master_{-1}, slave_{-1};
+  char name_[128]{};
+  std::shared_ptr<micon_driver_fd::SerialWriter> writer_;
+  rclcpp::Node::SharedPtr producer_;
+  std::unique_ptr<rclcpp::executors::SingleThreadedExecutor> executor_;
+  rclcpp::Publisher<std_msgs::msg::Float32MultiArray>::SharedPtr thrust_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr soft_, green_;
+  rclcpp::Publisher<geometry_msgs::msg::Twist>::SharedPtr sbus_;
+};
+}  // namespace
+
+TEST_F(CommandWatchdogTest, StartupStopsAndStaleCommandCannotBeKeptAliveByOtherTraffic)
+{
+  spin_for(100ms);
+  expect_thruster_command_frame(last_packet(), {0, 0, 0, 0}, 0x09, 0, false);
+  spin_for(100ms, [&]() {send({1, 2, 3, 4});});
+  expect_thruster_command_frame(last_packet(), {1, 2, 3, 4}, 0x00, 0, false);
+  spin_for(250ms, [&]() {
+    soft_->publish(std_msgs::msg::Bool().set__data(false));
+    green_->publish(std_msgs::msg::Bool().set__data(true));
+  });
+  expect_thruster_command_frame(last_packet(), {0, 0, 0, 0}, 0x09, 0, false);
+  spin_for(100ms, [&]() {send({4, 3, 2, 1});});
+  expect_thruster_command_frame(last_packet(), {4, 3, 2, 1}, 0x04, 0, false);
+}
+
+TEST_F(CommandWatchdogTest, InvalidValuesStopImmediatelyAndDoNotRefreshFreshness)
+{
+  const std::vector<std::vector<float>> invalid = {
+    {}, {1, 2, 3}, {1, 2, 3, 4, 5},
+    {1, 2, std::numeric_limits<float>::quiet_NaN(), 4},
+    {1, 2, 3, std::numeric_limits<float>::infinity()},
+  };
+  for (const auto & values : invalid) {
+    spin_for(80ms, [&]() {send({1, 2, 3, 4});});
+    spin_for(80ms, [&]() {send(values);});
+    expect_thruster_command_frame(last_packet(), {0, 0, 0, 0}, 0x09, 0, false);
+  }
+}
+
+TEST_F(CommandWatchdogTest, FreshCommandDoesNotClearIndependentSoftwareStop)
+{
+  spin_for(100ms, [&]() {
+    send({1, 2, 3, 4});
+    soft_->publish(std_msgs::msg::Bool().set__data(true));
+  });
+  expect_thruster_command_frame(last_packet(), {1, 2, 3, 4}, 0x08, 0, false);
+  spin_for(200ms);
+  expect_thruster_command_frame(last_packet(), {0, 0, 0, 0}, 0x09, 0, false);
+  spin_for(100ms, [&]() {send({4, 3, 2, 1});});
+  expect_thruster_command_frame(last_packet(), {4, 3, 2, 1}, 0x08, 0, false);
+}
+
+TEST(SerialWriterConfiguration, RejectsDisabledOrNonFiniteCommandTimeout)
+{
+  if (!rclcpp::ok()) {rclcpp::init(0, nullptr);}
+  for (double value : {0.0, -1.0, std::numeric_limits<double>::quiet_NaN()}) {
+    rclcpp::NodeOptions options;
+    options.parameter_overrides({rclcpp::Parameter("command_timeout_sec", value)});
+    EXPECT_THROW(std::make_shared<micon_driver_fd::SerialWriter>(options), std::invalid_argument);
+  }
   rclcpp::shutdown();
 }

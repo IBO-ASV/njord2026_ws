@@ -1,6 +1,9 @@
 #include "micon_driver_fd/serial_writer.hpp"
 
 #include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <stdexcept>
 #include <cerrno>
 #include <fcntl.h>
 #include <functional>
@@ -119,6 +122,10 @@ SerialWriter::SerialWriter(const rclcpp::NodeOptions & options)
 {
   serial_port_ = declare_parameter<std::string>("serial_port", "/dev/ttyUSB0");
   baud_ = declare_parameter<int>("baud", 115200);
+  command_timeout_sec_ = declare_parameter<double>("command_timeout_sec", 0.5);
+  if (!std::isfinite(command_timeout_sec_) || command_timeout_sec_ <= 0.0) {
+    throw std::invalid_argument("command_timeout_sec must be finite and positive");
+  }
   command_topic_ = declare_parameter<std::string>("command_topic", "/thruster_command");
   ground_station_heartbeat_topic_ = declare_parameter<std::string>(
     "ground_station_heartbeat_topic", "/heartbeat/ground_station");
@@ -147,6 +154,11 @@ SerialWriter::SerialWriter(const rclcpp::NodeOptions & options)
   pub_safety_emergency_ = create_publisher<std_msgs::msg::UInt8>(
     "/safety/emergency_stop", rclcpp::QoS(1).transient_local());
 
+  pub_command_fresh_ = create_publisher<std_msgs::msg::Bool>(
+    "/micon/thruster_command_fresh", rclcpp::QoS(1).transient_local());
+  pub_command_status_ = create_publisher<std_msgs::msg::String>(
+    "/micon/thruster_command_status", rclcpp::QoS(1).transient_local());
+  flags_.emergency = true;
   fd_ = open_serial(serial_port_, baud_);
   timer_ = create_wall_timer(
     std::chrono::milliseconds(50), std::bind(&SerialWriter::timer_cb, this));
@@ -192,9 +204,21 @@ SerialWriter::~SerialWriter()
 void SerialWriter::thrust_cb(const std_msgs::msg::Float32MultiArray::SharedPtr msg)
 {
   std::lock_guard<std::mutex> lock(mutex_);
-  for (size_t i = 0; i < thrust_.size(); ++i) {
-    thrust_[i] = i < msg->data.size() ? msg->data[i] : 0.0f;
+  if (msg->data.size() != thrust_.size() ||
+    !std::all_of(msg->data.begin(), msg->data.end(), [](float v) {return std::isfinite(v);}))
+  {
+    thrust_.fill(0.0F);
+    command_received_ = false;
+    command_timeout_emg_ = true;
+    command_status_ = "invalid thrust command: expected exactly four finite values";
+  } else {
+    std::copy(msg->data.begin(), msg->data.end(), thrust_.begin());
+    last_command_ = std::chrono::steady_clock::now();
+    command_received_ = true;
+    command_timeout_emg_ = false;
+    command_status_ = "fresh thrust command";
   }
+  flags_.emergency = soft_emg_ || ground_station_timeout_emg_ || command_timeout_emg_;
 }
 
 void SerialWriter::soft_emg_cb(const std_msgs::msg::Bool::SharedPtr msg)
@@ -202,7 +226,7 @@ void SerialWriter::soft_emg_cb(const std_msgs::msg::Bool::SharedPtr msg)
   {
     std::lock_guard<std::mutex> lock(mutex_);
     soft_emg_ = msg->data;
-    flags_.emergency = soft_emg_ || ground_station_timeout_emg_;
+    flags_.emergency = soft_emg_ || ground_station_timeout_emg_ || command_timeout_emg_;
   }
   publish_safety_state();
 }
@@ -241,24 +265,54 @@ void SerialWriter::refresh_ground_station_watchdog()
   ground_station_heartbeat_received_ = true;
   last_ground_station_heartbeat_ = std::chrono::steady_clock::now();
   ground_station_timeout_emg_ = false;
-  flags_.emergency = soft_emg_;
+  flags_.emergency = soft_emg_ || command_timeout_emg_;
 }
 
 void SerialWriter::timer_cb()
 {
   update_ground_station_watchdog();
+  update_command_watchdog();
+  publish_safety_state();
   if (fd_ < 0) {return;}
   read_relay_state();
   Packet packet;
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    packet = encode_packet(thrust_, flags_, sequence_++);
+    auto outgoing_flags = flags_;
+    auto outgoing_thrust = thrust_;
+    if (command_timeout_emg_) {
+      outgoing_thrust.fill(0.0F);
+      outgoing_flags.red = true;
+      outgoing_flags.yellow = false;
+      outgoing_flags.green = false;
+    }
+    packet = encode_packet(outgoing_thrust, outgoing_flags, sequence_++);
   }
   const ssize_t result = write(fd_, packet.data(), packet.size());
   if (result != static_cast<ssize_t>(packet.size())) {
     RCLCPP_WARN(get_logger(), "serial write failed or incomplete");
   }
   publish_safety_state();
+}
+
+void SerialWriter::update_command_watchdog()
+{
+  std::lock_guard<std::mutex> lock(mutex_);
+  if (command_received_ && std::chrono::duration<double>(
+      std::chrono::steady_clock::now() - last_command_).count() > command_timeout_sec_)
+  {
+    thrust_.fill(0.0F);
+    command_timeout_emg_ = true;
+    command_status_ = "thrust command stale: timeout " + std::to_string(command_timeout_sec_) + " s";
+  }
+  flags_.emergency = soft_emg_ || ground_station_timeout_emg_ || command_timeout_emg_;
+  pub_command_fresh_->publish(std_msgs::msg::Bool().set__data(!command_timeout_emg_));
+  auto status = command_status_;
+  if (soft_emg_) {status += "; software emergency stop requested";}
+  if (ground_station_timeout_emg_) {status += "; ground-station heartbeat timeout";}
+  if (relay_active_) {status += "; relay input active";}
+  if (fd_ < 0) {status += "; serial port unavailable";}
+  pub_command_status_->publish(std_msgs::msg::String().set__data(status));
 }
 
 void SerialWriter::read_relay_state()
@@ -294,7 +348,7 @@ void SerialWriter::update_ground_station_watchdog()
     timeout = !ground_station_heartbeat_received_ ||
       elapsed > ground_station_heartbeat_timeout_sec_;
     ground_station_timeout_emg_ = timeout;
-    flags_.emergency = soft_emg_ || ground_station_timeout_emg_;
+    flags_.emergency = soft_emg_ || ground_station_timeout_emg_ || command_timeout_emg_;
   }
   if (timeout) {
     RCLCPP_WARN_THROTTLE(
@@ -309,7 +363,7 @@ void SerialWriter::publish_safety_state()
   bool relay_active = false;
   {
     std::lock_guard<std::mutex> lock(mutex_);
-    soft_emg = soft_emg_ || ground_station_timeout_emg_;
+    soft_emg = soft_emg_ || ground_station_timeout_emg_ || command_timeout_emg_;
     relay_active = relay_active_;
   }
   pub_relay_active_->publish(std_msgs::msg::Bool().set__data(relay_active));

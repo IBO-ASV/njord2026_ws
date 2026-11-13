@@ -109,7 +109,9 @@ MPPI単独のポート側交差ではMission成功でも船体間隔0.019mで不
 ## 再実行と残る確認
 
 [起動・依存関係・操作手順](../src/sim/njord_sim/README.md) を参照してください。
-このホストはディスク空きが少ないため、検証用PyTorchとFoxglove bridgeをRAM側に展開しました。
+2026-11-12の検証時はディスク空きが少なく、検証用PyTorchとFoxglove bridgeをRAM側に展開しました。
+2026-11-13にはbridgeをworkspace内へ永続配置したため、現在はbridge用の一時環境変数は不要です。
+[現在のbridge起動とwatchdogの説明](foxglove_and_serial_watchdog.md)も参照してください。
 現在のセッションでTask2を再実行する場合はROS環境のsource後に次を追加します。
 再起動後は手順書の通常の依存関係インストールが必要です。
 

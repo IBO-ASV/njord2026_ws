@@ -1,5 +1,8 @@
 # AGX vessel + ground Jetson startup
 
+2026-11-13: AGXのFoxglove bridgeは標準で8767に起動します。
+[現在のbridgeとserial watchdogの説明](foxglove_and_serial_watchdog.md)を参照。以下の記録は2026-10-13時点です。
+
 Verified on 2026-10-13 (JST). Both workspaces: `/home/ibo/njord2026_ws`.
 
 - Vessel AGX: `ibo@100.73.137.72`, ROS domain 5.

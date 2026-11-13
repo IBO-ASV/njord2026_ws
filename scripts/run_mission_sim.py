@@ -65,6 +65,7 @@ def main():
                     "njord_sim",
                     "mission_sim.launch.py",
                     f"task:={a.task}",
+                    "foxglove:=false",  # Parallel acceptance runs never own a GUI port.
                     f"noise:={str(a.noise).lower()}",
                     f"model:={a.model}",
                     f"seed:={a.seed}",

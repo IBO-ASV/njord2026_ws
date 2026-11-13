@@ -14,6 +14,7 @@
 #include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/u_int8.hpp"
+#include "std_msgs/msg/string.hpp"
 
 namespace micon_driver_fd
 {
@@ -65,6 +66,7 @@ private:
   void refresh_ground_station_watchdog();
   void timer_cb();
   void update_ground_station_watchdog();
+  void update_command_watchdog();
   void read_relay_state();
   void publish_safety_state();
   int open_serial(const std::string & device, int baud);
@@ -79,6 +81,11 @@ private:
   std::string command_topic_;
   std::string ground_station_heartbeat_topic_;
   double ground_station_heartbeat_timeout_sec_{0.0};
+  double command_timeout_sec_{0.5};
+  bool command_received_{false};
+  bool command_timeout_emg_{true};
+  std::string command_status_{"waiting for first valid thrust command"};
+  std::chrono::steady_clock::time_point last_command_{};
   bool soft_emg_{false};
   bool ground_station_heartbeat_received_{false};
   bool ground_station_timeout_emg_{false};
@@ -93,6 +100,8 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Twist>::SharedPtr sub_sbus_command_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_relay_active_;
   rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr pub_safety_emergency_;
+  rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr pub_command_fresh_;
+  rclcpp::Publisher<std_msgs::msg::String>::SharedPtr pub_command_status_;
   rclcpp::TimerBase::SharedPtr timer_;
 };
 

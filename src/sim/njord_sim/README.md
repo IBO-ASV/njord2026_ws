@@ -1,8 +1,10 @@
 # Hardware-free mission simulation
 
 ROS 2 Jazzy CPU simulation through the production Mission Manager, Control
-Manager, command arbiter and Nav2. No sensor drivers, serial/CAN transport,
-network bridges or real actuators are started. Each run starts MANUAL / IDLE.
+Manager, command arbiter and Nav2. No hardware sensor drivers, serial/CAN
+transport or real actuators are started. Each run starts MANUAL / IDLE.
+Interactive launches start Foxglove by default at `0.0.0.0:8767`; the automated
+runner explicitly disables it so parallel runs do not compete for a GUI port.
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -39,21 +41,26 @@ real-vessel assessment. The synthetic port-side NPC never yields, so this
 fixture includes emergency avoidance rather than assuming stand-on priority
 alone prevents collision.
 
-For interactive use, install the optional bridge (`sudo apt install
-ros-jazzy-foxglove-bridge`). CPU PyTorch can be installed with
+For interactive use, install the bridge (`sudo apt install
+ros-jazzy-foxglove-bridge`). Without sudo, this workspace provides a local
+runtime install: `python3 scripts/install_foxglove_bridge_local.py`, then source
+`install/setup.bash` again. This install persists across reboots. CPU PyTorch can be installed with
 `sudo apt install python3-torch`. Build the dependency packages named above
 before running Task2.
 
 
 ```bash
 export ROS_DOMAIN_ID=89 ROS_LOCALHOST_ONLY=1 RMW_IMPLEMENTATION=rmw_fastrtps_cpp
-ros2 launch njord_sim mission_sim.launch.py task:=task3_2 noise:=true foxglove:=true
+ros2 launch njord_sim mission_sim.launch.py task:=task1 noise:=true
 # In a terminal with the same ROS_DOMAIN_ID / RMW:
-ros2 run mission_manager njord-task start task3_2 --auto
+ros2 run mission_manager njord-task start task1 --auto
 ```
 
-Connect Foxglove to `ws://localhost:8767` (or an SSH tunnel to that loopback
-port) and import `foxglove_setting.json`. The Mission Control panel lists the
+Connect Foxglove directly to `ws://<AGX-IP>:8767` from the viewing PC and import
+`foxglove_setting.json`. This is a WebSocket endpoint, not an HTTP-hosted GUI.
+Use `foxglove_address:=127.0.0.1` for loopback plus SSH forwarding, or
+`foxglove:=false` to disable the bridge. `foxglove_port:=8768` selects another
+port for a second interactive run. The Mission Control panel lists the
 run's task and shows progress, permission/inhibition, effective command source,
 health and the retained last result. Start requests AUTO; stop uses the active
 execution ID. State older than 3 s disables start. The map publishes the private

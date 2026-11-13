@@ -19,6 +19,15 @@ test('Mission controls use task discovery, execution IDs and freshness',async()=
   context.onRender({currentFrame:[{topic:'/alert_lamp/command',message:{color:6,pattern:2,period:.5,reason:'sensor not ready'}},{topic:'/health/state',message:{summary_state:3,message:'GNSS stale'}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('黄＋赤 · 点滅 (0.5秒周期)')));
   assert(elements.some(e=>String(e.textContent).includes('Health: ERROR · GNSS stale')));
+  context.onRender({currentFrame:[
+   {topic:'/control/requirements',message:{data:JSON.stringify({policy:'task1',requirements:{require_localization_heartbeat:true,require_rtk_fix:false,require_driver_heartbeat:false}})}},
+   {topic:'/health/state',message:{summary_state:3,message:'sensor stale',signals:[{name:'local_odometry',state:4,age_sec:2.1,measured_frequency_hz:0,message:'no odometry'}]}},
+   {topic:'/micon/thruster_command_status',message:{data:'thrust command stale: timeout 0.5 s'}}
+  ]},()=>{});
+  assert(elements.some(e=>String(e.textContent).includes('自己位置: STALE')&&String(e.textContent).includes('age=2.1s')&&String(e.textContent).includes('AUTO禁止条件: ON')));
+  assert(elements.some(e=>String(e.textContent).includes('GNSS受信: 監視信号が未登録 ｜ AUTO禁止条件: OFF')));
+  assert(elements.some(e=>String(e.textContent).includes('driver heartbeat: 監視信号が未登録')));
+  assert(elements.some(e=>String(e.textContent).includes('thrust command stale: timeout 0.5 s')));
   context.onRender({currentFrame:[{topic:'/mission/status',message:{state:5,execution_id:'execution-2',task_id:'task2'}},{topic:'/mission/task2/path_safe',message:{data:false}}]},()=>{});
   assert(elements.some(e=>String(e.textContent).includes('避航経路の安全条件未成立')));
   time+=4000;timer();assert.equal(start.disabled,true);assert(elements.some(e=>String(e.textContent).includes('STALE')));

@@ -60,6 +60,17 @@ software emergency stopが1、またはGPIO2の物理E-stop入力がLOWの場合
 有効な指令を1000 ms受信しなかった場合も、ESP32は全スラスターを中立にして
 FETをLOWにします。
 
+## PC側の推力指令watchdog
+
+`micon_driver_fd/serial_writer` は `/thruster_command` の受信をsteady clockで監視します。
+起動後に有効指令が来ていない場合、最後の有効指令から `command_timeout_sec`（既定0.5秒）
+を超えた場合、配列が4要素でない場合、NaN/Infを含む場合は、4基ゼロ＋software emergency stop＋赤を送ります。
+LED・地上局・SBUS通信だけではこの期限を更新しません。新しい有効な推力指令で復帰しますが、
+独立したsoftware emergency stopや地上局watchdogは維持します。
+`/micon/thruster_command_status` と `/micon/thruster_command_fresh` に受信状態を公開します。
+
+ESP32のUART無受信1秒停止とは別の監視です。UARTのフレーム形式は変更していません。
+
 ## CRC
 
 CRCはversionからpayload末尾までの22 byteを対象とします。

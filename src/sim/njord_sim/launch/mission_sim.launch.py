@@ -110,19 +110,13 @@ def launch(context):
         )
     if LaunchConfiguration("foxglove").perform(context) == "true":
         nodes.append(
-            Node(
-                package="foxglove_bridge",
-                executable="foxglove_bridge",
-                parameters=[
-                    {
-                        "port": int(
-                            LaunchConfiguration("foxglove_port").perform(context)
-                        ),
-                        "address": "127.0.0.1",
-                        "capabilities": ["services", "parameters", "connectionGraph"],
-                    }
-                ],
-                output="screen",
+            include(
+                "robot",
+                "foxglove_bridge.launch.py",
+                {
+                    "foxglove_address": LaunchConfiguration("foxglove_address"),
+                    "foxglove_port": LaunchConfiguration("foxglove_port"),
+                },
             )
         )
     if task == "task2":
@@ -190,9 +184,10 @@ def generate_launch_description():
             DeclareLaunchArgument("encounter", default_value="head_on"),
             DeclareLaunchArgument("config_dir", default_value=""),
             DeclareLaunchArgument(
-                "foxglove", default_value="false", choices=["true", "false"]
+                "foxglove", default_value="true", choices=["true", "false"]
             ),
             DeclareLaunchArgument("foxglove_port", default_value="8767"),
+            DeclareLaunchArgument("foxglove_address", default_value="0.0.0.0"),
             DeclareLaunchArgument("dropout_after", default_value="0.0"),
             OpaqueFunction(function=launch),
         ]

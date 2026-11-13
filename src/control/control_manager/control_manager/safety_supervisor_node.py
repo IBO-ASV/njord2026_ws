@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 from pathlib import Path
 
 from ament_index_python.packages import get_package_share_directory
@@ -49,6 +50,7 @@ class SafetySupervisor(Node):
         self._nav_received_ns: int | None = None
         self._sbus_received_ns: int | None = None
 
+        self._requirements_pub = self.create_publisher(String, "/control/requirements", TRANSIENT_QOS)
         self._state_pub = self.create_publisher(ControlState, "/control/state", TRANSIENT_QOS)
         self.create_subscription(UInt8, "/control/requested_mode", self._on_requested_mode, TRANSIENT_QOS)
         self.create_subscription(UInt8, "/safety/emergency_stop", self._on_emergency_stop, 10)
@@ -158,6 +160,13 @@ class SafetySupervisor(Node):
         state.state = int(control_state)
         state.effective_source = int(effective_source)
         self._state_pub.publish(state)
+        try:
+            requirements = self._policy.requirements_for(self._active_policy)
+        except PolicyError:
+            requirements = {}
+        self._requirements_pub.publish(String(data=json.dumps({
+            "policy": self._active_policy, "requirements": dict(requirements),
+        })))
 
 
 def main(args=None) -> None:
