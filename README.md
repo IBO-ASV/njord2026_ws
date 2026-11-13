@@ -293,6 +293,24 @@ sudo apt install ros-humble-vision-msgs
 * YOLOノードは `.venv` で実行する
 * Jetson では `torch` / `torchvision` を `pip` で上書きしない
 
+### AGX Orin / JetPack 7.2 / ROS Jazzy（uv）
+
+このAGXでは、CPU用とJetson GPU用のlock構成を選択できます。
+
+```bash
+bash scripts/setup_python_uv.sh jetson
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+source export_python_path.sh
+python3 scripts/yolo/check_jetson_runtime.py --ros --triton
+```
+
+既存の6クラスブイモデルとYOLO11nで、GPU推論・NMS・ROS画像の往復変換を確認済みです。
+CPU用は `bash scripts/setup_python_uv.sh cpu`、GPUへの復帰は `jetson` を指定します。
+通常のROS・Task2用Pythonは変更しません。詳細は
+[AGX uvセットアップと検証記録](Docs/agx_uv_python_setup.md)を参照してください。
+以下の旧セットアップ手順はNano等の旧JetPack向けです。
+
 ### Jetson用セットアップ
 
 ```shell

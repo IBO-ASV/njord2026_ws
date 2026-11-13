@@ -5,6 +5,26 @@ Njord Task 2 buoy detection) on the Jetson Orin Nano Super. The node is a
 parallel implementation next to the existing `yolo_node` (YOLOv10-fork based)
 and does not change that node or its environment.
 
+## AGX Orin / JetPack 7.2 / ROS Jazzy
+
+For the current AGX, use the reproducible `uv` profile rather than the older
+Nano/Humble instructions below:
+
+```bash
+bash scripts/setup_python_uv.sh jetson
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+source export_python_path.sh
+python3 scripts/yolo/check_jetson_runtime.py --ros --triton
+```
+
+This selects torch 2.9.1+cu130 / torchvision 0.24.1 from the official CUDA 13
+index, keeps numpy 1.26.4 and leaves the system ROS/CPU Python unchanged. The
+local model `src/robot/config/yolo_model/best.pt` (six buoy classes) was tested
+through this ROS node on GPU; pass its path when `yolo11s.pt` is absent. See
+[AGX setup/results](agx_uv_python_setup.md) for CPU switching, the narrowly
+scoped vendor wheel metadata correction and the exact validated environment.
+
 ## Environment strategy
 
 | Component | Where it lives | Why |

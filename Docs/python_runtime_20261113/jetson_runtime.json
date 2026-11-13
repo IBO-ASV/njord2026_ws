@@ -1,0 +1,48 @@
+{
+  "time": "2026-11-13T09:18:53.831508+00:00",
+  "python": "/home/ibo/njord2026_ws/.venv/bin/python",
+  "platform": "aarch64",
+  "requested_device": "cuda:0",
+  "passed": true,
+  "versions": {
+    "numpy": "1.26.4",
+    "scipy": "1.15.3",
+    "opencv-python": "4.10.0.84",
+    "matplotlib": "3.10.8",
+    "polars": "1.36.1",
+    "torch": "2.9.1+cu130",
+    "torchvision": "0.24.1",
+    "ultralytics": "8.3.237"
+  },
+  "cuda_build": "13.0",
+  "cuda_available": true,
+  "gpu": "Orin",
+  "compute_capability": [
+    8,
+    7
+  ],
+  "numeric_image_plot_checks": true,
+  "tensor_and_nms_checks": true,
+  "triton_kernel": true,
+  "ros_cv_bridge_roundtrip": true,
+  "rclpy": "/opt/ros/jazzy/lib/python3.12/site-packages/rclpy/__init__.py",
+  "yolo": {
+    "model": "/home/ibo/njord2026_ws/src/robot/config/yolo_model/best.pt",
+    "device": "cuda:0",
+    "classes": {
+      "0": "green",
+      "1": "red",
+      "2": "north",
+      "3": "east",
+      "4": "south",
+      "5": "west"
+    },
+    "detections": 0,
+    "timing_ms": [
+      738.8779330067337,
+      25.81728796940297,
+      24.789720016997308
+    ],
+    "input": "synthetic black 320x320 BGR; not an accuracy test"
+  }
+}
