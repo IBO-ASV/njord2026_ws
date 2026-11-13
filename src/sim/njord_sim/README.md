@@ -26,8 +26,9 @@ use separate domains starting at 100. Use domains not in use by another run.
 The runner cleans only its own process groups, including orphaned children.
 A run has a bounded timeout and returns nonzero on failed acceptance.
 
-Task2 additionally needs CPU PyTorch (`python3-torch` or a compatible Python
-installation), the existing `asv_trajectory_planner`, `task2_perception`,
+Task2 additionally needs CPU PyTorch in the same Python interpreter as ROS
+(`python3-torch`, where available, or a compatible persistent Python installation),
+the existing `asv_trajectory_planner`, `task2_perception`,
 `pcl_preprocessing`, `pcl_segmentation`, `ship_tracking`, and
 `ship_perception_bringup` installed. `--encounter` selects `head_on`, `port`,
 `starboard`, or `none`. It uses synthetic 3D hull/water returns through the
@@ -45,9 +46,18 @@ For interactive use, install the bridge (`sudo apt install
 ros-jazzy-foxglove-bridge`). Without sudo, this workspace provides a local
 runtime install: `python3 scripts/install_foxglove_bridge_local.py` (a no-op when
 the system bridge is already installed), then source
-`install/setup.bash` again. This install persists across reboots. CPU PyTorch can be installed with
-`sudo apt install python3-torch`. Build the dependency packages named above
-before running Task2.
+`install/setup.bash` again. This install persists across reboots.
+For Task2, verify `python3 -c 'import torch; print(torch.__version__)'`.
+When CPU PyTorch is missing, run `python3 scripts/install_task2_dependencies.py`
+with pip available for that interpreter. Some AGX apt sources do not provide
+`python3-torch`, so do not assume rosdep or a Nav2 build installed it. The
+installer uses the official CPU wheel index and the persistent Python user site.
+An already unpacked CPU environment can be migrated without another download:
+`python3 scripts/install_task2_dependencies.py --from-directory PATH`.
+Its source can be temporary; the resulting installation is copied to
+`~/.local/lib/python3.12/site-packages` on this Python 3.12 AGX. Runtime does not
+require that temporary source, a PYTHONPATH export or a separate shell setup.
+Build the dependency packages named above before running Task2.
 
 
 ```bash
@@ -204,3 +214,18 @@ in `config/course_overrides.yaml`; restart the sim after saving to apply the sam
 geometry to environment, generated mission route, costmaps and scoring. This is
 separate from the real waypoint YAML editor. See the
 [map editor instructions](../../gui/foxglove_extensions/gnss_map_telemetry/README.md).
+
+
+### Task2 appears stuck after opponent-selector warnings
+
+`No valid opponent track or bounded straight-line coast` describes unavailable
+opponent input, not a Nav2 lifecycle failure. With this sim's
+`require_other_ship=false`, MPPI can plan without an opponent; selection starts
+when a valid moving track enters range. If `/planned_path_pruned` has no
+publisher, first check whether `planner_node` exited (in particular because
+`import torch` failed). Nav2 servers can already be active while the MPPI path
+producer is absent, leaving `/autonomy/ready=false` and Task2 unable to start.
+Task2 launch now checks a real CPU PyTorch operation before bringing up nodes,
+and reports the installer command if that check fails. Task1/3/4 do not run this
+check. Restart the failed launch after installing dependencies; an exited planner
+process is not restored by changing Python packages beneath the remaining nodes.

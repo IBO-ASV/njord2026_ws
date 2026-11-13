@@ -18,6 +18,9 @@ from njord_sim.scenario import scenario, TASKS
 
 def launch(context):
     task = LaunchConfiguration("task").perform(context)
+    if task == "task2":
+        from njord_sim.dependencies import require_task2_python
+        require_task2_python()
     model = LaunchConfiguration("model").perform(context)
     seed = int(LaunchConfiguration("seed").perform(context))
     noise = LaunchConfiguration("noise").perform(context) == "true"
