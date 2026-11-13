@@ -7,7 +7,7 @@
 | 用途 | 入口・配置 |
 |---|---|
 | 端末別の起動 | `launch/ground_pc.launch.py`、`jetson_bringup.launch.py`、`minipc_bringup.launch.py` |
-| AGX と Ground PC の起動 | ワークスペースの `scripts/run_agx_pair.sh` |
+| AGX と Ground PC の起動 | ワークスペースの `scripts/operations/run_agx_pair.sh` |
 | ミッションの実行 | `njord-task`。下記のロール別 bringup を参照 |
 | 旧タスクの回帰比較 | `launch/task1.launch.py`、`task2.launch.py`、`task3.launch.py` と番号付き wrapper |
 | EKF・Nav2・センサ設定 | `config/`。利用する launch が選択する設定を編集する |
@@ -27,7 +27,7 @@ Zenoh 設定はワークスペースの `config/zenoh/` を正本とし、ビル
 
 ## ロール別 bringup(Jetson / miniPC 2台構成)
 
-構成の全体像・ネットワーク設定・ビルド手順は `Docs/two_machine_split.md` を参照。
+構成の全体像・ネットワーク設定・ビルド手順は `docs/operations/two_machine_split.md` を参照。
 
 | launch | 動かす端末 | 内容 |
 |---|---|---|
@@ -47,8 +47,8 @@ ros2 launch robot minipc_bringup.launch.py
 ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
 
 # AGX vessel + Ground PC direct CycloneDDS pair (domain 126, ops-LAN multicast)
-./scripts/run_agx_pair.sh vessel
-./scripts/run_agx_pair.sh ground
+./scripts/operations/run_agx_pair.sh vessel
+./scripts/operations/run_agx_pair.sh ground
 
 # Ground PC: task selection uses the persistent Mission Manager
 ros2 run mission_manager njord-task check task1

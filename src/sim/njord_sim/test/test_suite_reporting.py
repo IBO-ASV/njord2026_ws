@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 
 def test_runner_failure_cannot_be_reported_as_suite_success(tmp_path, monkeypatch):
-    script = Path(__file__).resolve().parents[4] / "scripts/run_sim_suite.py"
+    script = Path(__file__).resolve().parents[4] / "scripts/simulation/run_sim_suite.py"
     spec = importlib.util.spec_from_file_location("sim_suite", script)
     suite = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(suite)

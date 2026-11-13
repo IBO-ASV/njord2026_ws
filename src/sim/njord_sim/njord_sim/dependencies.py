@@ -25,7 +25,7 @@ def require_task2_python():
     if result.returncode:
         raise RuntimeError(
             "Task2 MPPI requires working PyTorch in the ROS Python interpreter. "
-            "Run: python3 scripts/install_task2_dependencies.py "
+            "Run: python3 scripts/setup/install_task2_dependencies.py "
             "(or --from-directory PATH for an existing CPU installation). "
             "The opponent-selector no-track warning is not this startup failure.\n"
             + result.stderr[-1500:]

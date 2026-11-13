@@ -72,4 +72,4 @@ Waypoint display inputs:
   IDLE and after completion. Hardware uses the existing ground waypoint source.
 
 A headless Firefox visual check with simulated telemetry is saved at
-[Mission Control preview](../../../../Docs/mission_control_preview_20261113.png).
+[Mission Control preview](../../../../docs/reference/mission_control_preview_20261113.png).

@@ -17,7 +17,7 @@
 // miniPC:
 //   ros2 run rmw_zenoh_cpp rmw_zenohd
 // with ZENOH_ROUTER_CONFIG_URI pointing at this file (done automatically by
-// scripts/njord_env.sh when NJORD_RMW=zenoh). Both Jetson and miniPC nodes
+// scripts/setup/njord_env.sh when NJORD_RMW=zenoh). Both Jetson and miniPC nodes
 // then run as sessions (see session_config.json5) that connect to it.
 //
 // This is a minimal diff on top of rmw_zenoh_cpp's default router config

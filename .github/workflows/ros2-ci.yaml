@@ -103,7 +103,7 @@ jobs:
       - name: Build core simulation packages
         run: |
           source /opt/ros/humble/setup.bash
-          source scripts/njord_env.sh
+          source scripts/setup/njord_env.sh
           colcon build --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS
 
       - name: Test core simulation packages
@@ -171,7 +171,7 @@ jobs:
         run: |
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
-          python3 scripts/run_mission_sim.py --task task3_1 \
+          python3 scripts/simulation/run_mission_sim.py --task task3_1 \
             --cancel-after 25 --timeout 75 --output /tmp/mission-sim-smoke
 
       - uses: actions/upload-artifact@v4

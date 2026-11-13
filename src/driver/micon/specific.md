@@ -14,7 +14,7 @@ sim で使っている `/thruster_command` と実機 ESP32 の USB serial を接
 
 - tty を open するのは `micon_driver_fd/serial_writer` だけ。
 - TX: `4 x float32 native little-endian Newton + flag byte`, 50 ms period。
-- RX: `Docs/njord_BMS_v0/master` のCSVを読み取り、`/bms`
+- RX: `firmware/njord_BMS_v0/master` のCSVを読み取り、`/bms`
   (`Float32MultiArray[4]`, V) へ publish。ヘッダ・`nan` を含む行はpublishしない。
 
 ## bms

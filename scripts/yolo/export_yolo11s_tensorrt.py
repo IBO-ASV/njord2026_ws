@@ -6,7 +6,7 @@ CUDA: a TensorRT engine is specific to the GPU and TensorRT version it was
 built with, so it has to be exported on the exact device that will run it.
 The script refuses to run when CUDA is unavailable.
 
-Usage (with the Jetson YOLO venv activated, see Docs/yolo11s_jetson_setup.md):
+Usage (with the Jetson YOLO venv activated, see docs/operations/yolo11s_jetson_setup.md):
 
     python3 scripts/yolo/export_yolo11s_tensorrt.py \
         --weights src/detection/yolo/config/yolo11s.pt \
@@ -136,7 +136,7 @@ def main():
         import torch
     except Exception as exc:  # noqa: BLE001
         print(f'ERROR: failed to import torch: {exc}. Activate the Jetson '
-              'YOLO venv first (see Docs/yolo11s_jetson_setup.md).',
+              'YOLO venv first (see docs/operations/yolo11s_jetson_setup.md).',
               file=sys.stderr)
         return 1
 
@@ -154,7 +154,7 @@ def main():
 
     if not os.path.isfile(args.weights):
         print(f'ERROR: weights not found: {args.weights}. Weights are not '
-              'shipped in the repository; see Docs/yolo11s_jetson_setup.md.',
+              'shipped in the repository; see docs/operations/yolo11s_jetson_setup.md.',
               file=sys.stderr)
         return 1
 
@@ -184,7 +184,7 @@ def main():
         from ultralytics import YOLO
     except Exception as exc:  # noqa: BLE001
         print(f'ERROR: failed to import ultralytics: {exc}. Activate the '
-              'Jetson YOLO venv first (see Docs/yolo11s_jetson_setup.md).',
+              'Jetson YOLO venv first (see docs/operations/yolo11s_jetson_setup.md).',
               file=sys.stderr)
         return 1
 
@@ -234,7 +234,7 @@ def main():
     print(f'Environment log : {sidecar_path}')
     print()
     print('Next steps:')
-    print(f'  1. Sanity-check the engine: python3 scripts/task2/'
+    print(f'  1. Sanity-check the engine: python3 scripts/yolo/'
           f'benchmark_yolo11s.py --model {engine_path} --imgsz {args.imgsz}')
     print('  2. Place/keep the engine where the node expects it, e.g. '
           'src/detection/yolo/config/yolo11s.engine, then colcon build.')

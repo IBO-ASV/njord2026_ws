@@ -1,6 +1,6 @@
 # Requirements for the dedicated Jetson YOLO11 venv.
 #
-# Policy (see Docs/yolo11s_jetson_setup.md):
+# Policy (see docs/operations/yolo11s_jetson_setup.md):
 # - ROS 2 / cv_bridge / ZED SDK stay on the system Python (never in the venv).
 # - Create the venv with --system-site-packages and install ONLY this file
 #   into it.

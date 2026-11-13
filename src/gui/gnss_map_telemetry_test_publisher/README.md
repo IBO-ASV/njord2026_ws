@@ -31,7 +31,7 @@ ros2 run gnss_map_telemetry_test_publisher gnss_map_telemetry_test_publisher --r
 ## ノルウェー Task ウェイポイントの地図表示
 
 `norway_waypoint_publisher` は、
-[`Docs/norway_waypoint_visualization.md`](../../../Docs/norway_waypoint_visualization.md)
+[`docs/operations/norway_waypoint_visualization.md`](../../../docs/operations/norway_waypoint_visualization.md)
 で説明する競技図ベースの検討用ウェイポイントを、実機GNSSとは別の `NavSatFix`
 トピックとして継続配信します。Task 1 のジグザグと方位標識通過、Task 2 の二つの
 ゲート、Task 3.1/3.2 の接岸案を同時に地図へ重ねられます。

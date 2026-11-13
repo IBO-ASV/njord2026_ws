@@ -15,7 +15,7 @@
 //
 // Usage: every ROS 2 node process on both the Jetson and the miniPC uses
 // this file as its rmw_zenoh session config (via ZENOH_SESSION_CONFIG_URI,
-// exported automatically by scripts/njord_env.sh when NJORD_RMW=zenoh).
+// exported automatically by scripts/setup/njord_env.sh when NJORD_RMW=zenoh).
 // It connects out to the single router started with router_config.json5
 // (see that file for the "run exactly one router, on the miniPC" note).
 //

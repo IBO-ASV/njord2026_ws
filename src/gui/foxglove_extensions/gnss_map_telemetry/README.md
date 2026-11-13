@@ -85,7 +85,7 @@ is read-only, the service reports the failure and retains the draft.
 Only the editor state is new map telemetry; no task-specific layout is needed.
 The old geographic MarkerArray display remains available when the editor server
 is absent. Course fitting now permits zoom 19 so nearby markers remain usable.
-[A browser preview with synthetic telemetry and an offline background](../../../../Docs/course_editor_preview_20261113.png).
+[A browser preview with synthetic telemetry and an offline background](../../../../docs/reference/course_editor_preview_20261113.png).
 
 Validation covers repeated telemetry during a drag, buoy type/add/delete,
 save/reload/conflict handling, stale/control locks, YAML comments/aliases,

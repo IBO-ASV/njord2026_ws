@@ -33,7 +33,7 @@
       // 役割別にさらに絞り込む。/joy と /heartbeat/ground_station は
       // critical_link_receiver だけがminiPCのcanonical topicへpublishする
       // ため、ここには絶対に加えない。
-      // Docs/two_machine_split.md「トピックの流れ」に対応。地上側の
+      // docs/operations/two_machine_split.md「トピックの流れ」に対応。地上側の
       // /ground_video/image/compressed は意図的に含めず、Jetson へ戻さない。
       // LivoxのrawデータはminiPCのlocal EKFが使う/livox/imuだけを通し、
       // 大容量の/livox/lidarはJetson内に閉じ込める。

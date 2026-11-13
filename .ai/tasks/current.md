@@ -243,7 +243,7 @@ Livox Mid-360 と Mid-360s の両方を robot bringup で使用可能にする�
 - `real_bringup.launch.py`: `lidar_model` 引数追加、include を lidar.launch.py へ差替、enable_mid360 コメント。
 - `robot/package.xml` に exec_depend livox_ros_driver2 追加。
 - `robot/test/test_livox_config.py`(pytest) で config 妥当性を担保。
-- 詳細: docs/ai-discussion.md, .ai/reviews/2026-07-12-review1/2-mid360s-design.md
+- 詳細: docs/architecture/livox_models.md, .ai/reviews/2026-07-12-review1/2-mid360s-design.md
 
 ## 実装担当の選択
 - 選択: **sonnet-coder**（Codex 上限のため。native 書込・文脈保持。robot 単一pkg内の加算的変更＝中規模）。
@@ -253,7 +253,7 @@ Livox Mid-360 と Mid-360s の両方を robot bringup で使用可能にする�
 - 2026-07-12: コード調査・初期案作成(メインClaude)。
 - 2026-07-12: Codex 利用上限(~20:48復帰) → ユーザ判断で Claude系暫定レビュー+Sol後追認に切替(.ai/escalations/)。
 - 2026-07-12: 設計レビュー R1(fable代役)→H1(submodule)/H2(param漏れ)/M1(lidar_type)ほか全採用。司令塔が submodule/glim/NIC を独立検証。案C修正版へ(.ai/reviews/review1)。
-- 2026-07-12: 設計レビュー R2(修正版)→**合意**。Med3点(choices/exec_depend/pytest)追記(.ai/reviews/review2)。往復2回で終了。docs/ai-discussion.md 保存。
+- 2026-07-12: 設計レビュー R2(修正版)→**合意**。Med3点(choices/exec_depend/pytest)追記(.ai/reviews/review2)。往復2回で終了。docs/architecture/livox_models.md 保存。
 - 2026-07-12: sonnet-coder 実装完了（robot pkg 内6ファイル、submodule 無改変）。
 - 2026-07-12: 実装レビュー(Opus, 実装者と別)= **合格**。独立に build + 53 tests/0 failure + dry-run(show-args/fail-fast/config解決) 再確認(.ai/reviews/review-mid360s-impl.md)。
 - ステータス: **実装+レビュー完了**。テスト失敗ゼロで昇格なし。残: Codex 復帰後の Sol 設計追認(~20:48)。実HW通電は艇上工程。

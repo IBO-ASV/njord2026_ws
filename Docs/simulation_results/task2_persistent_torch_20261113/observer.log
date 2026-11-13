@@ -1,7 +1,0 @@
-[WARN] [1794559829.290063588] [rcl]: ROS_LOCALHOST_ONLY is deprecated but still honored if it is enabled. Use ROS_AUTOMATIC_DISCOVERY_RANGE and ROS_STATIC_PEERS instead.
-[WARN] [1794559829.290120389] [rcl]: 'localhost_only' is enabled, 'automatic_discovery_range' and 'static_peers' will be ignored.
-[INFO] [1794559839.081462975] [njord_sim_evaluate]: : state=0
-[INFO] [1794559841.987203272] [njord_sim_evaluate]: task2: state=2 project_waypoints projecting latitude/longitude waypoint coordinates
-[INFO] [1794559841.993320896] [njord_sim_evaluate]: task2: state=4 permission waiting for AUTO permission before starting Nav2
-[INFO] [1794559842.061375532] [njord_sim_evaluate]: task2: state=5 navigate Task 2 MPPI FollowPath gate enabled
-[INFO] [1794559881.415568262] [njord_sim_evaluate]: : state=0  Task 2 FollowPath goal reached

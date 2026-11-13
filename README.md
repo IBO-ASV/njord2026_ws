@@ -17,17 +17,17 @@
 
 ```shell
 source /opt/ros/$ROS_DISTRO/setup.bash
-source scripts/njord_env.sh      # プロファイル判定と環境変数の export
+source scripts/setup/njord_env.sh      # プロファイル判定と環境変数の export
 colcon build --symlink-install
 ```
 
-`scripts/build.sh` は上記をまとめたラッパ。
+`scripts/setup/build.sh` は上記をまとめたラッパ。
 
-minIPC プロファイルでは `scripts/njord_env.sh` が Livox 関連と
+minIPC プロファイルでは `scripts/setup/njord_env.sh` が Livox 関連と
 `pcl_segmentation` に `COLCON_IGNORE` を自動配置するため、通常の
 `colcon build` でこれらはビルドされない。Jetson では同ファイルを自動削除する。
 
-配線図・ノード配置・帯域の注意・ネットワーク設定（FastRTPS / Zenoh）・時刻同期・検証手順は **`Docs/two_machine_split.md`** にまとめてある。
+配線図・ノード配置・帯域の注意・ネットワーク設定（FastRTPS / Zenoh）・時刻同期・検証手順は **`docs/operations/two_machine_split.md`** にまとめてある。
 
 ## 環境構築
 まずはros2 humbleが入っているubuntu22.04を起動し、以下のコマンドでこのワークスペースをクローンしてください。
@@ -79,9 +79,13 @@ GNSSアンテナを接続した Spatial v8.0 は `src/driver/ins/ros2-driver`
 115200 baud で高い packet rate にすると `SERIAL PORT DATA OVERFLOW` が出るため、
 この rate に落としています。
 
-引き継ぎと実機確認結果は `Docs/spatial_v8_handoff.md` を参照してください。
+引き継ぎと実機確認結果は `docs/operations/spatial_v8_handoff.md` を参照してください。
 
 ## ディレクトリ構成について
+
+文書は [docs](docs/README.md)、共通スクリプトは [scripts](scripts/README.md)、
+Arduinoソースは `firmware/`、実験生成物はGit対象外の `artifacts/` にまとめています。
+以下のsrc構成図には旧パッケージ名も含まれるため、現行の配置は各パッケージREADMEを参照してください。
 
 colcon buildしたあとは以下のようなディレクトリ構造になっていると思います。
 
@@ -298,17 +302,17 @@ sudo apt install ros-humble-vision-msgs
 このAGXでは、CPU用とJetson GPU用のlock構成を選択できます。
 
 ```bash
-bash scripts/setup_python_uv.sh jetson
+bash scripts/setup/setup_python_uv.sh jetson
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-source export_python_path.sh
+source scripts/setup/export_python_path.sh
 python3 scripts/yolo/check_jetson_runtime.py --ros --triton
 ```
 
 既存の6クラスブイモデルとYOLO11nで、GPU推論・NMS・ROS画像の往復変換を確認済みです。
-CPU用は `bash scripts/setup_python_uv.sh cpu`、GPUへの復帰は `jetson` を指定します。
+CPU用は `bash scripts/setup/setup_python_uv.sh cpu`、GPUへの復帰は `jetson` を指定します。
 通常のROS・Task2用Pythonは変更しません。詳細は
-[AGX uvセットアップと検証記録](Docs/agx_uv_python_setup.md)を参照してください。
+[AGX uvセットアップと検証記録](docs/operations/agx_uv_python_setup.md)を参照してください。
 以下の旧セットアップ手順はNano等の旧JetPack向けです。
 
 ### Jetson用セットアップ
@@ -322,7 +326,7 @@ sudo apt install -y python3-venv
 
 # YOLO専用venv
 # .venvがなければuv venv（uv未導入時はpython3 -m venv）で自動作成される
-source ./export_python_path.sh
+source ./scripts/setup/export_python_path.sh
 # Jetson専用requirementsのみ使う
 python3 -m pip install --upgrade pip setuptools wheel
 python3 -m pip install -r requirements_jetson_nano_yolo.txt
@@ -338,14 +342,14 @@ python3 -c "import cv_bridge; print('cv_bridge import OK')"
 YOLOノード起動は以下のラッパーを使うと安全です。
 
 ```shell
-./run_yolo_jetson.sh
+./scripts/yolo/run_yolo_jetson.sh
 ```
 
-launchファイルを直接使う場合も、`export_python_path.sh`をsourceして
+launchファイルを直接使う場合も、`scripts/setup/export_python_path.sh`をsourceして
 `.venv`の有効化、Python pathの設定、ユーザーsite-packagesの除外を行ってください。
 
 ```shell
-source ./export_python_path.sh
+source ./scripts/setup/export_python_path.sh
 ros2 launch yolo yolo.launch.py
 ```
 
@@ -407,7 +411,7 @@ for usb camera
 for zed 2i
 * CUDA 12.x/13.x に対応する Stereolabs ZED SDK（colcon build 時に CMake が検出します）
 * CUDA 13.1 環境では CUDA 13.x 対応の ZED SDK を入れてから rebuild してください
-* ROS2 Foxyなら [setup_foxy_image_transport.sh](setup_foxy_image_transport.sh) で image_transport v3 系を source から固定する
+* ROS2 Foxyなら [scripts/setup/setup_foxy_image_transport.sh](scripts/setup/setup_foxy_image_transport.sh) で image_transport v3 系を source から固定する
 
 for localization
 * ros-humble-robot-localization
@@ -756,7 +760,7 @@ cd /home/ibo_asv/njord2026_ws
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 source _worktrees/yolo-best-2026-smoke/.venv/bin/activate
-source _worktrees/yolo-best-2026-smoke/export_python_path.sh
+source _worktrees/yolo-best-2026-smoke/scripts/setup/export_python_path.sh
 export PYTHONPATH=/usr/lib/python3/dist-packages:$PYTHONPATH
 
 ros2 run yolo yolo_cuda_node --ros-args \
@@ -925,7 +929,7 @@ event-driven topicである。試験時は画角内に認識対象のブイが�
 設定周波数を満たさない主因と考えられる。
 
 今後の軽量化項目と実装状況は
-[`Docs/sensor_pipeline_performance_roadmap.md`](Docs/sensor_pipeline_performance_roadmap.md)
+[`docs/architecture/sensor_pipeline_performance_roadmap.md`](docs/architecture/sensor_pipeline_performance_roadmap.md)
 を参照する。
 
 UM982は`/dev/ttyUSB2`を開いて連続受信できているため、USBハブ帯域が直接の原因とは

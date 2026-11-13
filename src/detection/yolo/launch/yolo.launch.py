@@ -8,7 +8,7 @@ from launch_ros.actions import Node
 def generate_launch_description():
     if not os.environ.get('VIRTUAL_ENV'):
         raise RuntimeError(
-            'YOLO launch requires the Jetson venv. Activate .venv and source export_python_path.sh '
+            'YOLO launch requires the Jetson venv. Activate .venv and source scripts/setup/export_python_path.sh '
             'before running ros2 launch.'
         )
 

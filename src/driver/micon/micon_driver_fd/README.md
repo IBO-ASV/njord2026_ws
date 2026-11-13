@@ -22,7 +22,7 @@ be added alongside it without changing the manual-control package.
   timeout forces `SOFT_EMG`.
 
 Every 50 ms, `serial_writer` sends a `THRUSTER_COMMAND` frame compatible with
-`Docs/PROTOCOL.md`:
+`docs/reference/PROTOCOL.md`:
 
 ```text
 COBS(raw_frame) || 0x00
@@ -41,7 +41,7 @@ heartbeat watchdog has timed out; otherwise an active relay is reported as
 
 ## `bms_serial` (BMS serial)
 
-`Docs/njord_BMS_v0/master` sends one CSV row per second over its dedicated
+`firmware/njord_BMS_v0/master` sends one CSV row per second over its dedicated
 serial port. `bms_serial` extracts `cell1_V` through `cell4_V` and publishes them
 as a four-element `std_msgs/msg/Float32MultiArray` on `bms_topic`. CSV headers
 and malformed rows are ignored. A valid `STALE` row is still published with

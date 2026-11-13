@@ -1,4 +1,4 @@
-![](./images/Picto+STEREOLABS_Black.jpg)
+![](images/Picto+STEREOLABS_Black.jpg)
 
 # Stereolabs ZED Camera - ROS2 Foxy Fitzroy (Ubuntu 20.04) - ROS2 Humble Hawksbill (Ubuntu 22.04)
 
@@ -37,7 +37,7 @@ If you are setting this up on Jetson Nano with ROS2 Foxy, you can use the worksp
 
 ```bash
 $ cd <colcon_workspace>
-$ ./setup_foxy_image_transport.sh
+$ ./scripts/setup/setup_foxy_image_transport.sh
 ```
 
 ### [ROS2 Foxy] Image Transport Plugins and compressed topics

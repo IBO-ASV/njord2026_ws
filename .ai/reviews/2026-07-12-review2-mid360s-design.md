@@ -21,4 +21,4 @@
 - lidar.launch.py に choices 検証を入れる（Med-A）。
 - robot/package.xml に exec_depend 追加（Med-B）。
 - robot に `test/test_livox_config.py`（pytest）追加（Med-C）。
-- docs/ai-discussion.md に canonical 明記 + 艇上チェックリスト（Low-D/E/F）。
+- docs/architecture/livox_models.md に canonical 明記 + 艇上チェックリスト（Low-D/E/F）。

@@ -11,7 +11,7 @@
   between the two machines. rmw_zenoh_cpp (see config/zenoh/) is an
   opt-in alternative - see the warnings in that directory before using it.
 
-  scripts/njord_env.sh points FASTRTPS_DEFAULT_PROFILES_FILE at this file
+  scripts/setup/njord_env.sh points FASTRTPS_DEFAULT_PROFILES_FILE at this file
   when NJORD_RMW=fastrtps (the default).
 -->
 <dds xmlns="http://www.eprosima.com/XMLSchemas/fastRTPS_Profiles">

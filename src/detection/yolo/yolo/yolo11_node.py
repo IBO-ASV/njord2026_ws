@@ -53,7 +53,7 @@ except Exception as exc:  # noqa: BLE001
     _ultralytics_import_error = exc
 
 # Setup guide for the Jetson venv this node is expected to run in.
-SETUP_DOC = 'Docs/yolo11s_jetson_setup.md'
+SETUP_DOC = 'docs/operations/yolo11s_jetson_setup.md'
 
 
 class Yolo11DetectorNode(Node):

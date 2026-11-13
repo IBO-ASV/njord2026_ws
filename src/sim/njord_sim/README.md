@@ -11,12 +11,12 @@ source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 colcon build --symlink-install --paths src/sim/njord_sim
 source install/setup.bash
-python3 scripts/run_mission_sim.py --task task1 --output /tmp/njord/task1
-python3 scripts/run_mission_sim.py --task task1_2 --model mmg --output /tmp/njord/task1-mmg
-python3 scripts/run_mission_sim.py --task task3_1 --noise --seed 2026 --output /tmp/njord/dock
-python3 scripts/run_sim_suite.py --tasks task1,task1_2 --truth --workers 2 --output /tmp/njord/task1-suite
-python3 scripts/run_sim_suite.py --tasks task2 --encounters head_on,port,starboard,none --truth --workers 1 --output /tmp/njord/task2-suite
-python3 scripts/run_sim_suite.py --tasks task3_1,task3_2,task4 --truth --workers 1 --output /tmp/njord/docking-suite
+python3 scripts/simulation/run_mission_sim.py --task task1 --output /tmp/njord/task1
+python3 scripts/simulation/run_mission_sim.py --task task1_2 --model mmg --output /tmp/njord/task1-mmg
+python3 scripts/simulation/run_mission_sim.py --task task3_1 --noise --seed 2026 --output /tmp/njord/dock
+python3 scripts/simulation/run_sim_suite.py --tasks task1,task1_2 --truth --workers 2 --output /tmp/njord/task1-suite
+python3 scripts/simulation/run_sim_suite.py --tasks task2 --encounters head_on,port,starboard,none --truth --workers 1 --output /tmp/njord/task2-suite
+python3 scripts/simulation/run_sim_suite.py --tasks task3_1,task3_2,task4 --truth --workers 1 --output /tmp/njord/docking-suite
 ```
 
 Tasks: `task1`, `task1_2`, `task2`, `task3_1`, `task3_2`, `task4`.
@@ -46,20 +46,20 @@ Task2 costmaps additionally use `/sim/costmap_clearing_scan`, a clear-only
 360-degree scan bounded by current physical objects. It supplements the existing
 100 m costmap stand-in; the recognition LiDAR remains limited to 40 m. Costmap
 display streams publish at approximately 5 Hz. Acceptance runs save a separate
-`costmap_audit.json`; see [the correction and trial record](../../../Docs/task2_costmap_fix_20261113.md).
+`costmap_audit.json`; see [the correction and trial record](../../../docs/validation/task2_costmap.md).
 
 For interactive use, install the bridge (`sudo apt install
 ros-jazzy-foxglove-bridge`). Without sudo, this workspace provides a local
-runtime install: `python3 scripts/install_foxglove_bridge_local.py` (a no-op when
+runtime install: `python3 scripts/setup/install_foxglove_bridge_local.py` (a no-op when
 the system bridge is already installed), then source
 `install/setup.bash` again. This install persists across reboots.
 For Task2, verify `python3 -c 'import torch; print(torch.__version__)'`.
-When CPU PyTorch is missing, run `python3 scripts/install_task2_dependencies.py`
+When CPU PyTorch is missing, run `python3 scripts/setup/install_task2_dependencies.py`
 with pip available for that interpreter. Some AGX apt sources do not provide
 `python3-torch`, so do not assume rosdep or a Nav2 build installed it. The
 installer uses the official CPU wheel index and the persistent Python user site.
 An already unpacked CPU environment can be migrated without another download:
-`python3 scripts/install_task2_dependencies.py --from-directory PATH`.
+`python3 scripts/setup/install_task2_dependencies.py --from-directory PATH`.
 Its source can be temporary; the resulting installation is copied to
 `~/.local/lib/python3.12/site-packages` on this Python 3.12 AGX. Runtime does not
 require that temporary source, a PYTHONPATH export or a separate shell setup.
@@ -158,7 +158,7 @@ for full docking suites. Cancellation and sensor dropout can be checked with
 `--cancel-after 25` and `--dropout-after 25` respectively. Both require typed
 cancellation and zero final command, rather than a successful mission.
 
-See `Docs/simulation_tuning_log.md` and `Docs/simulation_acceptance.md` for
+See `docs/validation/simulation_tuning_log.md` and `docs/validation/simulation_acceptance.md` for
 observations, changes, measured results and remaining limitations.
 
 ## Task-specific ROS endpoints and course bounds

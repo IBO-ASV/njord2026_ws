@@ -10,11 +10,11 @@ from launch_ros.actions import Node
 def generate_launch_description():
     # Same venv guard as the existing yolo.launch.py: ultralytics lives in a
     # dedicated Jetson venv, not in the system Python, so refuse to start
-    # without an activated venv (see Docs/yolo11s_jetson_setup.md).
+    # without an activated venv (see docs/operations/yolo11s_jetson_setup.md).
     if not os.environ.get('VIRTUAL_ENV'):
         raise RuntimeError(
             'YOLO11 launch requires the Jetson venv. Activate the YOLO venv '
-            '(see Docs/yolo11s_jetson_setup.md) before running ros2 launch.'
+            '(see docs/operations/yolo11s_jetson_setup.md) before running ros2 launch.'
         )
 
     pkg_name = 'yolo'
@@ -22,7 +22,7 @@ def generate_launch_description():
 
     default_params_file = os.path.join(pkg_share, 'config', 'yolo11s_params.yaml')
     # The weights (yolo11s.pt / .engine) are NOT shipped in the repository;
-    # a human must place them (see Docs/yolo11s_jetson_setup.md).
+    # a human must place them (see docs/operations/yolo11s_jetson_setup.md).
     default_model_path = os.path.join(pkg_share, 'config', 'yolo11s.pt')
 
     params_file_arg = DeclareLaunchArgument(

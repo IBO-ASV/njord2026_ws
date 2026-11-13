@@ -1,9 +1,0 @@
-{
-  "passed": true,
-  "device": "cuda:0",
-  "input": "synthetic 320x320 BGR ROS Image",
-  "output_topic": "/runtime_check/detections",
-  "output_messages": 1,
-  "detections": 0,
-  "sensors_used": false
-}
