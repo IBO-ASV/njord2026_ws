@@ -22,7 +22,7 @@ from rclpy.action import ActionClient
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from robot_localization.srv import FromLL
-from sensor_msgs.msg import Imu, NavSatFix, PointCloud2
+from sensor_msgs.msg import Imu, LaserScan, NavSatFix, PointCloud2
 from sensor_msgs_py import point_cloud2
 from std_msgs.msg import Bool, Float32, Header, UInt8
 from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
@@ -35,6 +35,14 @@ from njord_interfaces.msg import (
     HealthState,
 )
 
+from .clearing import (
+    SCAN_ANGLE_INCREMENT,
+    SCAN_ANGLE_MIN,
+    SCAN_BEAMS,
+    SCAN_MIN_RANGE,
+    SCAN_RANGE,
+    clearing_ranges,
+)
 from .scenario import dock_segments, scenario
 
 QOS = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
@@ -56,6 +64,7 @@ class Environment(Node):
         self.external_force = self.declare_parameter("disturbance", False).value
         self.rng = random.Random(self.seed)
         self.x, self.y, self.yaw = self.s.initial
+        self.costmap_sensor_pose = self.s.initial
         self.u = self.v = self.r = 0.0
         self.bias = [0.0, 0.0, 0.0]
         self.command = Twist()
@@ -82,6 +91,10 @@ class Environment(Node):
             if self.s.task.task_id == "task2" else None
         )
         self.cloud = self.create_publisher(PointCloud2, "/sim_obstacles", 10)
+        self.clearing_scan = (
+            self.create_publisher(LaserScan, "/sim/costmap_clearing_scan", 10)
+            if self.s.task.task_id == "task2" else None
+        )
         self.lidar = self.create_publisher(PointCloud2, "/livox/lidar", 10)
         self.ready = self.create_publisher(Bool, "/autonomy/ready", 10)
         self.perception_ready = self.create_publisher(
@@ -297,6 +310,10 @@ class Environment(Node):
         tf.transform.translation.y = estimate.pose.pose.position.y
         tf.transform.rotation = estimate.pose.pose.orientation
         self.tf.sendTransform(tf)
+        self.costmap_sensor_pose = (
+            tf.transform.translation.x, tf.transform.translation.y,
+            2.0 * math.atan2(tf.transform.rotation.z, tf.transform.rotation.w),
+        )
         imu = Imu()
         imu.header = Header(stamp=stamp, frame_id="base_link")
         imu.orientation = quaternion(
@@ -343,6 +360,7 @@ class Environment(Node):
         detections = BuoyDetectionArray()
         detections.header = Header(stamp=stamp, frame_id="map")
         points = []
+        opponent = None
         classes = {"RED": 1, "GREEN": 0, "N": 2, "E": 3, "S": 4, "W": 5}
         for x, y, mark in self.s.buoys:
             distance = math.hypot(x - self.x, y - self.y)
@@ -387,6 +405,7 @@ class Environment(Node):
             mx, my = (a.x + b.x) / 2, (a.y + b.y) / 2
             ox = mx + (t - meeting) * 1.2861111111 * math.cos(theta)
             oy = my + (t - meeting) * 1.2861111111 * math.sin(theta)
+            opponent = (ox, oy, theta, 2.0, 1.08)
             other = Odometry()
             other.header = Header(stamp=stamp, frame_id="odom")
             other.child_frame_id = "sim_opponent"
@@ -416,6 +435,17 @@ class Environment(Node):
             )
         header = Header(stamp=stamp, frame_id="map")
         self.cloud.publish(point_cloud2.create_cloud_xyz32(header, points))
+        if self.clearing_scan is not None:
+            scan = LaserScan()
+            scan.header = Header(stamp=stamp, frame_id="base_link")
+            scan.angle_min = SCAN_ANGLE_MIN
+            scan.angle_increment = SCAN_ANGLE_INCREMENT
+            scan.angle_max = SCAN_ANGLE_MIN + (SCAN_BEAMS - 1) * SCAN_ANGLE_INCREMENT
+            scan.range_min, scan.range_max, scan.scan_time = SCAN_MIN_RANGE, SCAN_RANGE, 0.1
+            scan.ranges = clearing_ranges(
+                self.costmap_sensor_pose, self.s.buoys, opponent
+            ).tolist()
+            self.clearing_scan.publish(scan)
         # Simulated LiDAR uses the sensor/base frame and range gating.
         local = []
         for x, y, z in points:

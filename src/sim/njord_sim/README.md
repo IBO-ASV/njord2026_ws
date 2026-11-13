@@ -42,6 +42,12 @@ real-vessel assessment. The synthetic port-side NPC never yields, so this
 fixture includes emergency avoidance rather than assuming stand-on priority
 alone prevents collision.
 
+Task2 costmaps additionally use `/sim/costmap_clearing_scan`, a clear-only
+360-degree scan bounded by current physical objects. It supplements the existing
+100 m costmap stand-in; the recognition LiDAR remains limited to 40 m. Costmap
+display streams publish at approximately 5 Hz. Acceptance runs save a separate
+`costmap_audit.json`; see [the correction and trial record](../../../Docs/task2_costmap_fix_20261113.md).
+
 For interactive use, install the bridge (`sudo apt install
 ros-jazzy-foxglove-bridge`). Without sudo, this workspace provides a local
 runtime install: `python3 scripts/install_foxglove_bridge_local.py` (a no-op when

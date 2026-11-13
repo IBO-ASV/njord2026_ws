@@ -1,0 +1,1 @@
+Stopped after head-on seed 2027 collided again. Head-on 2028 also completed below the required hull gap (0.446 m versus 0.5 m), without contact. Completed and interrupted evaluations are retained with their original reason fields; interrupted/pending cases are not passes. A same-side 7 m candidate was added before the next matrix.

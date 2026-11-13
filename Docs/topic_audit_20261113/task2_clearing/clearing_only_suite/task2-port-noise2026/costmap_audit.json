@@ -1,0 +1,56 @@
+{
+  "maps": {
+    "local_costmap": {
+      "lethal_cells": 24,
+      "residual_cells": 0,
+      "visible_residual_cells": 0,
+      "occluded_or_unobserved_residual_cells": 0,
+      "residual_xy": [],
+      "resolution_m": 0.10000000149011612,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "global_costmap": {
+      "lethal_cells": 48,
+      "residual_cells": 0,
+      "visible_residual_cells": 0,
+      "occluded_or_unobserved_residual_cells": 0,
+      "residual_xy": [],
+      "resolution_m": 0.10000000149011612,
+      "size": [
+        490,
+        600
+      ]
+    }
+  },
+  "transport": {
+    "/sim/costmap_clearing_scan": {
+      "samples": 545,
+      "hz": 8.982333148868634,
+      "mean_receive_age_ms": 74.71941224036698
+    },
+    "/local_costmap/costmap_updates": {
+      "samples": 28,
+      "hz": 0.4550430590303779,
+      "mean_receive_age_ms": 42.26880842857143
+    },
+    "/local_costmap/obstacle_layer_updates": {
+      "samples": 28,
+      "hz": 0.45580220663152593,
+      "mean_receive_age_ms": 43.535614
+    },
+    "/global_costmap/costmap_updates": {
+      "samples": 99,
+      "hz": 1.6698514296350286,
+      "mean_receive_age_ms": 39.00768691919192
+    },
+    "/global_costmap/obstacle_layer_updates": {
+      "samples": 99,
+      "hz": 1.670464543232899,
+      "mean_receive_age_ms": 34.906291939393945
+    }
+  },
+  "ready": true
+}

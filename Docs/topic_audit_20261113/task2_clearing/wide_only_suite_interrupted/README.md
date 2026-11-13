@@ -1,0 +1,1 @@
+Wider 7 m candidates alone did not resolve head-on seed 2028: 0.007 m hull gap and no progress for 45 s. Stopped pending jobs; explicitly interrupted evaluations are not counted as navigation failures or passes. Next change removes the pre-gate excursion, adds straight gate approaches/departures, and preserves lateral continuity on replan.

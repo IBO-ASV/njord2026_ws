@@ -1,5 +1,9 @@
 # センサなしシミュレーションの実装・検証記録
 
+Task2の2026-11-13のcostmap修正・追加検証は
+[追加記録](task2_costmap_fix_20261113.md)を参照してください。
+以下は2026-11-12時点の構成・結果です。
+
 2026-11-12。実センサ・実機の駆動は使用していません。
 Mission Manager → Nav2 / Task2 planner → Control Manager → command arbiter
 → シミュレーション運動モデルを実行しました。タスクごとの独立したsim起動です。

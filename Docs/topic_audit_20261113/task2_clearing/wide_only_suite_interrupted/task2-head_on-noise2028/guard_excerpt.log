@@ -1,0 +1,29 @@
+[planner_node-25] [INFO] [1794564296.718878081] [planner_node]: Path guard: guard selected lane +0 m
+[planner_node-25] [INFO] [1794564299.434284411] [planner_node]: Path guard: MPPI path accepted
+[controller_server-7] [INFO] [1794564301.317967957] [controller_server]: Cancellation was successful. Stopping the robot.
+[planner_node-25] [INFO] [1794564302.690837630] [planner_node]: Path guard: guard selected lane -5 m
+[planner_node-25] [INFO] [1794564305.286553072] [planner_node]: Path guard: guard selected lane -5 m
+[controller_server-7] [INFO] [1794564306.285891728] [controller_server]: Cancellation was successful. Stopping the robot.
+[planner_node-25] [INFO] [1794564307.410173827] [planner_node]: Path guard: guard selected lane -5 m
+[controller_server-7] [INFO] [1794564307.755727480] [controller_server]: Cancellation was successful. Stopping the robot.
+[planner_node-25] [INFO] [1794564309.632254603] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[controller_server-7] [INFO] [1794564311.357394346] [controller_server]: Cancellation was successful. Stopping the robot.
+[planner_node-25] [INFO] [1794564312.099211955] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564314.224785635] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564316.717929255] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564318.733340953] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564320.860719940] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564323.201485095] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564325.203131378] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564327.210321422] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564329.686629472] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564331.691797087] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564334.151396926] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564336.199481197] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564338.661750963] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564340.671170513] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564343.142599677] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564345.144322508] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564347.159509918] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564349.172440783] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds
+[planner_node-25] [INFO] [1794564351.662649261] [planner_node]: Path guard: no candidate meets predicted hull clearance and observed buoy/gate bounds

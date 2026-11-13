@@ -1,0 +1,102 @@
+{
+  "maps": {
+    "local_costmap": {
+      "lethal_cells": 24,
+      "residual_cells": 0,
+      "visible_residual_cells": 0,
+      "occluded_or_unobserved_residual_cells": 0,
+      "residual_xy": [],
+      "resolution_m": 0.10000000149011612,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "global_costmap": {
+      "lethal_cells": 48,
+      "residual_cells": 0,
+      "visible_residual_cells": 0,
+      "occluded_or_unobserved_residual_cells": 0,
+      "residual_xy": [],
+      "resolution_m": 0.10000000149011612,
+      "size": [
+        490,
+        600
+      ]
+    }
+  },
+  "transport": {
+    "/sim/costmap_clearing_scan": {
+      "samples": 517,
+      "hz": 9.348178956831235,
+      "mean_receive_age_ms": 37.838526926499036
+    },
+    "/local_costmap/costmap": {
+      "samples": 225,
+      "hz": 4.102179089160704,
+      "mean_receive_age_ms": 11.355530431111111
+    },
+    "/local_costmap/obstacle_layer": {
+      "samples": 225,
+      "hz": 4.102626908822612,
+      "mean_receive_age_ms": 10.279571173333334
+    },
+    "/local_costmap/obstacle_layer_updates": {
+      "samples": 50,
+      "hz": 0.8973723860856858,
+      "mean_receive_age_ms": 14.115165099999999
+    },
+    "/local_costmap/costmap_updates": {
+      "samples": 50,
+      "hz": 0.8973233380341363,
+      "mean_receive_age_ms": 16.7660295
+    },
+    "/global_costmap/costmap": {
+      "samples": 1,
+      "hz": 0.0,
+      "mean_receive_age_ms": 5.699699
+    },
+    "/global_costmap/obstacle_layer": {
+      "samples": 1,
+      "hz": 0.0,
+      "mean_receive_age_ms": 6.502879
+    },
+    "/global_costmap/costmap_updates": {
+      "samples": 266,
+      "hz": 4.906898093011741,
+      "mean_receive_age_ms": 19.779123763157894
+    },
+    "/global_costmap/obstacle_layer_updates": {
+      "samples": 271,
+      "hz": 4.999506268665708,
+      "mean_receive_age_ms": 16.438184468634688
+    }
+  },
+  "display_streams": {
+    "/global_costmap/costmap": {
+      "samples": 267,
+      "hz": 4.907206166019529,
+      "full_samples": 1,
+      "incremental_samples": 266
+    },
+    "/global_costmap/obstacle_layer": {
+      "samples": 272,
+      "hz": 4.998774292794002,
+      "full_samples": 1,
+      "incremental_samples": 271
+    },
+    "/local_costmap/costmap": {
+      "samples": 275,
+      "hz": 4.999273119916733,
+      "full_samples": 225,
+      "incremental_samples": 50
+    },
+    "/local_costmap/obstacle_layer": {
+      "samples": 275,
+      "hz": 4.999891152732954,
+      "full_samples": 225,
+      "incremental_samples": 50
+    }
+  },
+  "ready": true
+}

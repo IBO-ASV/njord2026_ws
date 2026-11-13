@@ -41,6 +41,9 @@ def nodes(directory, seed):
                 params,
                 {
                     "map_frame": "odom",
+                    # Match task2_jetson_autonomy: retain a confirmed CV track
+                    # through bounded LiDAR gaps instead of resetting each gap.
+                    "motion_filter_mode": "straight_line",
                     "min_absolute_speed_knots": 0.5,
                     "corridor_enabled": True,
                     "corridor_start_topic": "/waypoint1_pose",

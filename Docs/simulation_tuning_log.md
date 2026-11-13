@@ -77,3 +77,24 @@ See `simulation_acceptance.md` and the retained JSON for the exact configuration
 The focused Python regression set is now 77 passed; the plugin gtest and GUI
 behavioral test also pass. This does not clear the seven unrelated baseline
 launch/network/video assertions noted above.
+
+## Task2 costmap follow-up — 2026-11-13
+
+| Observation | Change and reason | Evidence |
+|---|---|---|
+| Moving-obstacle endpoints did not observe empty water; old global lethal cells remained after the target moved | Add Task2-only, occlusion-bounded clear-only LaserScan to the existing physical costmap stand-in; retain marking and inflation | Real Nav2 fixture clears old hull cells, retains live objects and hidden cells, then clears the hidden cells once reobserved |
+| Configured 2 Hz publication delivered approximately 1.7 Hz inside Jazzy's 5 Hz map update loop | Request publication at 10 Hz so every 5 Hz update can publish, keeping incremental maps and the update rate | Final subscriber measurements and both generated configs retained in the costmap follow-up report |
+| First faster-publication matrix: head-on noise seed 2027 stopped repeatedly, then contacted a non-yielding NPC; Mission still reported success | Retain the failed case. Inspection found sim `standard` opponent filtering versus real Task2's `straight_line`; select the same bounded 3 s CV coast in sim to reduce resets during brief tracking gaps | Instrumented single repeat passed with 2.154 m true hull gap, but the parallel repeat collided again. Mode alignment alone did not resolve the failure |
+| Replayed delayed-approach observations rejected both 5 m and 3.5 m candidates, although a 7 m lane met all existing checks | Add a 7 m fallback on the already committed encounter side before holding; retain the same separation, buoy and gate checks | Recorded-input regression passes; final matrix below the costmap follow-up report. Unsafe wider candidates are still rejected |
+| Wider candidates alone still failed head-on 2028 near the first gate; replanning multiplied measured lateral displacement by gate tapers, creating a path-head jump | Remove the pre-gate lane excursion, leave straight gate approaches/departures, and blend the initial lateral correction continuously into a fixed route profile | Preserve the 0.007 m failed hull gap and trajectory; add gate-profile and replan-continuity tests, then rerun the full matrix |
+
+MPPI weights, guard clearance margins, RPP tracking parameters, target speed,
+and the 0.5 m hull-gap acceptance threshold were unchanged in this follow-up.
+See [Task2 costmap correction](task2_costmap_fix_20261113.md) for retained failures,
+the final matrix, timestamp limitations of residual counts, and restart scope.
+
+Final corrected Task2 matrix: **12/12 passed**, all four encounters with seeds
+2026/2027/2028. Minimum true NPC hull gap 1.259 m; minimum buoy hull gap 0.642 m.
+Global/local costmap delivery was 4.89–5.00 Hz. Focused regression: 142 passed.
+An observer-only follow-up caches exactly matched scan/pose pairs when callbacks
+arrive out of order; it does not change navigation or acceptance criteria.

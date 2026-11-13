@@ -1,0 +1,127 @@
+{
+  "maps": {
+    "local_costmap": {
+      "lethal_cells": 24,
+      "residual_cells": 0,
+      "visible_residual_cells": 0,
+      "occluded_or_unobserved_residual_cells": 0,
+      "residual_xy": [],
+      "resolution_m": 0.10000000149011612,
+      "size": [
+        160,
+        160
+      ]
+    },
+    "global_costmap": {
+      "lethal_cells": 130,
+      "residual_cells": 6,
+      "visible_residual_cells": 6,
+      "occluded_or_unobserved_residual_cells": 0,
+      "residual_xy": [
+        [
+          8.086,
+          11.908
+        ],
+        [
+          7.786,
+          12.008
+        ],
+        [
+          7.686,
+          12.108
+        ],
+        [
+          7.486,
+          12.208
+        ],
+        [
+          7.386,
+          12.308
+        ],
+        [
+          7.186,
+          12.408
+        ]
+      ],
+      "resolution_m": 0.10000000149011612,
+      "size": [
+        490,
+        600
+      ]
+    }
+  },
+  "transport": {
+    "/sim/costmap_clearing_scan": {
+      "samples": 496,
+      "hz": 9.93987924640657,
+      "mean_receive_age_ms": 38.84503445766129
+    },
+    "/local_costmap/obstacle_layer": {
+      "samples": 199,
+      "hz": 4.2308621503559705,
+      "mean_receive_age_ms": 6.852612608040201
+    },
+    "/local_costmap/costmap": {
+      "samples": 199,
+      "hz": 4.231327500549027,
+      "mean_receive_age_ms": 7.938575165829147
+    },
+    "/local_costmap/obstacle_layer_updates": {
+      "samples": 49,
+      "hz": 0.9756644074435535,
+      "mean_receive_age_ms": 25.944375448979596
+    },
+    "/local_costmap/costmap_updates": {
+      "samples": 49,
+      "hz": 0.9756724139182789,
+      "mean_receive_age_ms": 26.538467183673472
+    },
+    "/global_costmap/costmap": {
+      "samples": 1,
+      "hz": 0.0,
+      "mean_receive_age_ms": 3.090253
+    },
+    "/global_costmap/obstacle_layer": {
+      "samples": 1,
+      "hz": 0.0,
+      "mean_receive_age_ms": 3.519475
+    },
+    "/global_costmap/costmap_updates": {
+      "samples": 241,
+      "hz": 4.918769201022789,
+      "mean_receive_age_ms": 11.122260273858922
+    },
+    "/global_costmap/obstacle_layer_updates": {
+      "samples": 244,
+      "hz": 5.00236519340542,
+      "mean_receive_age_ms": 9.80363612295082
+    }
+  },
+  "display_streams": {
+    "/global_costmap/costmap": {
+      "samples": 242,
+      "hz": 4.918618673497753,
+      "full_samples": 1,
+      "incremental_samples": 241
+    },
+    "/global_costmap/obstacle_layer": {
+      "samples": 245,
+      "hz": 4.999721973144748,
+      "full_samples": 1,
+      "incremental_samples": 244
+    },
+    "/local_costmap/costmap": {
+      "samples": 248,
+      "hz": 5.000605143978858,
+      "full_samples": 199,
+      "incremental_samples": 49
+    },
+    "/local_costmap/obstacle_layer": {
+      "samples": 248,
+      "hz": 5.000576259020737,
+      "full_samples": 199,
+      "incremental_samples": 49
+    }
+  },
+  "ready": true
+}

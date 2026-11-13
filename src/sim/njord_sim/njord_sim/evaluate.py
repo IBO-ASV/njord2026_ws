@@ -95,6 +95,11 @@ class Evaluation(Node):
             Bool, "/autonomy/ready", lambda m: setattr(self, "nav_ready", m.data), 10
         )
 
+        self.costmap_audit = None
+        if args.task == "task2":
+            from .costmap_audit import CostmapAudit
+            self.costmap_audit = CostmapAudit(self)
+
     def on_detected(self, m):
         self.opponent_selected = self.opponent_selected or m.data
 
@@ -353,6 +358,10 @@ class Evaluation(Node):
                 "MMG qualification is separate from kinematic runs",
             ],
         }
+        if self.costmap_audit is not None:
+            (out / "costmap_audit.json").write_text(
+                json.dumps(self.costmap_audit.snapshot(), indent=2) + "\n"
+            )
         (out / "evaluation.json").write_text(
             json.dumps(summary, indent=2, ensure_ascii=False)
         )

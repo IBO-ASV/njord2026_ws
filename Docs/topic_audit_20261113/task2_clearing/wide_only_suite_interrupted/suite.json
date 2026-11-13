@@ -1,0 +1,347 @@
+[
+  {
+    "run": "task2-head_on-noise2026",
+    "exit_code": 0,
+    "test_mode": "none",
+    "task": "task2",
+    "final_output": {
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "final_inhibit_reasons": [
+      "no active task control policy"
+    ],
+    "passed": true,
+    "reason": "mission terminal",
+    "mission_result": 8,
+    "action_result_code": 0,
+    "waypoints_visited": 2,
+    "waypoints_total": 2,
+    "minimum_buoy_clearance_m": 1.6213376910109596,
+    "stationary_dwell_s": {},
+    "required_dwell_s": [],
+    "other_ship_clearance_m": 1.0403507857100933,
+    "opponent_selected": true,
+    "max_starboard_offset_m": 3.4915085849225083,
+    "cpa_astern": false,
+    "gates_passed": [
+      0,
+      1
+    ],
+    "wall_enabled_seen": false,
+    "wall_disabled_seen": true,
+    "maximum_wall_points": 0,
+    "enabled_wall_cloud_seen": false,
+    "dock_contact_samples": 0,
+    "cardinal_passages": {},
+    "final_stationary_s": 3.233438257011585,
+    "samples": 1180,
+    "events": [
+      {
+        "t": 16.577863739978056,
+        "state": 0,
+        "stage": "",
+        "message": "",
+        "inhibit": [
+          "control state unavailable"
+        ]
+      },
+      {
+        "t": 23.184000812994782,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projecting latitude/longitude waypoint coordinates",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 23.204482549976092,
+        "state": 4,
+        "stage": "permission",
+        "message": "waiting for AUTO permission before starting Nav2",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 23.301461237017065,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Task 2 MPPI FollowPath gate enabled",
+        "inhibit": []
+      },
+      {
+        "t": 73.949285923969,
+        "state": 0,
+        "stage": "",
+        "message": "Task 2 FollowPath goal reached",
+        "inhibit": []
+      }
+    ],
+    "evaluation_limits": [
+      "synthetic perception; not image recognition accuracy",
+      "MMG qualification is separate from kinematic runs"
+    ]
+  },
+  {
+    "run": "task2-head_on-noise2027",
+    "exit_code": 0,
+    "test_mode": "none",
+    "task": "task2",
+    "final_output": {
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "final_inhibit_reasons": [
+      "no active task control policy"
+    ],
+    "passed": true,
+    "reason": "mission terminal",
+    "mission_result": 8,
+    "action_result_code": 0,
+    "waypoints_visited": 2,
+    "waypoints_total": 2,
+    "minimum_buoy_clearance_m": 1.4629818351674346,
+    "stationary_dwell_s": {},
+    "required_dwell_s": [],
+    "other_ship_clearance_m": 2.4524907698448195,
+    "opponent_selected": true,
+    "max_starboard_offset_m": 4.443001247502644,
+    "cpa_astern": false,
+    "gates_passed": [
+      0,
+      1
+    ],
+    "wall_enabled_seen": false,
+    "wall_disabled_seen": true,
+    "maximum_wall_points": 0,
+    "enabled_wall_cloud_seen": false,
+    "dock_contact_samples": 0,
+    "cardinal_passages": {},
+    "final_stationary_s": 3.3548193760216236,
+    "samples": 1023,
+    "events": [
+      {
+        "t": 15.75565808895044,
+        "state": 0,
+        "stage": "",
+        "message": "",
+        "inhibit": [
+          "control state unavailable"
+        ]
+      },
+      {
+        "t": 22.873669369961135,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projecting latitude/longitude waypoint coordinates",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 22.888534128956962,
+        "state": 4,
+        "stage": "permission",
+        "message": "waiting for AUTO permission before starting Nav2",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 23.007114920997992,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Task 2 MPPI FollowPath gate enabled",
+        "inhibit": []
+      },
+      {
+        "t": 64.19034972996451,
+        "state": 0,
+        "stage": "",
+        "message": "Task 2 FollowPath goal reached",
+        "inhibit": []
+      }
+    ],
+    "evaluation_limits": [
+      "synthetic perception; not image recognition accuracy",
+      "MMG qualification is separate from kinematic runs"
+    ]
+  },
+  {
+    "run": "task2-head_on-noise2028",
+    "exit_code": 1,
+    "test_mode": "none",
+    "task": "task2",
+    "final_output": {
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "final_inhibit_reasons": [
+      "Nav2 is not ready"
+    ],
+    "passed": false,
+    "reason": "runner exit 1: no physical progress for 45 seconds",
+    "mission_result": null,
+    "action_result_code": null,
+    "waypoints_visited": 1,
+    "waypoints_total": 2,
+    "minimum_buoy_clearance_m": 0.06908573472176713,
+    "stationary_dwell_s": {},
+    "required_dwell_s": [],
+    "other_ship_clearance_m": 0.00699113709796886,
+    "opponent_selected": true,
+    "max_starboard_offset_m": 1.4443989492471454,
+    "cpa_astern": false,
+    "gates_passed": [
+      0
+    ],
+    "wall_enabled_seen": false,
+    "wall_disabled_seen": true,
+    "maximum_wall_points": 0,
+    "enabled_wall_cloud_seen": false,
+    "dock_contact_samples": 0,
+    "cardinal_passages": {},
+    "final_stationary_s": 0.0,
+    "samples": 1141,
+    "events": [
+      {
+        "t": 12.639221909979824,
+        "state": 0,
+        "stage": "",
+        "message": "",
+        "inhibit": [
+          "control state unavailable"
+        ]
+      },
+      {
+        "t": 16.85849795601098,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projecting latitude/longitude waypoint coordinates",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 16.87402042100439,
+        "state": 4,
+        "stage": "permission",
+        "message": "waiting for AUTO permission before starting Nav2",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 17.0232228100067,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Task 2 MPPI FollowPath gate enabled",
+        "inhibit": []
+      },
+      {
+        "t": 72.50936157000251,
+        "state": 0,
+        "stage": "",
+        "message": "Task 2 MPPI FollowPath gate disabled",
+        "inhibit": [
+          "Nav2 is not ready"
+        ]
+      }
+    ],
+    "evaluation_limits": [
+      "synthetic perception; not image recognition accuracy",
+      "MMG qualification is separate from kinematic runs"
+    ]
+  },
+  {
+    "run": "task2-port-noise2026",
+    "exit_code": 0,
+    "test_mode": "none",
+    "task": "task2",
+    "final_output": {
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "final_inhibit_reasons": [
+      "no active task control policy"
+    ],
+    "passed": true,
+    "reason": "mission terminal",
+    "mission_result": 8,
+    "action_result_code": 0,
+    "waypoints_visited": 2,
+    "waypoints_total": 2,
+    "minimum_buoy_clearance_m": 0.6518935824823529,
+    "stationary_dwell_s": {},
+    "required_dwell_s": [],
+    "other_ship_clearance_m": 3.5785447790319136,
+    "opponent_selected": true,
+    "max_starboard_offset_m": 0.31050294957009683,
+    "cpa_astern": true,
+    "gates_passed": [
+      0,
+      1
+    ],
+    "wall_enabled_seen": false,
+    "wall_disabled_seen": true,
+    "maximum_wall_points": 0,
+    "enabled_wall_cloud_seen": false,
+    "dock_contact_samples": 0,
+    "cardinal_passages": {},
+    "final_stationary_s": 2.8997683709603734,
+    "samples": 898,
+    "events": [
+      {
+        "t": 13.355467093002517,
+        "state": 0,
+        "stage": "",
+        "message": "",
+        "inhibit": [
+          "control state unavailable"
+        ]
+      },
+      {
+        "t": 18.903338700998574,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projecting latitude/longitude waypoint coordinates",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 18.924262941000052,
+        "state": 4,
+        "stage": "permission",
+        "message": "waiting for AUTO permission before starting Nav2",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 19.076697056007106,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Task 2 MPPI FollowPath gate enabled",
+        "inhibit": []
+      },
+      {
+        "t": 59.66036602901295,
+        "state": 0,
+        "stage": "",
+        "message": "Task 2 FollowPath goal reached",
+        "inhibit": []
+      }
+    ],
+    "evaluation_limits": [
+      "synthetic perception; not image recognition accuracy",
+      "MMG qualification is separate from kinematic runs"
+    ]
+  }
+]

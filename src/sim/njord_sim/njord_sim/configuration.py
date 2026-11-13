@@ -1,11 +1,13 @@
 """Generate sim-only overrides without touching deployed vehicle configuration."""
 
-import math
 import json
+import math
 from dataclasses import asdict
 from pathlib import Path
+
 import yaml
 from ament_index_python.packages import get_package_share_directory as share
+
 from .scenario import scenario
 
 
@@ -119,6 +121,25 @@ def configurations(task_id, directory):
                 "min_obstacle_height": -0.1,
             },
         }
+        if task_id == "task2":
+            # Jazzy checks publication deadlines inside the 5 Hz update loop.
+            # Request faster than that loop so every update is published (~5 Hz),
+            # without changing controller/update timing or forcing full grids.
+            p["publish_frequency"] = 10.0
+            p["always_send_full_costmap"] = False
+            p["obstacle_layer"]["observation_sources"] += " free_space"
+            p["obstacle_layer"]["free_space"] = {
+                "topic": "/sim/costmap_clearing_scan",
+                "data_type": "LaserScan",
+                "sensor_frame": "base_link",
+                "marking": False,
+                "clearing": True,
+                "raytrace_min_range": 0.0,
+                "raytrace_max_range": 100.0,
+                "min_obstacle_height": -0.1,
+                "max_obstacle_height": 0.1,
+                "observation_persistence": 0.0,
+            }
         p["inflation_layer"] = {
             "plugin": "nav2_costmap_2d::InflationLayer",
             "inflation_radius": 1.2,

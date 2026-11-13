@@ -82,14 +82,30 @@ def lane_path(start, end, lane, buoys, spacing=0.25):
         t = max(0.0, min(1.0, t))
         return t * t * (3 - 2 * t)
 
+    def nominal(s):
+        lateral = lane * smooth(s / 7.0) * smooth((length - s) / 7.0)
+        for gate_s, _, _ in gates:
+            # Leave a straight approach/departure through each gate so the
+            # controller's lookahead does not cut toward a nearby buoy. Do not
+            # make a needless excursion before the first or after the last gate.
+            if gate_s < length / 2:
+                lateral *= smooth((s - gate_s - 1.0) / 6.0)
+            else:
+                lateral *= smooth((gate_s - s - 1.0) / 6.0)
+        return lateral
+
+    # Preserve the measured lateral position at the head of each replan.
+    # Multiplying that position by gate/finish tapers caused a lateral jump
+    # immediately after the forcibly inserted origin and a sharp steering turn.
+    correction = own_lateral - nominal(own_s)
+    blend = min(
+        [7.0, max(0.25, length - own_s)]
+        + [max(0.25, gs - own_s) for gs, _, _ in gates if gs > own_s]
+    )
     for i in range(count + 1):
         advance = remaining * i / count
         s = own_s + advance
-        lateral = own_lateral + (lane - own_lateral) * smooth(advance / 7.0)
-        lateral *= smooth((length - s) / 7.0)
-        # Observed gate pairs constrain the lane to the navigable gap.
-        for gate_s, _, _ in gates:
-            lateral *= smooth(abs(s - gate_s) / 4.0)
+        lateral = nominal(s) + correction * (1.0 - smooth(advance / blend))
         points.append(
             (start[0] + s * ex - lateral * ey, start[1] + s * ey + lateral * ex)
         )
@@ -126,7 +142,11 @@ def guarded_path(raw, start, end, other, speed, buoys, preferred_lane=None):
         # Commit early to a complete route rather than alternate rolling MPPI
         # horizons and opposite lanes during a closing encounter. The caller
         # retains the observed encounter side until the target has passed.
-        lanes = [lane, math.copysign(3.5, lane)]
+        # A delayed approach or a small observed course error can make both
+        # narrow lanes unsafe while a wider route still meets every hull/gate
+        # check. Try that same-side escape before inhibiting propulsion; holding
+        # on the course does not make a non-yielding approaching vessel stop.
+        lanes = [lane, math.copysign(3.5, lane), math.copysign(7.0, lane)]
     for lane in lanes:
         candidate = lane_path(start, end, lane, buoys)
         if safe_path(candidate, other, speed, buoys, start, end):
