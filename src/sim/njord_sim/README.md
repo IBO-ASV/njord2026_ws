@@ -43,7 +43,8 @@ alone prevents collision.
 
 For interactive use, install the bridge (`sudo apt install
 ros-jazzy-foxglove-bridge`). Without sudo, this workspace provides a local
-runtime install: `python3 scripts/install_foxglove_bridge_local.py`, then source
+runtime install: `python3 scripts/install_foxglove_bridge_local.py` (a no-op when
+the system bridge is already installed), then source
 `install/setup.bash` again. This install persists across reboots. CPU PyTorch can be installed with
 `sudo apt install python3-torch`. Build the dependency packages named above
 before running Task2.

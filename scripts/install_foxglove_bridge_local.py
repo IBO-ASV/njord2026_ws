@@ -23,9 +23,19 @@ def main():
     )
     args = parser.parse_args()
     prefix = args.prefix.resolve()
+    distro = os.environ.get("ROS_DISTRO", "jazzy")
+    system_marker = (
+        Path("/opt/ros")
+        / distro
+        / "share/ament_index/resource_index/packages/foxglove_bridge"
+    )
+    if system_marker.is_file():
+        print(
+            f"System bridge already available at /opt/ros/{distro}; no fallback install needed."
+        )
+        return
     if prefix.exists():
         parser.error(f"prefix already exists: {prefix}; refusing to overwrite")
-    distro = os.environ.get("ROS_DISTRO", "jazzy")
     packages = [
         f"ros-{distro}-{name}"
         for name in ("foxglove-bridge", "rosx-introspection", "resource-retriever")

@@ -12,8 +12,11 @@ AGXの `agx_bringup.launch.py`（Task1/Task2ラッパーを含む）と
 - WebSocketデータサーバーであり、HTTPアクセスだけで表示するWeb GUIではない。
 
 標準インストールは `sudo apt install ros-jazzy-foxglove-bridge`。
-このAGXではsudoが使えなかったため、次のfallbackでworkspaceのinstall配下へ配置した。
-RAM上の一時ファイルに依存せず、通常の `source install/setup.bash` で見つかる。
+このAGXでは最初sudoを使えず、下記fallbackでworkspace内に配置していた。
+現在はapt版が導入されたため、旧fallbackを `~/.local/share/njord/` 配下に退避し、
+通常の `source /opt/ros/jazzy/setup.bash` と `source install/setup.bash` で
+`ros2 pkg prefix foxglove_bridge` が `/opt/ros/jazzy` を返す構成へ移行した。
+launchはパッケージ名による解決なので、apt版のための実行パス指定は不要。
 
 ```bash
 source /opt/ros/jazzy/setup.bash
@@ -21,7 +24,8 @@ python3 scripts/install_foxglove_bridge_local.py
 source install/setup.bash
 ```
 
-既存prefixを上書きしない。通常のシステム依存関係は別途必要で、これはaptパッケージを展開する
+apt版が既にある場合、このinstallerは何も配置しない。既存prefixも上書きしない。
+通常のシステム依存関係は別途必要で、これはaptパッケージを展開する
 runtime用fallbackであり、source buildするためのSDK導入ではない。
 
 ## GUIとAUTO条件
