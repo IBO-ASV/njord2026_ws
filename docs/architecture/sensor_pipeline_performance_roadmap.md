@@ -1,5 +1,12 @@
 # センサパイプライン性能改善ロードマップ
 
+> 履歴資料（2026-11-13整理）: この文書の「未実装」「現状」は当時のPython YOLO経路を
+> 含み、現在の実装一覧ではありません。現行のGPU camera/LiDAR経路と既定launchは
+> [robot README](../../src/robot/README.md)、実装契約は
+> [GPU perception仕様](zed_gpu_perception_implementation_spec.md)を参照してください。
+> 現行の残作業は[統合backlog](integration_backlog.md)へ集約しています。
+> 性能目標の達成には実機での周期・遅延・EMC・連続運転の計測が必要です。
+
 ZED 2iとLivox MID-360SをJetson上で同時使用する際の、CPU/GPU負荷、メモリコピー、
 ROS 2通信量を削減するための優先項目をまとめる。
 

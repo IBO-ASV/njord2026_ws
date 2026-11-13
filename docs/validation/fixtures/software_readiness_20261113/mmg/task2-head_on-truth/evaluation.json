@@ -1,0 +1,85 @@
+{
+  "test_mode": "none",
+  "task": "task2",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": false,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 2,
+  "waypoints_total": 2,
+  "minimum_buoy_clearance_m": 1.7905875622006528,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [],
+  "other_ship_clearance_m": 0.0,
+  "opponent_selected": true,
+  "max_starboard_offset_m": 1.635560804715185,
+  "cpa_astern": false,
+  "gates_passed": [
+    0,
+    1
+  ],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 0,
+  "enabled_wall_cloud_seen": false,
+  "dock_contact_samples": 0,
+  "docking_simultaneous_translation_yaw_samples": null,
+  "cardinal_passages": {},
+  "final_stationary_s": 3.500082870014012,
+  "samples": 1534,
+  "events": [
+    {
+      "t": 12.639501563971862,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "control state unavailable"
+      ]
+    },
+    {
+      "t": 16.08411449898267,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 16.093652946001384,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 16.181964213959873,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Task 2 MPPI FollowPath gate enabled",
+      "inhibit": []
+    },
+    {
+      "t": 85.28968498395989,
+      "state": 0,
+      "stage": "",
+      "message": "Task 2 FollowPath goal reached",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

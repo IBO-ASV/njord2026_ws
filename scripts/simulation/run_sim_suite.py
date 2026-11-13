@@ -20,7 +20,17 @@ def main():
     p.add_argument("--timeout", type=int, default=None)
     p.add_argument("--domain-base", type=int, default=100)
     p.add_argument("--output", required=True)
+    p.add_argument("--model", choices=["kinematic", "mmg"], default="kinematic")
+    p.add_argument("--disturbance", action="store_true")
+    p.add_argument("--opponent-variable-speed", action="store_true")
+    for name in ("initial-x-offset", "initial-y-offset", "initial-yaw-offset",
+                 "detection-loss-period", "detection-loss-duration"):
+        p.add_argument("--" + name, type=float, default=0.0)
     a = p.parse_args()
+    if a.workers < 1 or a.domain_base < 0 or a.domain_base + a.workers > 233:
+        p.error("workers must be positive and domains must be in 0..232")
+    if not 0 <= a.detection_loss_duration <= a.detection_loss_period:
+        p.error("detection loss requires 0 <= duration <= period")
     out = Path(a.output).resolve()
     out.mkdir(parents=True, exist_ok=True)
     domains = queue.Queue()
@@ -35,6 +45,9 @@ def main():
             jobs.extend(
                 (task, int(seed), encounter) for seed in a.seeds.split(",") if seed
             )
+
+    if not jobs:
+        p.error("no cases selected; use --truth or at least one seed")
 
     def run(job):
         task, seed, encounter = job
@@ -55,6 +68,13 @@ def main():
             "--encounter",
             encounter,
         ]
+        command += ["--model", a.model]
+        for flag in ("disturbance", "opponent_variable_speed"):
+            if getattr(a, flag):
+                command.append("--" + flag.replace("_", "-"))
+        for option_name in ("initial_x_offset", "initial_y_offset", "initial_yaw_offset",
+                     "detection_loss_period", "detection_loss_duration"):
+            command += ["--" + option_name.replace("_", "-"), str(getattr(a, option_name))]
         if seed is not None:
             command += ["--noise", "--seed", str(seed)]
         try:

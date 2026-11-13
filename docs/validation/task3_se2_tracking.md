@@ -98,9 +98,11 @@ Berth stationary dwell was 5.76 s / 5.86 s in Task3.2 truth/noise, and
 command components at zero.
 
 The controller and tests build with ROS 2 Jazzy. CTest passes all five robot
-package test targets, including three new control-law cases. The standard
-colcon build of `robot` is blocked locally by the existing `ntripcaster`
-dependency's missing `wsocket` / `ulog` submodules. The robot package was
+package test targets, including three new control-law cases. At the time of this test, the standard
+colcon build of `robot` was blocked locally by the existing `ntripcaster`
+dependency's missing `wsocket` / `ulog` submodules. The software-readiness
+follow-up on 2026-11-13 initialized them, added bundled-libev fallback and
+verified the normal colcon build; see [acceptance follow-up](simulation_acceptance.md). The robot package was
 configured, built and installed directly with CMake; Mission Manager,
 waypoint_publisher, task1_sim and njord_sim were built with colcon.
 

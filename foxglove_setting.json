@@ -62,7 +62,7 @@
           "colorMap": "turbo"
         },
         "/global_costmap/obstacle_layer": {
-          "visible": true
+          "visible": false
         },
         "/route_graph": {
           "visible": false
@@ -71,7 +71,7 @@
           "visible": true
         },
         "/local_costmap/obstacle_layer": {
-          "visible": true
+          "visible": false
         },
         "/sim/boundary_markers": {
           "visible": true
@@ -119,7 +119,7 @@
           "visible": true
         },
         "/received_global_plan": {
-          "visible": true
+          "visible": false
         },
         "/staging_pose": {
           "visible": false

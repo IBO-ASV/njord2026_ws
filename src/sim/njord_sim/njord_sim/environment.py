@@ -44,6 +44,8 @@ from .clearing import (
     clearing_ranges,
 )
 from .scenario import dock_segments, scenario
+from .telemetry import TrajectorySampler
+from .robustness import detection_missing, opponent_motion
 
 QOS = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
 
@@ -64,7 +66,15 @@ class Environment(Node):
         self.external_force = self.declare_parameter("disturbance", False).value
         self.rng = random.Random(self.seed)
         self.x, self.y, self.yaw = self.s.initial
-        self.costmap_sensor_pose = self.s.initial
+        self.x += self.declare_parameter("initial_x_offset", 0.0).value
+        self.y += self.declare_parameter("initial_y_offset", 0.0).value
+        self.yaw += self.declare_parameter("initial_yaw_offset", 0.0).value
+        self.opponent_variable_speed = self.declare_parameter("opponent_variable_speed", False).value
+        self.detection_loss_period = self.declare_parameter("detection_loss_period", 0.0).value
+        self.detection_loss_duration = self.declare_parameter("detection_loss_duration", 0.0).value
+        if not 0 <= self.detection_loss_duration <= self.detection_loss_period:
+            raise ValueError("detection loss requires 0 <= duration <= period")
+        self.costmap_sensor_pose = (self.x, self.y, self.yaw)
         self.u = self.v = self.r = 0.0
         self.bias = [0.0, 0.0, 0.0]
         self.command = Twist()
@@ -106,7 +116,8 @@ class Environment(Node):
         self.ground_speed = self.create_publisher(Float32, "/gui/ground_speed_mps", 10)
         self.actual_path = Path()
         self.actual_path.header.frame_id = "odom"
-        self.path_pub = self.create_publisher(Path, "/sim/estimated_path", 10)
+        self.path_sampler = TrajectorySampler()
+        self.path_pub = self.create_publisher(Path, "/sim/estimated_path", QOS)
         self.geo_markers = self.create_publisher(
             MarkerArray, "/ground_waypoint_markers", QOS
         )
@@ -327,10 +338,16 @@ class Environment(Node):
         imu.angular_velocity_covariance[8] = 0.003464**2
         self.imu.publish(imu)
         self.tick_count += 1
-        if self.tick_count % 10 == 0:
+        if self.tick_count % 10 == 0 and self.path_sampler.accept(
+            estimate.pose.pose.position.x, estimate.pose.pose.position.y,
+            2 * math.atan2(estimate.pose.pose.orientation.z, estimate.pose.pose.orientation.w),
+        ):
             pose = PoseStamped(header=estimate.header, pose=estimate.pose.pose)
             self.actual_path.poses.append(pose)
-            self.actual_path.poses = self.actual_path.poses[-2400:]
+            if len(self.actual_path.poses) > self.path_sampler.max_points:
+                # Retain the start and the full course, reducing old detail
+                # instead of silently dropping the beginning of long missions.
+                self.actual_path.poses = self.actual_path.poses[:-1:2] + [self.actual_path.poses[-1]]
             self.actual_path.header.stamp = stamp
             self.path_pub.publish(self.actual_path)
         if self.tick_count % 2:
@@ -361,6 +378,7 @@ class Environment(Node):
         detections.header = Header(stamp=stamp, frame_id="map")
         points = []
         opponent = None
+        hidden_hull = set()
         classes = {"RED": 1, "GREEN": 0, "N": 2, "E": 3, "S": 4, "W": 5}
         for x, y, mark in self.s.buoys:
             distance = math.hypot(x - self.x, y - self.y)
@@ -403,8 +421,9 @@ class Environment(Node):
             )
             meeting = math.hypot(b.x - a.x, b.y - a.y) / 2 / 1.0288888889
             mx, my = (a.x + b.x) / 2, (a.y + b.y) / 2
-            ox = mx + (t - meeting) * 1.2861111111 * math.cos(theta)
-            oy = my + (t - meeting) * 1.2861111111 * math.sin(theta)
+            displacement, speed = opponent_motion(t, meeting, self.opponent_variable_speed)
+            ox = mx + displacement * math.cos(theta)
+            oy = my + displacement * math.sin(theta)
             opponent = (ox, oy, theta, 2.0, 1.08)
             other = Odometry()
             other.header = Header(stamp=stamp, frame_id="odom")
@@ -412,8 +431,9 @@ class Environment(Node):
             other.pose.pose.position.x = ox
             other.pose.pose.position.y = oy
             other.pose.pose.orientation = quaternion(theta)
-            other.twist.twist.linear.x = 1.2861111111
+            other.twist.twist.linear.x = speed
             self.other_truth.publish(other)
+            hull_start = len(points)
             for u in range(11):
                 for v in range(7):
                     for z in (0.25, 0.5, 0.75, 1.0):
@@ -427,6 +447,8 @@ class Environment(Node):
                                 z,
                             )
                         )
+            if detection_missing(t, self.detection_loss_period, self.detection_loss_duration):
+                hidden_hull.update(points[hull_start:])
             # Water returns let the real RANSAC ground-remover estimate a plane.
             points.extend(
                 (self.x + i * 2.0, self.y + j * 2.0, 0.0)
@@ -449,6 +471,8 @@ class Environment(Node):
         # Simulated LiDAR uses the sensor/base frame and range gating.
         local = []
         for x, y, z in points:
+            if (x, y, z) in hidden_hull:
+                continue
             dx, dy = x - self.x, y - self.y
             if math.hypot(dx, dy) < 40.0:
                 local.append(

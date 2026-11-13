@@ -1,0 +1,4 @@
+{
+  "reason": "Initial collector shadowed case name with the last forwarded option name; navigation/evaluator outputs were unaffected. Fixed before robustness matrix.",
+  "source": "Per-case evaluation.json plus ordered runner exit codes from suite_collector_failure.json"
+}

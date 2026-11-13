@@ -1,0 +1,39 @@
+control_policy:
+  common:
+    nav_command_timeout_sec: 2.0
+    require_driver_heartbeat: false
+    require_emergency_stop_clear: true
+    require_ground_station: false
+    require_localization_heartbeat: true
+    require_nav2_ready: true
+    require_no_critical_health_fault: false
+    require_rtk_fix: false
+    require_task_ready: true
+  health_signals:
+  - ground_station_heartbeat
+  - local_odometry
+  - gnss
+  return_home:
+    require_buoy_perception: false
+    require_collision_monitor: false
+    require_dynamic_gate_tf: false
+    require_ground_station: false
+    require_waypoint_plan: true
+  task1:
+    require_buoy_perception: true
+    require_collision_monitor: false
+    require_dynamic_gate_tf: false
+    require_ground_station: false
+    require_waypoint_plan: true
+  task2:
+    require_buoy_perception: false
+    require_collision_monitor: false
+    require_dynamic_gate_tf: false
+    require_ground_station: true
+    require_waypoint_plan: true
+  task3:
+    require_buoy_perception: true
+    require_collision_monitor: true
+    require_dynamic_gate_tf: false
+    require_ground_station: true
+    require_waypoint_plan: true

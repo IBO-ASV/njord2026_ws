@@ -20,7 +20,13 @@ def main():
     p.add_argument("--encounter", default="head_on")
     p.add_argument("--cancel-after", type=float, default=0.0)
     p.add_argument("--dropout-after", type=float, default=0.0)
+    p.add_argument("--opponent-variable-speed", action="store_true")
+    for name in ("initial-x-offset", "initial-y-offset", "initial-yaw-offset",
+                 "detection-loss-period", "detection-loss-duration"):
+        p.add_argument("--" + name, type=float, default=0.0)
     a = p.parse_args()
+    if not 0 <= a.detection_loss_duration <= a.detection_loss_period:
+        p.error("detection loss requires 0 <= duration <= period")
     out = Path(a.output).resolve()
     out.mkdir(parents=True, exist_ok=True)
     if (out / "run.json").exists():
@@ -71,6 +77,11 @@ def main():
                     f"seed:={a.seed}",
                     f"disturbance:={str(a.disturbance).lower()}",
                     f"encounter:={a.encounter}",
+                    f"opponent_variable_speed:={str(a.opponent_variable_speed).lower()}",
+                    *[f"{name}:={getattr(a, name)}" for name in (
+                        "initial_x_offset", "initial_y_offset", "initial_yaw_offset",
+                        "detection_loss_period", "detection_loss_duration",
+                    )],
                     f"dropout_after:={a.dropout_after}",
                     f"config_dir:={out / 'config'}",
                 ],

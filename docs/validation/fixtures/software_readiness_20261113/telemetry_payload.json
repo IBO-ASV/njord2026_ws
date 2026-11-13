@@ -1,0 +1,10 @@
+{
+  "method": "rclpy CDR serialization of Path with odom headers; payload only, not measured network throughput",
+  "bytes_by_pose_count": {
+    "600": 48028,
+    "2400": 192028
+  },
+  "maximum_payload_reduction_fraction": 0.7498906409481951,
+  "unchanged_path_periodic_publish": false,
+  "source_test": "src/sim/njord_sim/test/test_path_telemetry_ros.py"
+}

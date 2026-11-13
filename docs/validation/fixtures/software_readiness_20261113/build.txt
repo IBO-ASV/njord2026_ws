@@ -1,0 +1,23 @@
+[0.950s] WARNING:colcon.colcon_core.package_selection:Some selected packages are already built in one or more underlay workspaces:
+	'robot' is in: /home/ibo/njord2026_ws/install/robot
+If a package in a merged underlay workspace is overridden and it installs headers, then all packages in the overlay must sort their include directories by workspace order. Failure to do so may result in build failures or undefined behavior at run time.
+If the overridden package is used by another package in any underlay, then the overriding package in the overlay must be API and ABI compatible or undefined behavior at run time may occur.
+
+If you understand the risks and want to override a package anyways, add the following to the command line:
+	--allow-overriding robot
+
+This may be promoted to an error in a future release of colcon-override-check.
+Starting >>> ntripcaster
+--- stderr: ntripcaster
+/home/ibo/njord2026_ws/src/driver/gnss/ntripcaster/libev/ev.c:1866:31: warning: ‘ev_default_loop_ptr’ initialized and declared ‘extern’
+ 1866 |   EV_API_DECL struct ev_loop *ev_default_loop_ptr = 0; /* needs to be initialised to make it a definition despite extern */
+      |                               ^~~~~~~~~~~~~~~~~~~
+---
+Finished <<< ntripcaster [2.65s]
+Starting >>> robot
+Finished <<< robot [5.86s]
+Starting >>> njord_sim
+Finished <<< njord_sim [4.49s]
+
+Summary: 3 packages finished [13.8s]
+  1 package had stderr output: ntripcaster

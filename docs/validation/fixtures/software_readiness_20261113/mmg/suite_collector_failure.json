@@ -1,0 +1,38 @@
+[
+  {
+    "run": "detection_loss_duration",
+    "exit_code": 0,
+    "passed": false,
+    "reason": "observer failed before producing evaluation"
+  },
+  {
+    "run": "detection_loss_duration",
+    "exit_code": 0,
+    "passed": false,
+    "reason": "observer failed before producing evaluation"
+  },
+  {
+    "run": "detection_loss_duration",
+    "exit_code": 1,
+    "passed": false,
+    "reason": "runner exit 1: observer failed before producing evaluation"
+  },
+  {
+    "run": "detection_loss_duration",
+    "exit_code": 0,
+    "passed": false,
+    "reason": "observer failed before producing evaluation"
+  },
+  {
+    "run": "detection_loss_duration",
+    "exit_code": 0,
+    "passed": false,
+    "reason": "observer failed before producing evaluation"
+  },
+  {
+    "run": "detection_loss_duration",
+    "exit_code": 0,
+    "passed": false,
+    "reason": "observer failed before producing evaluation"
+  }
+]

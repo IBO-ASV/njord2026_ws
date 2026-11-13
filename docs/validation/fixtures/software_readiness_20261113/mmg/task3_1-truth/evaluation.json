@@ -1,0 +1,128 @@
+{
+  "test_mode": "none",
+  "task": "task3_1",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 4,
+  "waypoints_total": 4,
+  "minimum_buoy_clearance_m": null,
+  "stationary_dwell_s": {
+    "0": 10.349091121985111
+  },
+  "required_dwell_s": [
+    10.0
+  ],
+  "other_ship_clearance_m": null,
+  "opponent_selected": false,
+  "max_starboard_offset_m": 0.0,
+  "cpa_astern": null,
+  "gates_passed": [],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 0,
+  "enabled_wall_cloud_seen": false,
+  "dock_contact_samples": 0,
+  "docking_simultaneous_translation_yaw_samples": null,
+  "cardinal_passages": {},
+  "final_stationary_s": 3.4500344489933923,
+  "samples": 2109,
+  "events": [
+    {
+      "t": 6.553805864998139,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.017654841998592,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.035902136005461,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.115544511994813,
+      "state": 5,
+      "stage": "stage_1_gate",
+      "message": "sending docking stage_1_gate",
+      "inhibit": []
+    },
+    {
+      "t": 10.182590896030888,
+      "state": 5,
+      "stage": "stage_1",
+      "message": "sending docking stage_1",
+      "inhibit": []
+    },
+    {
+      "t": 53.727031591988634,
+      "state": 5,
+      "stage": "stage_2",
+      "message": "sending docking stage_2",
+      "inhibit": []
+    },
+    {
+      "t": 59.7822481180192,
+      "state": 5,
+      "stage": "stage_2_wait",
+      "message": "waiting at berth for 10 seconds",
+      "inhibit": []
+    },
+    {
+      "t": 71.98395620600786,
+      "state": 5,
+      "stage": "stage_3",
+      "message": "sending docking stage_3",
+      "inhibit": []
+    },
+    {
+      "t": 80.57915923302062,
+      "state": 5,
+      "stage": "stage_4",
+      "message": "sending docking stage_4",
+      "inhibit": []
+    },
+    {
+      "t": 105.39424590498675,
+      "state": 8,
+      "stage": "complete",
+      "message": "docking route complete",
+      "inhibit": []
+    },
+    {
+      "t": 105.3987215780071,
+      "state": 0,
+      "stage": "",
+      "message": "docking route complete",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

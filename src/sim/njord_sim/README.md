@@ -235,3 +235,42 @@ Task2 launch now checks a real CPU PyTorch operation before bringing up nodes,
 and reports the installer command if that check fails. Task1/3/4 do not run this
 check. Restart the failed launch after installing dependencies; an exited planner
 process is not restored by changing Python packages beneath the remaining nodes.
+
+
+## Software readiness follow-up (2026-11-13)
+
+The suite accepts `--model mmg`, `--disturbance`, `--initial-x-offset`,
+`--initial-y-offset` (metres in odom), and `--initial-yaw-offset` (radians).
+Offsets change the initial vessel pose, not the route or scoring geometry.
+Use separate output directories for every matrix; failed results remain failures.
+For example, a truth-only full MMG matrix and perturbed Task2 matrix:
+
+```bash
+python3 scripts/simulation/run_sim_suite.py --model mmg --truth --seeds '' \
+  --workers 2 --domain-base 150 --output artifacts/mmg-matrix
+python3 scripts/simulation/run_sim_suite.py --tasks task2 --seeds 2026 \
+  --encounters head_on,port,starboard,none --opponent-variable-speed \
+  --initial-x-offset 0.5 --initial-y-offset 0.3 --initial-yaw-offset 0.15 \
+  --detection-loss-period 15 --detection-loss-duration 2 \
+  --workers 2 --domain-base 160 --output artifacts/task2-robustness
+```
+
+`--opponent-variable-speed` adds a continuous 30 s sinusoidal speed variation
+of ±0.4 m/s around the existing 1.2861 m/s NPC speed. Truth velocity is the
+analytic derivative of truth position. Periodic detection loss begins after
+one period and removes only NPC hull returns from the recognition LiDAR.
+Physical obstacle clouds, clearing occlusion and evaluator truth retain the
+NPC. This isolates tracker/opponent-selection resilience; it does not simulate
+loss of every collision sensor, general visibility or measured vessel statistics.
+A period/duration of zero disables loss. Existing `--dropout-after` instead
+simulates a persistent health/sensor failure and requires a safe canceled stop.
+
+`/sim/estimated_path` now uses retained depth-one QoS. It publishes at most
+2 Hz and adds a pose only after 0.10 m displacement or 0.05 rad rotation from
+the last recorded sample, suppressing stationary jitter. Above 600 poses,
+the history is decimated while retaining its beginning and latest endpoint.
+Late subscribers receive the latest complete path without periodic idle sends.
+This display sampling never changes the full-rate truth trajectory used for
+scoring. The common Foxglove layout hides individual obstacle-layer grids and
+`/received_global_plan`; combined local/global costmaps remain visible. Reimport
+the layout and restart the sim to apply these changes to an existing session.

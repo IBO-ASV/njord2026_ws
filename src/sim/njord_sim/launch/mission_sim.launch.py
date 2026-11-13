@@ -51,6 +51,11 @@ def launch(context):
                     "seed": seed,
                     "disturbance": disturbance,
                     "encounter": LaunchConfiguration("encounter"),
+                    "opponent_variable_speed": LaunchConfiguration("opponent_variable_speed").perform(context) == "true",
+                    **{name: float(LaunchConfiguration(name).perform(context)) for name in (
+                        "initial_x_offset", "initial_y_offset", "initial_yaw_offset",
+                        "detection_loss_period", "detection_loss_duration",
+                    )},
                     "dropout_after": float(
                         LaunchConfiguration("dropout_after").perform(context)
                     ),
@@ -145,7 +150,12 @@ def launch(context):
                         {
                             "publish_tf": False,
                             "topic_odom": "/sim/physics/odom",
-                            "initial_pose_xyyaw": list(s.initial),
+                            "initial_pose_xyyaw": [
+                                value + float(LaunchConfiguration(name).perform(context))
+                                for value, name in zip(s.initial, (
+                                    "initial_x_offset", "initial_y_offset", "initial_yaw_offset",
+                                ))
+                            ],
                             "thruster_force_sign": [1.0, 1.0, 1.0, 1.0],
                             "disturbance.seed": seed,
                             "disturbance.sigma_u": 0.12 if disturbance else 0.0,
@@ -194,6 +204,11 @@ def generate_launch_description():
             DeclareLaunchArgument("foxglove_port", default_value="8767"),
             DeclareLaunchArgument("foxglove_address", default_value="0.0.0.0"),
             DeclareLaunchArgument("dropout_after", default_value="0.0"),
+            DeclareLaunchArgument("opponent_variable_speed", default_value="false", choices=["true", "false"]),
+            *[DeclareLaunchArgument(name, default_value="0.0") for name in (
+                "initial_x_offset", "initial_y_offset", "initial_yaw_offset",
+                "detection_loss_period", "detection_loss_duration",
+            )],
             OpaqueFunction(function=launch),
         ]
     )
