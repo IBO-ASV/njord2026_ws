@@ -1,18 +1,20 @@
 """The GUI receives the same active requirements that inhibit AUTO."""
 
 import json
-from pathlib import Path
 import time
+from pathlib import Path
+
 import pytest
 import yaml
 
 pytest.importorskip("rclpy")
 import rclpy
+from control_manager.safety_supervisor_node import TRANSIENT_QOS, SafetySupervisor
 from rclpy.executors import SingleThreadedExecutor
 from rclpy.node import Node
 from std_msgs.msg import String
+
 from njord_interfaces.msg import HealthSignal, HealthState
-from control_manager.safety_supervisor_node import SafetySupervisor, TRANSIENT_QOS
 
 
 def test_required_stale_inputs_are_published_with_all_inhibit_reasons(tmp_path):
@@ -66,11 +68,35 @@ def test_required_stale_inputs_are_published_with_all_inhibit_reasons(tmp_path):
             "require_rtk_fix",
         ):
             assert message["requirements"][key]
+        assert not message["preparation_permitted"]
+        assert all(any(signal in reason for reason in message["preparation_inhibit_reasons"])
+                   for signal in ("local_odometry", "gnss", "driver_heartbeat"))
         permitted, reasons = supervisor._decision()
         assert not permitted
         text = " ".join(reason for _, reason in reasons)
         for signal in ("local_odometry", "gnss", "driver_heartbeat"):
             assert signal in text
+        # IDLE hides task permission behind "no active policy", but preparation
+        # must still independently check health, even before Nav2/Task are ready.
+        supervisor._active_policy = ""
+        supervisor._health_states = {
+            name: HealthSignal.OK for name in ("local_odometry", "gnss", "driver_heartbeat")
+        }
+        assert not supervisor._decision()[0]
+        received.clear()
+        deadline = time.monotonic() + 3
+        while not any(r["policy"] == "" and r["preparation_permitted"] for r in received) and time.monotonic() < deadline:
+            executor.spin_once(timeout_sec=0.05)
+        prepared = next(r for r in received if r["policy"] == "" and r["preparation_permitted"])
+        assert not prepared["task_ready"]
+        assert not prepared["nav2_ready"]
+        supervisor._emergency_stop = True
+        received.clear()
+        deadline = time.monotonic() + 3
+        while not any(not r["preparation_permitted"] for r in received) and time.monotonic() < deadline:
+            executor.spin_once(timeout_sec=0.05)
+        blocked = next(r for r in received if not r["preparation_permitted"])
+        assert "emergency stop is active" in blocked["preparation_inhibit_reasons"]
     finally:
         executor.shutdown()
         supervisor.destroy_node()

@@ -6,35 +6,36 @@ import time
 from copy import deepcopy
 
 import rclpy
-from rclpy.node import Node
-from rclpy.action import ActionClient
-from rclpy.qos import QoSProfile, DurabilityPolicy
 from geometry_msgs.msg import (
-    Twist,
-    TransformStamped,
-    Quaternion,
-    PoseWithCovarianceStamped,
     PointStamped,
     PoseStamped,
+    PoseWithCovarianceStamped,
+    Quaternion,
+    TransformStamped,
+    Twist,
 )
-from nav_msgs.msg import Odometry, Path
-from nav2_msgs.action import NavigateThroughPoses
-from sensor_msgs.msg import NavSatFix, Imu, PointCloud2
-from sensor_msgs_py import point_cloud2
-from std_msgs.msg import Bool, UInt8, Header, Float32
-from tf2_ros import TransformBroadcaster, StaticTransformBroadcaster
-from robot_localization.srv import FromLL
 from lifecycle_msgs.srv import GetState
+from mission_manager.geodesy import wgs84_to_enu
+from nav2_msgs.action import NavigateThroughPoses
+from nav_msgs.msg import Odometry, Path
+from rclpy.action import ActionClient
+from rclpy.node import Node
+from rclpy.qos import DurabilityPolicy, QoSProfile
+from robot_localization.srv import FromLL
+from sensor_msgs.msg import Imu, NavSatFix, PointCloud2
+from sensor_msgs_py import point_cloud2
+from std_msgs.msg import Bool, Float32, Header, UInt8
+from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
 from visualization_msgs.msg import Marker, MarkerArray
+
 from njord_interfaces.msg import (
     BuoyDetection,
     BuoyDetectionArray,
-    HealthState,
     HealthSignal,
-    MissionStatus,
+    HealthState,
 )
-from .scenario import scenario, dock_segments
-from mission_manager.geodesy import wgs84_to_enu
+
+from .scenario import dock_segments, scenario
 
 QOS = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
 
@@ -96,9 +97,11 @@ class Environment(Node):
         self.geo_markers = self.create_publisher(
             MarkerArray, "/ground_waypoint_markers", QOS
         )
-        self.create_subscription(
-            MissionStatus, "/mission/status", self.on_mission_status, QOS
+        self.preview_markers = self.create_publisher(
+            MarkerArray, "/sim/waypoint_markers", QOS
         )
+        self.publish_waypoint_previews()
+        self.create_timer(1.0, self.publish_waypoint_previews)
         self.tf = TransformBroadcaster(self)
         self.static = StaticTransformBroadcaster(self)
         static = TransformStamped()
@@ -131,28 +134,48 @@ class Environment(Node):
         self.tick_count = 0
         self.create_timer(0.05, self.tick)
 
-    def on_mission_status(self, message):
-        markers = MarkerArray()
-        if message.task_id != self.s.task.task_id or message.state not in range(1, 8):
-            markers.markers = [Marker(action=Marker.DELETEALL)]
-        else:
-            for i, w in enumerate(self.s.route.waypoints):
-                marker = Marker(
-                    id=i,
-                    ns=f"ground_waypoint_wgs84/{message.task_id}",
-                    type=Marker.SPHERE,
-                    action=Marker.ADD,
-                )
-                marker.header.frame_id = "wgs84"
-                marker.header.stamp = self.get_clock().now().to_msg()
-                marker.pose.position.x = w.longitude
-                marker.pose.position.y = w.latitude
-                marker.pose.orientation.w = 1.0
-                marker.text = w.name
-                marker.scale.x = marker.scale.y = marker.scale.z = 1.0
-                marker.color.a = 1.0
-                markers.markers.append(marker)
-        self.geo_markers.publish(markers)
+    def publish_waypoint_previews(self):
+        """Display the selected sim route before, during and after a mission."""
+        # Replace the previous route, including extra IDs from another sim
+        # task that a viewer may have displayed before reconnecting.
+        geographic = MarkerArray(markers=[Marker(action=Marker.DELETEALL)])
+        local = MarkerArray(markers=[Marker(action=Marker.DELETEALL)])
+        stamp = self.get_clock().now().to_msg()
+        route = Marker()
+        route.header = Header(stamp=stamp, frame_id="odom")
+        route.ns, route.id = "sim_waypoint_route", 0
+        route.type, route.action = Marker.LINE_STRIP, Marker.ADD
+        route.pose.orientation.w = 1.0
+        route.scale.x = 0.1
+        route.color.g, route.color.b, route.color.a = 0.8, 1.0, 0.8
+        for i, waypoint in enumerate(self.s.route.waypoints):
+            marker = Marker()
+            marker.header = Header(stamp=stamp, frame_id="wgs84")
+            marker.ns, marker.id = f"ground_waypoint_wgs84/{self.s.task.task_id}", i
+            marker.type, marker.action = Marker.SPHERE, Marker.ADD
+            marker.pose.position.x, marker.pose.position.y = waypoint.longitude, waypoint.latitude
+            marker.pose.orientation.w = 1.0
+            marker.text = waypoint.name
+            marker.scale.x = marker.scale.y = marker.scale.z = 1.0
+            marker.color.g, marker.color.b, marker.color.a = 0.9, 1.0, 1.0
+            geographic.markers.append(marker)
+            point = deepcopy(marker)
+            point.header.frame_id = "odom"
+            point.ns = "sim_waypoints"
+            point.pose.position.x, point.pose.position.y = waypoint.x, waypoint.y
+            point.pose.position.z = 0.2
+            point.scale.x = point.scale.y = point.scale.z = 0.45
+            local.markers.append(point)
+            route.points.append(deepcopy(point.pose.position))
+            label = deepcopy(point)
+            label.ns, label.type = "sim_waypoint_labels", Marker.TEXT_VIEW_FACING
+            label.pose.position.z = 1.0 + (i % 3) * 0.35
+            label.scale.z = 0.7
+            label.text = f"{i + 1:02d} {waypoint.name}"
+            local.markers.append(label)
+        local.markers.append(route)
+        self.geo_markers.publish(geographic)
+        self.preview_markers.publish(local)
 
     def on_planned_path(self, message):
         if len(message.poses) >= 2:

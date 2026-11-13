@@ -34,3 +34,42 @@ hardcoded GUI assumption. Missing driver-heartbeat signals remain visible.
 GNSS frequency health is explicitly labelled separately from RTK FIX quality.
 The serial writer's independent command-watchdog reason comes from
 `/micon/thruster_command_status`.
+
+The panel uses actual HTML tables for mode request, AUTO output permission,
+effective output source, health signals, receive age/frequency and enabled
+requirements. `AUTO要求中` is operator intent; only `実際の出力源: 自律航行`
+means AUTO was selected by the arbiter. Before a task is configured, permission
+is displayed as `準備前` rather than an unexplained `不可`.
+
+`準備してAUTO開始` requests task/profile preparation and AUTO intent. The
+SafetySupervisor publishes `preparation_permitted` and
+`preparation_inhibit_reasons` in the existing `/control/requirements` JSON.
+These check the common emergency/health conditions even while no task policy is
+active. Task and Nav2 readiness are deferred to mission preparation, where the
+existing AUTO safety decision still applies. Missing/stale telemetry, emergency
+stop, failed preparation checks and current physical/configuration faults disable
+the button. Click handlers recheck the same conditions. This is an operator UI
+check; the command arbiter remains the authority for actual actuator output.
+Task-specific conditions are checked after the selected task is configured.
+`停止・MANUALへ` also cancels an orphaned AUTO request when no mission is active.
+
+After updating, restart the ROS launch (including SafetySupervisor), reinstall
+`mission-control-0.1.0.foxe`, and reimport the common `foxglove_setting.json`.
+An older SafetySupervisor lacks the preparation fields, so this panel keeps the
+start button disabled with an explicit update message. No sensor interlock
+configuration is changed by this display update.
+
+Waypoint display inputs:
+
+- `/ground_waypoint_markers`: WGS84 longitude/latitude for **GNSS Map Telemetry**;
+  it is not an ENU marker array for the standard 3D panel.
+- `/mission/waypoint_markers`: validated route markers published by Mission
+  Manager when navigation or dry-run preview starts, now enabled in the common
+  3D layout.
+- `/sim/waypoint_markers`: ENU points, labels and route preview for the selected
+  sim task. Published at 1 Hz with transient-local durability, starting before
+  mission execution. The sim's geographic preview also remains visible while
+  IDLE and after completion. Hardware uses the existing ground waypoint source.
+
+A headless Firefox visual check with simulated telemetry is saved at
+[Mission Control preview](../../../../Docs/mission_control_preview_20261113.png).

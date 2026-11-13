@@ -162,6 +162,12 @@
         },
         "/virtual_obstacle_markers": {
           "visible": true
+        },
+        "/mission/waypoint_markers": {
+          "visible": true
+        },
+        "/sim/waypoint_markers": {
+          "visible": true
         }
       },
       "layers": {

@@ -4,10 +4,11 @@ import time
 
 import pytest
 import rclpy
-from std_msgs.msg import Bool
 from mission_manager.mission_manager_node import MissionManager
 from njord_sim.configuration import configurations
-from njord_sim.environment import Environment, QOS
+from njord_sim.environment import QOS, Environment
+from std_msgs.msg import Bool
+from visualization_msgs.msg import Marker, MarkerArray
 
 
 def spin_for(node, seconds):
@@ -25,6 +26,24 @@ def test_task_endpoints_and_repeated_task2_activation(task, tmp_path):
     try:
         environment = Environment()
         manager = MissionManager()
+        # A late-joining display must receive the preview while still IDLE,
+        # before any navigation goal or MissionStatus callback has occurred.
+        geographic, local = [], []
+        manager.create_subscription(MarkerArray, "/ground_waypoint_markers", geographic.append, QOS)
+        manager.create_subscription(MarkerArray, "/sim/waypoint_markers", local.append, QOS)
+        deadline = time.monotonic() + 3
+        while (not geographic or not local) and time.monotonic() < deadline:
+            spin_for(manager, 0.05)
+        assert geographic and local
+        route = environment.s.route.waypoints
+        geo = [m for m in geographic[-1].markers if m.action == Marker.ADD]
+        assert len(geo) == len(route)
+        assert geo[0].pose.position.x == route[0].longitude
+        assert geo[0].pose.position.y == route[0].latitude
+        assert geographic[-1].markers[0].action == Marker.DELETEALL
+        assert local[-1].markers[0].action == Marker.DELETEALL
+        assert all(m.header.frame_id == "odom" for m in local[-1].markers if m.action == Marker.ADD)
+        assert sum(m.type == Marker.TEXT_VIEW_FACING for m in local[-1].markers) == len(route)
         topics = {subscription.topic_name for subscription in environment.subscriptions}
         task2_topics = {"/planned_path_pruned", "/task2/points_filtered",
                         "/mission/task2/enabled"}

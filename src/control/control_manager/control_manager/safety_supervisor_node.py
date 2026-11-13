@@ -5,8 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from ament_index_python.packages import get_package_share_directory
 import rclpy
+from ament_index_python.packages import get_package_share_directory
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
@@ -17,7 +17,6 @@ from njord_interfaces.srv import SetControlMode
 
 from .arbitration import derive_control_state
 from .policy import PolicyError, SafetyInputs, evaluate_auto_permission, load_policy
-
 
 TRANSIENT_QOS = QoSProfile(depth=1, durability=DurabilityPolicy.TRANSIENT_LOCAL)
 
@@ -58,7 +57,9 @@ class SafetySupervisor(Node):
         self.create_subscription(Bool, "/mission/task_ready", self._on_task_ready, TRANSIENT_QOS)
         self.create_subscription(Bool, "/mission/task_requirements_ready", self._on_task_requirements_ready, TRANSIENT_QOS)
         self.create_subscription(String, "/mission/active_control_policy", self._on_active_policy, TRANSIENT_QOS)
-        from geometry_msgs.msg import Twist  # Imported here to keep policy tests ROS-free.
+        from geometry_msgs.msg import (
+            Twist,  # Imported here to keep policy tests ROS-free.
+        )
         self.create_subscription(Twist, "/cmd_vel_manual", self._on_manual_command, 10)
         self.create_subscription(Twist, "/cmd_vel_nav", self._on_nav_command, 10)
         self.create_subscription(Twist, "/cmd_vel_sbus", self._on_sbus_command, 10)
@@ -108,6 +109,9 @@ class SafetySupervisor(Node):
             requirements = self._policy.requirements_for(self._active_policy)
         except PolicyError as exc:
             return False, ((ControlState.INHIBIT_CONFIGURATION_ERROR, str(exc)),)
+        return self._evaluate_requirements(requirements)
+
+    def _evaluate_requirements(self, requirements):
         decision = evaluate_auto_permission(
             requirements,
             SafetyInputs(
@@ -164,8 +168,22 @@ class SafetySupervisor(Node):
             requirements = self._policy.requirements_for(self._active_policy)
         except PolicyError:
             requirements = {}
+        # Task/profile readiness can only be established after starting mission
+        # preparation. Physical safety/health failures must remain visible before
+        # any task is active; _decision() alone only reports "no active policy".
+        preparation_requirements = dict(self._policy.common)
+        preparation_requirements["require_task_ready"] = False
+        preparation_requirements["require_nav2_ready"] = False
+        preparation_permitted, preparation_reasons = self._evaluate_requirements(
+            preparation_requirements
+        )
         self._requirements_pub.publish(String(data=json.dumps({
             "policy": self._active_policy, "requirements": dict(requirements),
+            "preparation_permitted": preparation_permitted,
+            "preparation_inhibit_reasons": [message for _, message in preparation_reasons],
+            "nav2_ready": self._nav2_ready,
+            "task_ready": self._task_ready,
+            "task_requirements_ready": self._task_requirements_ready,
         })))
 
 

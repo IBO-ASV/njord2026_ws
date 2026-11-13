@@ -185,3 +185,11 @@ Validation: ROS endpoint construction for Task1/Task2, Task2 stop/restart and
 rejection of retained completion from a previous run are covered by
 `test_task_endpoints.py`. GUI tests cover switching Task1 -> Task2 -> Task1,
 Task2 restart and completion using the same panel.
+
+Waypoint display update: the selected sim route is now previewed from launch,
+including while IDLE and after completion. `/ground_waypoint_markers` carries
+WGS84 markers for GNSS Map Telemetry; `/sim/waypoint_markers` carries odom-frame
+points, numbered labels and a route line for the standard 3D display. Both are
+published at 1 Hz with transient-local durability for late-joining viewers. The
+common layout enables the latter and `/mission/waypoint_markers`. The previous
+sim behavior deleted geographic markers outside active mission states.

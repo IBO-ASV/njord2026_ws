@@ -1,58 +1,231 @@
 const STATES = ['IDLE','VALIDATING','CONFIGURING','WAITING FOR INPUT','WAITING FOR AUTO','RUNNING','PAUSED','CANCELING','SUCCEEDED','FAILED','REJECTED'];
-const SOURCES = ['STOPPED / ZERO','MANUAL','AUTO','SBUS'];
+const SOURCES = ['停止（ZERO）','手動操縦','自律航行','SBUS'];
 const HEALTH = ['UNKNOWN','OK','DEGRADED','ERROR','STALE','DISABLED'];
 const PATTERNS = ['消灯','点灯','点滅'];
-function lampColors(value){return [[1,'緑'],[2,'黄'],[4,'赤']].filter(([bit])=>value&bit).map(([,label])=>label).join('＋')||'消灯';}
+function lampColors(value) {
+  return [[1,'緑'],[2,'黄'],[4,'赤']].filter(([bit])=>value&bit).map(([,label])=>label).join('＋')||'消灯';
+}
 function initPanel(context) {
   const root = context.panelElement;
   root.replaceChildren();
-  root.style.cssText='height:100%;overflow:auto;box-sizing:border-box;padding:16px;background:#101820;color:#edf3fa;font:14px system-ui';
-  const heading=document.createElement('h3'); heading.textContent='NJORD Mission';
-  const select=document.createElement('select'); select.setAttribute('aria-label','Task');
-  const refresh=document.createElement('button'); refresh.textContent='タスク一覧を更新';
-  const start=document.createElement('button'); start.textContent='AUTOで開始';
-  const stop=document.createElement('button'); stop.textContent='停止・MANUALへ'; stop.style.background='#b91c1c';stop.style.color='white';
-  const mode=document.createElement('p'),state=document.createElement('p'),detail=document.createElement('p'),health=document.createElement('p'),lamp=document.createElement('p'),feedback=document.createElement('p');
-  const progress=document.createElement('progress'); progress.max=1; progress.style.width='100%';
-  for(const b of [select,refresh,start,stop]) b.style.cssText+=';margin:4px;padding:8px';
-  root.append(heading,select,refresh,start,stop,mode,state,progress,detail,health,lamp,feedback);
-  let mission=null,control=null,lastMission=0,lastControl=0,lastHealth=0,lastLamp=0,busy=false,tasks=[],summary=null,lampMessage=null,lastExecution='',lastPathSafety=0,pathSafe=true,requirements=null,lastRequirements=0,lastSerial=0,serialStatus='';
-  health.style.whiteSpace='pre-wrap';
-  const fresh=t=>t>0&&Date.now()-t<3000;
-  function render(){
-    const ready=fresh(lastMission)&&fresh(lastControl);
-    const task=tasks.find(t=>t.task_id===select.value);
-    start.disabled=busy||!ready||!task||task.availability>1||mission.state!==0;
-    stop.disabled=busy||!mission?.execution_id||![1,2,3,4,5,6,7].includes(mission.state);
-    mode.textContent=fresh(lastControl)?`要求: ${control.requested_mode===1?'AUTO':'MANUAL'} ｜ AUTO許可: ${control.auto_permitted?'可':'不可'} ｜ 実効出力: ${SOURCES[control.effective_source]??'UNKNOWN'}${control.emergency_stop?' ｜ 緊急停止':''}`:'制御状態: STALE / 未受信';
-    mode.style.color=ready?(control.emergency_stop?'#f87171':control.effective_source===2?'#4ade80':'#fbbf24'):'#f87171';
-    state.textContent=fresh(lastMission)?`${mission.task_id||'--'} · ${STATES[mission.state]??'UNKNOWN'} · ${mission.stage||'--'}`:'Mission: STALE / 未受信';
-    progress.value=fresh(lastMission)?Math.max(0,Math.min(1,mission.progress||0)):0;
-    const reasons=[...(control?.inhibit_reasons||[]),...(mission?.inhibit_reasons||[])];
-    const pathReason=mission?.task_id==='task2'&&mission.state===5&&lastPathSafety?(fresh(lastPathSafety)?(pathSafe?'':'避航経路の安全条件未成立（停止）'):'避航経路の判定: STALE'):'';
-    detail.textContent=[mission?.message||'',pathReason,...new Set(reasons)].filter(Boolean).join(' / ');
-    const checks=[['自己位置','local_odometry','require_localization_heartbeat'],['GNSS受信','gnss','require_rtk_fix'],['driver heartbeat','driver_heartbeat','require_driver_heartbeat']];
-    const checkLines=checks.map(([label,name,key])=>{
-      const signal=fresh(lastHealth)?summary.signals?.find(s=>s.name===name):null;
-      const gate=fresh(lastRequirements)&&typeof requirements?.requirements?.[key]==='boolean'?(requirements.requirements[key]?'ON':'OFF'):'不明';
-      const info=signal?`${HEALTH[signal.state]??'UNKNOWN'} · age=${Number(signal.age_sec).toFixed(1)}s · ${Number(signal.measured_frequency_hz).toFixed(1)}Hz · ${signal.message||''}`:(fresh(lastHealth)?'監視信号が未登録':'STALE / Health未受信');
-      return `${label}: ${info} ｜ AUTO禁止条件: ${gate}`;
-    });
-    health.textContent=[fresh(lastHealth)?`Health: ${HEALTH[summary.summary_state]??'UNKNOWN'} · ${summary.message||''}`:'Health: STALE / 未受信',`AUTO条件の適用先: ${fresh(lastRequirements)?(requirements?.policy||'未選択（共通条件）'):'STALE / 未受信'}`,...checkLines,'※GNSS受信監視は更新頻度の判定です。RTK FIX品質の判定とは異なります。',`serial writer: ${fresh(lastSerial)?serialStatus:'STALE / 未受信（simでは実シリアル未起動）'}`].join('\n');
-    lamp.style.color=fresh(lastLamp)?(lampMessage.color&4?'#f87171':lampMessage.color&2?'#fbbf24':lampMessage.color&1?'#4ade80':'#edf3fa'):'#f87171';
-    lamp.textContent=fresh(lastLamp)?`状態灯（指令）: ${lampColors(lampMessage.color)} · ${PATTERNS[lampMessage.pattern]??'不明'}${lampMessage.pattern===2?` (${lampMessage.period}秒周期)`:''} / ${lampMessage.reason||''}`:'状態灯: STALE / 未受信';
+  root.style.cssText = 'height:100%;overflow:auto;box-sizing:border-box;padding:12px;background:#101820;color:#edf3fa;font:14px/1.5 system-ui';
+  function element(tag, text, style='') {
+    const node = document.createElement(tag);
+    if (text !== undefined) node.textContent = text;
+    node.style.cssText = style;
+    return node;
   }
-  async function call(service,request){busy=true;render();try{const response=await context.callService(service,request);feedback.textContent=response?.message||'応答を受信';return response;}catch(e){feedback.textContent=`操作失敗: ${e.message||e}`;return null;}finally{busy=false;render();}}
-  async function list(){const response=await call('/mission/list_tasks',{});if(!response)return;tasks=response.tasks||[];const old=select.value;select.replaceChildren();for(const task of tasks){const o=document.createElement('option');o.value=task.task_id;o.textContent=`${task.display_name}${task.availability>1?' (利用不可)':''}`;o.disabled=task.availability>1;o.title=task.reason||'';select.append(o);}if(tasks.some(t=>t.task_id===old))select.value=old;render();}
-  refresh.onclick=list; select.onchange=render;
-  start.onclick=()=>call('/mission/start_task',{task_id:select.value,request_auto_mode:true,dry_run:false,request_id:`foxglove-${Date.now()}-${Math.random().toString(16).slice(2)}`});
-  stop.onclick=()=>call('/mission/stop_task',{execution_id:mission.execution_id,return_to_manual:true});
+  function section(title) {
+    const box = element('section', undefined, 'margin:0 0 16px');
+    box.append(element('h3', title, 'font-size:14px;margin:0 0 8px;color:#a9c3d7'));
+    root.append(box);
+    return box;
+  }
+  function table(parent, headings) {
+    const wrap = element('div', undefined, 'overflow-x:auto;border:1px solid #385064;border-radius:6px');
+    const node = element('table', undefined, 'width:100%;border-collapse:collapse;table-layout:fixed');
+    if (headings) {
+      const head = element('thead');
+      const row = element('tr');
+      for (const title of headings) row.append(element('th', title, 'text-align:left;padding:8px;background:#223342;font-weight:600'));
+      head.append(row); node.append(head);
+      node.style.minWidth = '440px';
+    }
+    const body = element('tbody'); node.append(body); wrap.append(node); parent.append(wrap);
+    return body;
+  }
+  function row(body, label, columns=1) {
+    const tr = element('tr');
+    tr.append(element('th', label, 'width:30%;text-align:left;vertical-align:top;padding:8px;border-bottom:1px solid #304354;font-weight:500;color:#bbcad7;overflow-wrap:anywhere'));
+    const values = [];
+    for (let i=0;i<columns;i++) {
+      const td = element('td', '', 'padding:8px;vertical-align:top;border-bottom:1px solid #304354;white-space:pre-wrap;overflow-wrap:anywhere');
+      tr.append(td); values.push(td);
+    }
+    body.append(tr);
+    return columns === 1 ? values[0] : values;
+  }
+  function set(node, text, tone) {
+    node.textContent = text;
+    node.style.color = tone === 'bad' ? '#fca5a5' : tone === 'ok' ? '#86efac' : tone === 'wait' ? '#fde68a' : '#edf3fa';
+  }
+  const actions = section('NJORD Mission Control');
+  const toolbar = element('div', undefined, 'display:flex;flex-wrap:wrap;gap:8px;align-items:center');
+  const select = element('select'); select.setAttribute('aria-label','Task');
+  const refresh = element('button', 'タスク一覧を更新');
+  const start = element('button', '準備してAUTO開始');
+  const stop = element('button', '停止・MANUALへ');
+  for (const control of [select,refresh,start,stop]) {
+    control.style.cssText = 'padding:8px 10px;border:1px solid #536c80;border-radius:5px;background:#223342;color:#edf3fa;font:inherit';
+  }
+  select.style.flex = '1 1 160px';
+  start.style.background = '#14532d'; stop.style.background = '#881337';
+  toolbar.append(select,refresh,start,stop); actions.append(toolbar);
+  const explanation = element('p', '開始操作はタスク準備とAUTO要求を送ります。安全条件を満たすまでは自律出力されません。', 'font-size:12px;color:#bbcad7;margin:8px 0');
+  const startHint = element('p', '', 'margin:8px 0;white-space:pre-wrap');
+  actions.append(explanation,startHint);
+
+  const statusBody = table(section('運転状態'));
+  const requested = row(statusBody, '要求モード');
+  const permission = row(statusBody, 'AUTO出力許可');
+  const output = row(statusBody, '実際の出力源');
+  const emergency = row(statusBody, '非常停止');
+  const missionState = row(statusBody, 'Mission');
+  const stage = row(statusBody, '実行段階');
+  const detail = row(statusBody, '待機・停止理由');
+  const progressBox = section('進行状況');
+  const progress = element('progress', undefined, 'width:100%;height:12px'); progress.max=1;
+  const progressLabel = element('div', '0%'); progressBox.append(progress,progressLabel);
+
+  const checkBox = section('安全条件と受信状態');
+  const conditionBody = table(checkBox, ['項目','状態','受信情報','AUTO条件']);
+  const checks = [
+    ['自己位置','local_odometry','require_localization_heartbeat'],
+    ['GNSS受信','gnss','require_rtk_fix'],
+    ['driver heartbeat','driver_heartbeat','require_driver_heartbeat'],
+    ['地上局heartbeat','ground_station_heartbeat','require_ground_station'],
+  ].map(([label,name,key])=>({name,key,cells:row(conditionBody,label,3)}));
+  const readyChecks = [
+    {label:'Nav2',key:'nav2_ready',gate:'require_nav2_ready'},
+    {label:'Task準備',key:'task_ready',gate:'require_task_ready'},
+  ].map(check=>({...check,cells:row(conditionBody,check.label,3)}));
+  const healthSummary = element('p', '', 'font-size:12px;margin:8px 0;white-space:pre-wrap');
+  const policyLabel = element('p', '', 'font-size:12px;color:#bbcad7;margin:8px 0');
+  checkBox.append(healthSummary,policyLabel,element('p','GNSS受信の状態は更新頻度の監視です。RTK FIX品質を保証する表示ではありません。','font-size:12px;color:#bbcad7'));
+  const hardwareBody = table(section('機器への指令'));
+  const lamp = row(hardwareBody,'状態灯（指令）');
+  const serial = row(hardwareBody,'serial writer');
+  const feedback = element('p', '', 'white-space:pre-wrap;overflow-wrap:anywhere;margin:8px 0');
+  section('操作結果・直近の完了結果').append(feedback);
+
+  let mission=null,control=null,summary=null,lampMessage=null,requirements=null;
+  let lastMission=0,lastControl=0,lastHealth=0,lastLamp=0,lastRequirements=0,lastSerial=0;
+  let busy=false,tasks=[],lastExecution='',lastPathSafety=0,pathSafe=false,serialStatus='',pendingStart=false;
+  const fresh = t=>t>0&&Date.now()-t<3000;
+  const active = ()=>mission?.execution_id&&mission.state>=1&&mission.state<=7;
+  function startBlockers() {
+    if (!fresh(lastMission)||!fresh(lastControl)||!fresh(lastRequirements)) return ['Mission・Control・安全条件の受信待ち / STALE'];
+    if (control.emergency_stop) return ['非常停止が有効です'];
+    if (requirements.preparation_permitted !== true) {
+      return requirements.preparation_inhibit_reasons?.length ? requirements.preparation_inhibit_reasons : ['開始条件が未確認です（SafetySupervisorの更新が必要）'];
+    }
+    // These conditions cannot be solved by preparing a task or Nav2 profile.
+    const hardFaults = (control.inhibit_reason_codes||[]).some(code=>[1,5,6,7,8,9,11].includes(code));
+    return hardFaults ? (control.inhibit_reasons?.length ? control.inhibit_reasons : ['安全条件により禁止されています']) : [];
+  }
+  function render() {
+    const task = tasks.find(t=>t.task_id===select.value);
+    const blockers = startBlockers();
+    start.disabled = busy||pendingStart||blockers.length>0||!task||task.availability>1||mission?.state!==0;
+    stop.disabled = busy||(!active()&&!(fresh(lastControl)&&control.requested_mode===1));
+    select.disabled = busy||pendingStart||Boolean(active());
+    refresh.disabled = busy;
+    for (const button of [start,stop,refresh]) {
+      button.style.opacity = button.disabled ? '0.45' : '1';
+      button.style.cursor = button.disabled ? 'not-allowed' : 'pointer';
+    }
+    const hint = pendingStart ? '開始受付済み：Missionの状態更新待ち' : active() ? 'タスク実行中：停止操作でMANUALへ戻せます' : blockers.length ? `開始できません：${blockers.join(' / ')}` : '準備開始可能：Task・Nav2・Task固有の条件は準備後に判定します';
+    set(startHint,hint,blockers.length?'bad':'wait');
+    set(requested,fresh(lastControl)?(control.requested_mode===1?'AUTO要求中':'MANUAL要求中'):'STALE / 未受信');
+    const unprepared = fresh(lastControl)&&fresh(lastRequirements)&&!requirements.policy&&requirements.preparation_permitted===true&&!control.emergency_stop;
+    set(permission,!fresh(lastControl)?'STALE / 未受信':control.auto_permitted?'許可':unprepared?'準備前（有効なTaskなし）':'禁止',control?.auto_permitted?'ok':'wait');
+    set(output,fresh(lastControl)?(SOURCES[control.effective_source]||'UNKNOWN'):'STALE / 未受信',control?.effective_source===2?'ok':'wait');
+    set(emergency,fresh(lastControl)?(control.emergency_stop?'有効 — 出力停止':'解除'):'STALE / 未受信',!fresh(lastControl)||control?.emergency_stop?'bad':'ok');
+    set(missionState,fresh(lastMission)?`${mission.task_id||'未選択'} · ${STATES[mission.state]||'UNKNOWN'}`:'STALE / 未受信');
+    set(stage,fresh(lastMission)?(mission.stage||'—'):'STALE / 未受信');
+    const pathReason = mission?.task_id==='task2'&&mission.state===5 ? (!fresh(lastPathSafety)?'避航経路の判定: STALE / 未受信':!pathSafe?'避航経路の安全条件未成立（停止）':'') : '';
+    const reasons = [...new Set([...(fresh(lastControl)?control.inhibit_reasons||[]:[]),...(fresh(lastMission)?mission.inhibit_reasons||[]:[])])];
+    set(detail,[fresh(lastMission)?mission.message||'':'Mission未受信',pathReason,...reasons].filter(Boolean).join('\n')||'なし');
+    progress.value = fresh(lastMission)?Math.max(0,Math.min(1,mission.progress||0)):0;
+    progressLabel.textContent = `${Math.round(progress.value*100)}%`;
+    for (const {name,key,cells} of checks) {
+      const signal = fresh(lastHealth)?summary?.signals?.find(s=>s.name===name):null;
+      const gate = fresh(lastRequirements)?requirements.requirements?.[key]:undefined;
+      set(cells[0],signal?(HEALTH[signal.state]||'UNKNOWN'):(fresh(lastHealth)?'監視信号が未登録':'STALE / 未受信'),signal?.state===1?'ok':'wait');
+      set(cells[1],signal?`age=${Number(signal.age_sec).toFixed(1)}s\n${Number(signal.measured_frequency_hz).toFixed(1)}Hz\n${signal.message||''}`:'—');
+      set(cells[2],typeof gate==='boolean'?(gate?'適用':'監視のみ'):'未受信',gate?'wait':undefined);
+    }
+    for (const check of readyChecks) {
+      const value = fresh(lastRequirements)?requirements[check.key]:undefined;
+      const gate = fresh(lastRequirements)?requirements.requirements?.[check.gate]:undefined;
+      set(check.cells[0],typeof value==='boolean'?(value?'READY':'未準備'):'未受信',value?'ok':'wait');
+      set(check.cells[1],'タスク準備後にも再判定');
+      set(check.cells[2],typeof gate==='boolean'?(gate?'適用':'監視のみ'):'未受信');
+    }
+    set(healthSummary,fresh(lastHealth)?`Health: ${HEALTH[summary.summary_state]||'UNKNOWN'} · ${summary.message||''}`:'Health: STALE / 未受信');
+    policyLabel.textContent = `AUTO条件の適用先: ${fresh(lastRequirements)?requirements.policy||'共通条件（Task準備前）':'STALE / 未受信'}`;
+    set(serial,fresh(lastSerial)?serialStatus:'未受信 / STALE（simでは実シリアル未起動）');
+    set(lamp,fresh(lastLamp)?`${lampColors(lampMessage.color)} · ${PATTERNS[lampMessage.pattern]||'不明'}${lampMessage.pattern===2?` (${lampMessage.period}秒周期)`:''}\n${lampMessage.reason||''}`:'STALE / 未受信',lampMessage?.color&4?'bad':'wait');
+  }
+  async function call(service,request) {
+    busy=true;render();
+    try {
+      const response=await context.callService(service,request);
+      feedback.textContent=response?.message||'応答を受信';
+      return response;
+    } catch(e) {feedback.textContent=`操作失敗: ${e.message||e}`;return null;}
+    finally {busy=false;render();}
+  }
+  async function list() {
+    const response=await call('/mission/list_tasks',{});
+    if(!response)return;
+    tasks=response.tasks||[];
+    const old=select.value; select.replaceChildren();
+    for(const task of tasks) {
+      const option=element('option',`${task.display_name}${task.availability>1?' (利用不可)':''}`);
+      option.value=task.task_id; option.disabled=task.availability>1; option.title=task.reason||''; select.append(option);
+    }
+    if(tasks.some(t=>t.task_id===old))select.value=old;
+    render();
+  }
+  refresh.onclick=list;select.onchange=render;
+  start.onclick=async()=>{
+    render();if(start.disabled)return;
+    pendingStart=true;
+    const response=await call('/mission/start_task',{task_id:select.value,request_auto_mode:true,dry_run:false,request_id:`foxglove-${Date.now()}-${Math.random().toString(16).slice(2)}`});
+    if(!response?.accepted)pendingStart=false;
+    render();
+  };
+  stop.onclick=()=>{
+    render();if(stop.disabled)return;
+    if(active())return call('/mission/stop_task',{execution_id:mission.execution_id,return_to_manual:true});
+    return call('/control/set_mode',{requested_mode:0});
+  };
   const baseTopics=['/mission/status','/mission/last_result','/control/state','/health/state','/alert_lamp/command','/control/requirements','/micon/thruster_command_status'];
   let task2Subscribed=false;
-  function updateSubscriptions(){const active=mission?.task_id==='task2'&&mission.state>=1&&mission.state<=7;if(active===task2Subscribed)return;task2Subscribed=active;lastPathSafety=0;context.subscribe([...baseTopics,...(active?['/mission/task2/path_safe']:[])].map(topic=>({topic})));}
-  context.subscribe(baseTopics.map(topic=>({topic})));
-  context.watch('currentFrame');
-  context.onRender=(rs,done)=>{try{for(const e of rs.currentFrame||[]){const m=e.message||{};if(e.topic==='/control/requirements'){try{requirements=JSON.parse(m.data);lastRequirements=Date.now();}catch{requirements=null;lastRequirements=0;}}else if(e.topic==='/micon/thruster_command_status'){serialStatus=m.data;lastSerial=Date.now();}else if(e.topic==='/mission/task2/path_safe'){pathSafe=m.data;lastPathSafety=Date.now();}else if(e.topic==='/mission/last_result'){feedback.textContent=`直近の結果 ${m.task_id}: ${STATES[m.state]} · ${m.message}`;}else if(e.topic==='/mission/status'){mission=m;updateSubscriptions();lastMission=Date.now();if(m.execution_id&&m.execution_id!==lastExecution){lastExecution=m.execution_id;feedback.textContent='';}if([8,9,10].includes(m.state))feedback.textContent=`${STATES[m.state]}: ${m.message}`;}else if(e.topic==='/control/state'){control=m;lastControl=Date.now();}else if(e.topic==='/health/state'){summary=m;lastHealth=Date.now();}else if(e.topic==='/alert_lamp/command'){lampMessage=m;lastLamp=Date.now();}}render();}finally{done();}};
+  function updateSubscriptions() {
+    const enabled=mission?.task_id==='task2'&&mission.state>=1&&mission.state<=7;
+    if(enabled===task2Subscribed)return;
+    task2Subscribed=enabled;lastPathSafety=0;
+    context.subscribe([...baseTopics,...(enabled?['/mission/task2/path_safe']:[])].map(topic=>({topic})));
+  }
+  context.subscribe(baseTopics.map(topic=>({topic})));context.watch('currentFrame');
+  context.onRender=(rs,done)=>{
+    try {
+      for(const event of rs.currentFrame||[]) {
+        const message=event.message||{};
+        switch(event.topic) {
+          case '/control/requirements':
+            try {requirements=JSON.parse(message.data);lastRequirements=Date.now();}
+            catch {requirements=null;lastRequirements=0;}
+            break;
+          case '/micon/thruster_command_status':serialStatus=message.data;lastSerial=Date.now();break;
+          case '/mission/task2/path_safe':pathSafe=message.data;lastPathSafety=Date.now();break;
+          case '/mission/last_result':pendingStart=false;feedback.textContent=`直近の結果 ${message.task_id}: ${STATES[message.state]} · ${message.message}`;break;
+          case '/mission/status':
+            mission=message;updateSubscriptions();lastMission=Date.now();
+            if(message.state!==0)pendingStart=false;
+            if(message.execution_id&&message.execution_id!==lastExecution){lastExecution=message.execution_id;feedback.textContent='';}
+            if([8,9,10].includes(message.state))feedback.textContent=`${STATES[message.state]}: ${message.message}`;
+            break;
+          case '/control/state':control=message;lastControl=Date.now();break;
+          case '/health/state':summary=message;lastHealth=Date.now();break;
+          case '/alert_lamp/command':lampMessage=message;lastLamp=Date.now();break;
+        }
+      }
+      render();
+    } finally {done();}
+  };
   const timer=setInterval(render,500);render();list();
   return()=>{clearInterval(timer);root.replaceChildren();};
 }
