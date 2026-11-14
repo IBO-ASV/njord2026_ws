@@ -28,9 +28,13 @@ from std_msgs.msg import Bool, Empty, Float64, String
 from visualization_msgs.msg import Marker, MarkerArray
 from waypoint_transformer import transform_waypoints
 
-from njord_interfaces.action import ConfigureSystem, RunTask
-from njord_interfaces.msg import ControlState, MissionStatus, Nav2RuntimeStatus, TaskInfo
-from njord_interfaces.srv import GetMissionStatus, ListTasks, SetControlMode, StartTask, StopTask
+from mission_interfaces.action import RunTask
+from runtime_interfaces.action import ConfigureSystem
+from control_interfaces.msg import ControlState
+from mission_interfaces.msg import MissionStatus, TaskInfo
+from runtime_interfaces.msg import Nav2RuntimeStatus
+from control_interfaces.srv import SetControlMode
+from mission_interfaces.srv import GetMissionStatus, ListTasks, StartTask, StopTask
 
 from .docking_reference import docking_reference
 from .executors import (

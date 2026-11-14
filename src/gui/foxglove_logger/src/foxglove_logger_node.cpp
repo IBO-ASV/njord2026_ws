@@ -17,9 +17,9 @@
 #include "geometry_msgs/msg/pose_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "nav_msgs/msg/path.hpp"
-#include "njord_interfaces/msg/buoy_detection_array.hpp"
-#include "njord_interfaces/msg/control_state.hpp"
-#include "njord_interfaces/msg/mission_status.hpp"
+#include "perception_interfaces/msg/buoy_detection_array.hpp"
+#include "control_interfaces/msg/control_state.hpp"
+#include "mission_interfaces/msg/mission_status.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rcl_interfaces/msg/log.hpp"
 #include "sensor_msgs/msg/nav_sat_fix.hpp"
@@ -78,8 +78,8 @@ public:
       [this](std_msgs::msg::Float32MultiArray::SharedPtr msg) {cells_ = msg->data;});
     temperature_sub_ = create_subscription<std_msgs::msg::Float32>(temperature_topic, 10,
       [this](std_msgs::msg::Float32::SharedPtr msg) {temperature_c_ = msg->data;});
-    buoy_sub_ = create_subscription<njord_interfaces::msg::BuoyDetectionArray>(buoy_topic, 10,
-      [this](njord_interfaces::msg::BuoyDetectionArray::SharedPtr msg) {onBuoys(*msg);});
+    buoy_sub_ = create_subscription<perception_interfaces::msg::BuoyDetectionArray>(buoy_topic, 10,
+      [this](perception_interfaces::msg::BuoyDetectionArray::SharedPtr msg) {onBuoys(*msg);});
     fix_sub_ = create_subscription<sensor_msgs::msg::NavSatFix>(fix_topic, 10,
       [this](sensor_msgs::msg::NavSatFix::SharedPtr msg) {fix_ = *msg;});
     heading_sub_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -92,16 +92,16 @@ public:
       [this](nav_msgs::msg::Path::SharedPtr msg) {plan_ = *msg;});
     task2_plan_sub_ = create_subscription<nav_msgs::msg::Path>(task2_plan_topic, 10,
       [this](nav_msgs::msg::Path::SharedPtr msg) {task2_plan_ = *msg;});
-    mission_status_sub_ = create_subscription<njord_interfaces::msg::MissionStatus>(
+    mission_status_sub_ = create_subscription<mission_interfaces::msg::MissionStatus>(
       mission_status_topic, rclcpp::QoS(1).transient_local(),
-      [this](njord_interfaces::msg::MissionStatus::SharedPtr msg) {mission_status_ = *msg;});
+      [this](mission_interfaces::msg::MissionStatus::SharedPtr msg) {mission_status_ = *msg;});
     speed_sub_ = create_subscription<std_msgs::msg::Float32>(speed_topic, 10,
       [this](std_msgs::msg::Float32::SharedPtr msg) {ground_speed_mps_ = msg->data;});
     control_sub_ = create_subscription<std_msgs::msg::String>(control_topic, rclcpp::QoS(1).transient_local(),
       [this](std_msgs::msg::String::SharedPtr msg) {control_status_ = msg->data;});
-    control_state_sub_ = create_subscription<njord_interfaces::msg::ControlState>(
+    control_state_sub_ = create_subscription<control_interfaces::msg::ControlState>(
       control_state_topic, rclcpp::QoS(1).transient_local(),
-      [this](njord_interfaces::msg::ControlState::SharedPtr msg) {control_state_ = *msg;});
+      [this](control_interfaces::msg::ControlState::SharedPtr msg) {control_state_ = *msg;});
     nav2_status_sub_ = create_subscription<action_msgs::msg::GoalStatusArray>(nav2_status_topic, 10,
       [this](action_msgs::msg::GoalStatusArray::SharedPtr msg) {onNav2Status(*msg);});
 
@@ -153,7 +153,7 @@ private:
     return rcl_interfaces::msg::Log::INFO;
   }
 
-  void onBuoys(const njord_interfaces::msg::BuoyDetectionArray & msg)
+  void onBuoys(const perception_interfaces::msg::BuoyDetectionArray & msg)
   {
     if (msg.detections.empty()) {
       return;
@@ -276,7 +276,7 @@ private:
 
   static std::string controlStateName(uint8_t state)
   {
-    using ControlState = njord_interfaces::msg::ControlState;
+    using ControlState = control_interfaces::msg::ControlState;
     switch (state) {
       case ControlState::STATE_BOOTING: return "BOOTING";
       case ControlState::STATE_MANUAL: return "MANUAL";
@@ -291,7 +291,7 @@ private:
 
   static std::string controlSourceName(uint8_t source)
   {
-    using ControlState = njord_interfaces::msg::ControlState;
+    using ControlState = control_interfaces::msg::ControlState;
     switch (source) {
       case ControlState::SOURCE_ZERO: return "ZERO";
       case ControlState::SOURCE_MANUAL: return "MANUAL";
@@ -367,7 +367,7 @@ private:
     out << '\n' << "STATUS_COLOR=" << controlStatusColor(control_status);
     if (control_state_) {
       out << '\n' << "CTRL_REQUESTED=" <<
-        (control_state_->requested_mode == njord_interfaces::msg::ControlState::MODE_AUTO ? "AUTO" : "MANUAL");
+        (control_state_->requested_mode == control_interfaces::msg::ControlState::MODE_AUTO ? "AUTO" : "MANUAL");
       out << '\n' << "CTRL_STATE=" << controlStateName(control_state_->state);
       out << '\n' << "CTRL_SOURCE=" << controlSourceName(control_state_->effective_source);
       out << '\n' << "CTRL_AUTO_PERMITTED=" << (control_state_->auto_permitted ? "YES" : "NO");
@@ -393,25 +393,25 @@ private:
   std::optional<nav_msgs::msg::Odometry> odometry_;
   std::optional<nav_msgs::msg::Path> plan_;
   std::optional<nav_msgs::msg::Path> task2_plan_;
-  std::optional<njord_interfaces::msg::MissionStatus> mission_status_;
+  std::optional<mission_interfaces::msg::MissionStatus> mission_status_;
   std::optional<float> ground_speed_mps_;
   std::optional<std::string> control_status_;
-  std::optional<njord_interfaces::msg::ControlState> control_state_;
+  std::optional<control_interfaces::msg::ControlState> control_state_;
   std::set<std::array<uint8_t, 16>> aborted_goal_ids_;
   std::deque<std::chrono::steady_clock::time_point> buoy_detection_times_;
   std::size_t last_buoy_count_{0};
   rclcpp::Subscription<std_msgs::msg::Float32MultiArray>::SharedPtr cells_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr temperature_sub_;
-  rclcpp::Subscription<njord_interfaces::msg::BuoyDetectionArray>::SharedPtr buoy_sub_;
+  rclcpp::Subscription<perception_interfaces::msg::BuoyDetectionArray>::SharedPtr buoy_sub_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr fix_sub_;
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr heading_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
   rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr plan_sub_;
   rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr task2_plan_sub_;
-  rclcpp::Subscription<njord_interfaces::msg::MissionStatus>::SharedPtr mission_status_sub_;
+  rclcpp::Subscription<mission_interfaces::msg::MissionStatus>::SharedPtr mission_status_sub_;
   rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr speed_sub_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr control_sub_;
-  rclcpp::Subscription<njord_interfaces::msg::ControlState>::SharedPtr control_state_sub_;
+  rclcpp::Subscription<control_interfaces::msg::ControlState>::SharedPtr control_state_sub_;
   rclcpp::Subscription<action_msgs::msg::GoalStatusArray>::SharedPtr nav2_status_sub_;
   rclcpp::Publisher<rcl_interfaces::msg::Log>::SharedPtr log_pub_;
   rclcpp::TimerBase::SharedPtr timer_;

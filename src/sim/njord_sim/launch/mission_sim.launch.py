@@ -63,7 +63,7 @@ def launch(context):
             ],
             output="screen",
         ),
-        include("control_manager", "control.launch.py", {"policy_file": policy}),
+        include("motion_supervisor", "control.launch.py", {"policy_file": policy}),
         Node(
             package="mission_manager",
             executable="mission_manager_node",
@@ -87,7 +87,7 @@ def launch(context):
                 ),
             },
         ),
-        include("alert_lamp", "alert_lamp.launch.py"),
+        include("status_lights", "status_lights.launch.py"),
     ]
     if task.startswith("task1") or task == "task4":
         nodes.append(
@@ -168,10 +168,10 @@ def launch(context):
                     output="screen",
                 ),
                 Node(
-                    package="thruster_driver",
-                    executable="thruster_driver_node",
+                    package="thruster_controller",
+                    executable="thruster_controller_node",
                     parameters=[
-                        str(Path(share("thruster_driver")) / "config/config.yaml"),
+                        str(Path(share("thruster_controller")) / "config/config.yaml"),
                         controller_config,
                         {
                             "robot_description": description,

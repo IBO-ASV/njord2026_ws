@@ -18,7 +18,7 @@ def main():
         '--weights', default='yolov8s-worldv2.pt',
         help='YOLO-World v2 .pt weights (download it with Ultralytics if absent)')
     parser.add_argument(
-        '--output', default='src/robot/config/yolo_model/yolov8s-world-boat.onnx',
+        '--output', default='src/bringup/robot/config/yolo_model/yolov8s-world-boat.onnx',
         help='Output ONNX path')
     parser.add_argument('--imgsz', type=int, default=640)
     args = parser.parse_args()

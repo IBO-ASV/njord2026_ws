@@ -11,14 +11,14 @@
 namespace zed2i_driver
 {
 
-njord_interfaces::msg::BuoyDetectionArray to_detection_array(
+perception_interfaces::msg::BuoyDetectionArray to_detection_array(
   const std::vector<PositionedDetection> & detections, const std_msgs::msg::Header & header)
 {
-  njord_interfaces::msg::BuoyDetectionArray message;
+  perception_interfaces::msg::BuoyDetectionArray message;
   message.header = header;
   message.detections.reserve(detections.size());
   for (const auto & item : detections) {
-    njord_interfaces::msg::BuoyDetection detection;
+    perception_interfaces::msg::BuoyDetection detection;
     detection.class_id = static_cast<uint8_t>(std::clamp(item.detection.class_id, 0, 255));
     detection.confidence = std::clamp(item.detection.confidence, 0.0F, 1.0F);
     detection.position_source = static_cast<uint8_t>(item.source);

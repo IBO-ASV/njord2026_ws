@@ -1,0 +1,21 @@
+{
+  "cpp_and_lint": {
+    "tests": 76,
+    "failures": 0,
+    "errors": 0,
+    "skipped": 14
+  },
+  "suites": 19,
+  "idl_definitions_preserved": 18,
+  "python": {
+    "passed": 241,
+    "failed": 0
+  },
+  "built_packages": 39,
+  "launch_checks": 7,
+  "mission_smoke": {
+    "passed": 2,
+    "failed": 0,
+    "model": "mmg"
+  }
+}

@@ -228,7 +228,7 @@ def test_service_stop_cannot_request_an_invalid_ros_action_transition():
     import threading
     from mission_manager.mission_manager_node import MissionManager
     from mission_manager.state_machine import ResultCode, StartDecision
-    from njord_interfaces.action import RunTask
+    from mission_interfaces.action import RunTask
     class Handle:
         request=RunTask.Goal(task_id='task1',request_id='stop-test')
         is_cancel_requested=False  # StopTask service, not action cancel.

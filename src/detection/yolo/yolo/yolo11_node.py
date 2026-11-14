@@ -8,7 +8,7 @@ untouched). Design points:
   camera-yolo-lidar-fusion branch) so slow hardware never builds up a queue.
 - Optional image ROI crop (fractions 0.0-1.0); detection bboxes are mapped
   back to full-image coordinates before publishing.
-- Outputs: vision_msgs/Detection2DArray, njord_interfaces/BuoyRoi (same
+- Outputs: vision_msgs/Detection2DArray, perception_interfaces/BuoyRoi (same
   bearing-from-pixel-center + fixed-range semantics as main.py), and a
   rate-limited debug image.
 - HSV color estimation (ported from the fusion branch). Class-name to color
@@ -27,7 +27,7 @@ from rclpy.qos import qos_profile_sensor_data
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
 from sensor_msgs.msg import CameraInfo, Image
 from vision_msgs.msg import Detection2D, Detection2DArray, ObjectHypothesisWithPose
-from njord_interfaces.msg import BuoyRoi
+from perception_interfaces.msg import BuoyRoi
 from ament_index_python.packages import get_package_share_directory
 
 import cv2

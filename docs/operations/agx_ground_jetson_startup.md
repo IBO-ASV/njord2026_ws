@@ -50,7 +50,7 @@ source install/setup.bash
 export PATH=/usr/local/cuda/bin:$PATH
 export CUDACXX=/usr/local/cuda/bin/nvcc
 export NJORD_PROFILE=jetson
-colcon build --symlink-install --packages-select njord_platform zed2i_driver \
+colcon build --symlink-install --packages-select sensor_build_support zed2i_driver \
   foxglove_image_preview robot --cmake-clean-cache --parallel-workers 2 \
   --cmake-args -DCMAKE_BUILD_TYPE=Release
 colcon build --symlink-install --packages-select mission_manager robot

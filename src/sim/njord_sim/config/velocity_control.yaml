@@ -1,4 +1,4 @@
-thruster_driver_node:
+thruster_controller_node:
   ros__parameters:
     control.i.surge: 55.0
     control.i.sway: 55.0

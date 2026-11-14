@@ -127,7 +127,7 @@ def generate_launch_description():
     pkg_robot = get_package_share_directory("robot")
     pkg_dutyed = get_package_share_directory("dutyed_tf_pub_with_disturbance")
     pkg_sensor_noise = get_package_share_directory("sensor_sim_with_noise")
-    pkg_thruster = get_package_share_directory("thruster_driver")
+    pkg_thruster = get_package_share_directory("thruster_controller")
 
     config = os.path.join(pkg_share, "config", "task1_params.yaml")
     nav2_params_name = "task1_nav2_params_jazzy.yaml"
@@ -147,12 +147,12 @@ def generate_launch_description():
 
     # Startup timing (mirrors task2/task3):
     #   t=0.0  SENSOR layer: sim_dynamics, sensor_noise (including UM982),
-    #            thruster_driver, orchestrator, EKFs
+    #            thruster_controller, orchestrator, EKFs
     #   t=5.0  NAV2 layer:   Nav2 bringup (needs SimNode TF + filtered odometry)
     #   t=8.0  GOAL layer:   waypoint_publisher (needs NavigateThroughPoses action server)
     use_dynamics_arg = DeclareLaunchArgument("use_dynamics", default_value="true")
     use_nav2_arg = DeclareLaunchArgument("use_nav2", default_value="true")
-    use_thruster_driver_arg = DeclareLaunchArgument("use_thruster_driver", default_value="true")
+    use_thruster_controller_arg = DeclareLaunchArgument("use_thruster_controller", default_value="true")
     use_waypoints_arg = DeclareLaunchArgument("use_waypoints", default_value="true")
     use_validator_arg = DeclareLaunchArgument("use_validator", default_value="true")
     use_sensor_noise_arg = DeclareLaunchArgument("use_sensor_noise", default_value="true")
@@ -227,10 +227,10 @@ def generate_launch_description():
 
     # Thruster driver: cmd_vel -> /thruster_command with P + DOB velocity control.
     # Replaces the deprecated open-loop `kinematics` node.
-    thruster_driver_node = Node(
-        package="thruster_driver",
-        executable="thruster_driver_node",
-        name="thruster_driver_node",
+    thruster_controller_node = Node(
+        package="thruster_controller",
+        executable="thruster_controller_node",
+        name="thruster_controller_node",
         parameters=[
             os.path.join(pkg_thruster, "config", "config.yaml"),
             {
@@ -248,7 +248,7 @@ def generate_launch_description():
             },
         ],
         output="screen",
-        condition=IfCondition(LaunchConfiguration("use_thruster_driver")),
+        condition=IfCondition(LaunchConfiguration("use_thruster_controller")),
     )
 
     # Shared Nav2 publishes /cmd_vel_nav after smoothing and collision checking.
@@ -384,7 +384,7 @@ def generate_launch_description():
         actions=[
             dynamics,
             sensor_noise_launch,
-            thruster_driver_node,
+            thruster_controller_node,
             twist_mux,
             robot_state_pub_node,
             local_ekf_node,
@@ -442,7 +442,7 @@ def generate_launch_description():
     return LaunchDescription([
         use_dynamics_arg,
         use_nav2_arg,
-        use_thruster_driver_arg,
+        use_thruster_controller_arg,
         use_waypoints_arg,
         use_validator_arg,
         use_sensor_noise_arg,

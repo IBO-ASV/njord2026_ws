@@ -10,7 +10,7 @@
   <buildtool_depend>ament_python</buildtool_depend>
   <depend>rclpy</depend>
   <depend>nav_msgs</depend>
-  <depend>njord_interfaces</depend>
+  <depend>perception_interfaces</depend>
 
   <test_depend>python3-pytest</test_depend>
   <export><build_type>ament_python</build_type></export>

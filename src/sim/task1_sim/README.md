@@ -52,7 +52,7 @@ real ZED2i + Mid-360 fusion pipeline (`zed2i_driver`'s `sdk_node_zed`):
    bearing to each marker (ZED2i range/FOV, Mid-360 range/FOV) and, once a
    marker is within range, auto-triggers `/yolo/start_inference`.
 3. Once inference is confirmed, `cardinal_perception_sim` publishes
-   `njord_interfaces/BuoyDetectionArray` on `/buoy_detections_3d` with each
+   `perception_interfaces/BuoyDetectionArray` on `/buoy_detections_3d` with each
    detection's `class_id` taken from that marker's own mark.
 4. `cardinal_wall_publisher` (package `buoy_obstacle_publisher`) turns
    confirmed detections into a one-sided Nav2 obstacle wall on

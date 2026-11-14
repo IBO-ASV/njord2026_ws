@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>thruster_tools</name><version>0.1.0</version>
+  <description>Explicit individual thruster channel identification tools</description>
+  <maintainer email="oswystk15662@keio.jp">NJORD</maintainer><license>Apache-2.0</license>
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>micon_driver_fd</exec_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <export><build_type>ament_cmake</build_type></export>
+</package>

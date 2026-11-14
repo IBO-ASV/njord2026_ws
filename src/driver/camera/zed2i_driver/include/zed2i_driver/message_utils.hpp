@@ -5,7 +5,7 @@
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <njord_interfaces/msg/buoy_detection_array.hpp>
+#include <perception_interfaces/msg/buoy_detection_array.hpp>
 
 #include <memory>
 #include <string>
@@ -46,7 +46,7 @@ sensor_msgs::msg::PointCloud2::UniquePtr depth_to_point_cloud_msg(
   const std::string & frame_id,
   const rclcpp::Time & stamp);
 
-njord_interfaces::msg::BuoyDetectionArray to_detection_array_msg(
+perception_interfaces::msg::BuoyDetectionArray to_detection_array_msg(
   const std::vector<PositionedDetection> & detections,
   const std::string & frame_id, const rclcpp::Time & stamp);
 

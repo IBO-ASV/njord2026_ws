@@ -3,7 +3,7 @@ import sys
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image, PointCloud2, PointField
-from njord_interfaces.msg import BuoyRoi
+from perception_interfaces.msg import BuoyRoi
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
 import cv2
 import numpy as np

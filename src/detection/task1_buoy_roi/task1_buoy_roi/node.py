@@ -1,7 +1,7 @@
 """Task 1 fallback LiDAR ROI from surveyed buoy positions."""
 
 from nav_msgs.msg import Odometry
-from njord_interfaces.msg import BuoyRoi
+from perception_interfaces.msg import BuoyRoi
 import rclpy
 from rclpy.node import Node
 

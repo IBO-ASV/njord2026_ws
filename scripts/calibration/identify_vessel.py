@@ -20,7 +20,7 @@ def main():
     p.add_argument('--draft',type=float,default=.25)
     p.add_argument('--balance',action='store_true')
     p.add_argument('--output',required=True)
-    p.add_argument('--driver-config',default=str(Path(get_package_share_directory('thruster_driver'))/'config/config.yaml'))
+    p.add_argument('--driver-config',default=str(Path(get_package_share_directory('thruster_controller'))/'config/config.yaml'))
     a=p.parse_args()
     root=Path(a.output)
     if root.exists() and any(root.iterdir()):p.error('choose an empty output directory')
@@ -37,7 +37,7 @@ def main():
                 if not .005<=dt<=.1:continue
                 result.append(([float(data['command_'+name][i]) for name in IDS],float((data['r'][i+1]-data['r'][i])/dt)))
             return result
-        base=yaml.safe_load(Path(a.driver_config).read_text())['thruster_driver_node']['ros__parameters']
+        base=yaml.safe_load(Path(a.driver_config).read_text())['thruster_controller_node']['ros__parameters']
         def flatten(values,prefix=''):
             out={}
             for key,value in values.items():
@@ -51,7 +51,7 @@ def main():
         if not np.allclose(flat['thrusters.angle_rad'],ANGLES,atol=1e-5):p.error('different geometry needs a separate balance model')
         result=fit_balance(pulse_trials(rows),flat['thrusters.reverse'],pulse_trials(load_csv(a.holdout)))
         overlay={key:result[key] for key in ('static_map.thrusters.forward_gain','static_map.thrusters.reverse_gain')}
-        document={'thruster_driver_node':{'ros__parameters':flat|overlay}}
+        document={'thruster_controller_node':{'ros__parameters':flat|overlay}}
     else:
         if not a.holdout or a.mass is None or a.iz is None:p.error('MMG fit needs --holdout, --mass and --iz')
         result=fit_mmg(rows,load_csv(a.holdout),a.mass,a.iz,a.length,a.draft)

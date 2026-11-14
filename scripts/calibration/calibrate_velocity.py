@@ -128,15 +128,15 @@ def main():
               'scope':'Synthetic calibration, not real-vessel parameter identification or mission acceptance'}
     report['source_sha256']={str(path):hashlib.sha256(path.read_bytes()).hexdigest() for path in (
         Path(__file__),Path('src/sim/njord_sim/njord_sim/calibration.py'),
-        Path('src/driver/micon/thruster_driver/include/thruster_driver/velocity_control.hpp'),
+        Path('src/control/thruster_controller/include/thruster_controller/velocity_control.hpp'),
         Path('src/sim/dutyed_tf_pub_with_disturbance/src/velocity_benchmark.cpp'),
         Path('src/sim/dutyed_tf_pub_with_disturbance/src/mmg_doyle_model.cpp'))}
     (out/'report.json').write_text(json.dumps(report,indent=2))
     (out/'identified_mmg.yaml').write_text(yaml.safe_dump({'dutyed_tf_pub_with_disturbance_node':{'ros__parameters':{'mmg':fitted['mmg']}}}))
     if balance['passed']:
-        (out/'thruster_balance.yaml').write_text(yaml.safe_dump({'thruster_driver_node':{'ros__parameters':{key:balance[key] for key in ('static_map.thrusters.forward_gain','static_map.thrusters.reverse_gain')}}}))
+        (out/'thruster_balance.yaml').write_text(yaml.safe_dump({'thruster_controller_node':{'ros__parameters':{key:balance[key] for key in ('static_map.thrusters.forward_gain','static_map.thrusters.reverse_gain')}}}))
     if report['passed']:
-        (out/'velocity_control.yaml').write_text(yaml.safe_dump({'thruster_driver_node':{'ros__parameters':best['parameters']}}))
+        (out/'velocity_control.yaml').write_text(yaml.safe_dump({'thruster_controller_node':{'ros__parameters':best['parameters']}}))
     if args.plot:
         from njord_sim.calibration import plot_tracking
         plot_tracking(load_csv(out/'baseline/samples.csv'),load_csv(out/f'tune_{candidates.index(best)}_0/samples.csv'),out/'velocity_tracking.png')

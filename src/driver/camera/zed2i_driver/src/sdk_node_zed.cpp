@@ -332,7 +332,7 @@ public:
       detector_ = std::make_unique<TensorRtDetector>(engine_path_, confidence_threshold_, max_detections_);
       // Canonical output for Nav2-side perception consumers.  This must not
       // depend on the optional debug-detection setting.
-      detection_pub_ = create_publisher<njord_interfaces::msg::BuoyDetectionArray>(
+      detection_pub_ = create_publisher<perception_interfaces::msg::BuoyDetectionArray>(
         detection_topic_, rclcpp::QoS(10));
       if (enable_virtual_wall_) {
         virtual_wall_pub_ = create_publisher<sensor_msgs::msg::PointCloud2>(
@@ -1129,7 +1129,7 @@ private:
   bool connect_same_color_buoys_{};
   double same_color_wall_max_gap_m_{};
   double same_color_wall_point_spacing_m_{};
-  rclcpp::Publisher<njord_interfaces::msg::BuoyDetectionArray>::SharedPtr detection_pub_;
+  rclcpp::Publisher<perception_interfaces::msg::BuoyDetectionArray>::SharedPtr detection_pub_;
   rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr debug_image_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr virtual_wall_pub_;
   std::string lidar_topic_;

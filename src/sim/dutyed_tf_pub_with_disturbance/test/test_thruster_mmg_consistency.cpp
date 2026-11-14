@@ -6,13 +6,13 @@
 
 #include "dutyed_tf_pub_with_disturbance/mmg_doyle_model.hpp"
 #include "dutyed_tf_pub_with_disturbance/thruster_wrench.hpp"
-#include "thruster_driver/allocation.hpp"
+#include "thruster_controller/allocation.hpp"
 
 namespace
 {
 constexpr double kPi = 3.14159265358979323846;
 
-std::vector<njord::thruster_driver::ThrusterGeometry> driverGeometry()
+std::vector<njord::thruster_controller::ThrusterGeometry> driverGeometry()
 {
   return {
     {-0.1803, -0.2500, 3.0 * kPi / 4.0, 51.5, false},
@@ -32,7 +32,7 @@ std::vector<njord::sim::SimThrusterGeometry> simulatorGeometry()
 
 std::vector<double> restorePhysicalForces(
   const std::vector<double> & commands,
-  const std::vector<njord::thruster_driver::ThrusterGeometry> & geometry)
+  const std::vector<njord::thruster_controller::ThrusterGeometry> & geometry)
 {
   std::vector<double> forces;
   forces.reserve(commands.size());
@@ -45,7 +45,7 @@ std::vector<double> restorePhysicalForces(
 
 void expectMmgAxisMatchesAllocation(const std::array<double, 3> & requested)
 {
-  const auto commands = njord::thruster_driver::allocateWrench(
+  const auto commands = njord::thruster_controller::allocateWrench(
     driverGeometry(), {requested[0], requested[1], requested[2]}, 1e-9);
   const auto input = njord::sim::forcesToPlanarInput(
     restorePhysicalForces(commands, driverGeometry()), simulatorGeometry());
@@ -90,11 +90,11 @@ TEST(ThrusterMmgConsistency, ForceTopicMatchesDriverAllocation)
     std::array<double, 3>{0.5, 0.0, 0.0},
     std::array<double, 3>{0.0, 0.5, 0.0},
     std::array<double, 3>{0.0, 0.0, 0.25}}) {
-    const auto commands = njord::thruster_driver::allocateWrench(
+    const auto commands = njord::thruster_controller::allocateWrench(
       geometry, {requested[0], requested[1], requested[2]}, 1e-9);
     const auto forces = restorePhysicalForces(commands, geometry);
 
-    const auto driver_wrench = njord::thruster_driver::commandToWrench(geometry, commands);
+    const auto driver_wrench = njord::thruster_controller::commandToWrench(geometry, commands);
     const auto sim_wrench = njord::sim::forcesToPlanarInput(forces, sim_geometry);
     EXPECT_NEAR(sim_wrench.surge_force, driver_wrench[0], 1e-9);
     EXPECT_NEAR(sim_wrench.sway_force, driver_wrench[1], 1e-9);

@@ -2,20 +2,20 @@
 #include <memory>
 
 #include "nav2_behavior_tree/bt_action_node.hpp"
-#include "njord_interfaces/action/configure_system.hpp"
+#include "runtime_interfaces/action/configure_system.hpp"
 
 namespace njord_behavior
 {
 
 // テンプレート引数に先ほど定義したAction型を指定します
-class ConfigureSystemNode : public nav2_behavior_tree::BtActionNode<njord_interfaces::action::ConfigureSystem>
+class ConfigureSystemNode : public nav2_behavior_tree::BtActionNode<runtime_interfaces::action::ConfigureSystem>
 {
 public:
   ConfigureSystemNode(
     const std::string & xml_tag_name,
     const std::string & action_name,
     const BT::NodeConfiguration & conf)
-  : nav2_behavior_tree::BtActionNode<njord_interfaces::action::ConfigureSystem>(xml_tag_name, action_name, conf)
+  : nav2_behavior_tree::BtActionNode<runtime_interfaces::action::ConfigureSystem>(xml_tag_name, action_name, conf)
   {
   }
 

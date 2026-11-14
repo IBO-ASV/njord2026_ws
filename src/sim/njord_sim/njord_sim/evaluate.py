@@ -9,14 +9,15 @@ from pathlib import Path
 import rclpy
 from rclpy.node import Node
 from rclpy.action import ActionClient
-from njord_interfaces.action import RunTask
+from mission_interfaces.action import RunTask
 from rclpy.qos import QoSProfile, DurabilityPolicy
 from nav_msgs.msg import Odometry
 from geometry_msgs.msg import Twist, PoseStamped
 from std_msgs.msg import Bool
 from sensor_msgs.msg import PointCloud2
-from njord_interfaces.msg import MissionStatus, ControlState
-from njord_interfaces.srv import StopTask
+from control_interfaces.msg import ControlState
+from mission_interfaces.msg import MissionStatus
+from mission_interfaces.srv import StopTask
 from .scenario import (
     scenario,
     dock_segments,

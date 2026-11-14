@@ -6,7 +6,7 @@
 # Jazzy and hardware profile so CMake never reuses miniPC/Jetson
 # configuration results. Extra arguments are forwarded to
 # colcon build, e.g.:
-#   scripts/setup/build.sh --packages-select njord_platform
+#   scripts/setup/build.sh --packages-select sensor_build_support
 set -euo pipefail
 
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"

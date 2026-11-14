@@ -10,7 +10,7 @@
 #include "nav2_msgs/action/follow_path.hpp"
 #include "nav2_msgs/action/navigate_through_poses.hpp"
 #include "nav_msgs/msg/path.hpp"
-#include "njord_interfaces/msg/nav2_runtime_status.hpp"
+#include "runtime_interfaces/msg/nav2_runtime_status.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp_action/rclcpp_action.hpp"
 #include "std_msgs/msg/bool.hpp"
@@ -71,9 +71,9 @@ public:
     mode_sub_ = create_subscription<std_msgs::msg::String>(
       "/system/operating_mode", rclcpp::QoS(1).transient_local(),
       [this](std_msgs::msg::String::SharedPtr message) {mode_ = message->data;});
-    runtime_sub_ = create_subscription<njord_interfaces::msg::Nav2RuntimeStatus>(
+    runtime_sub_ = create_subscription<runtime_interfaces::msg::Nav2RuntimeStatus>(
       "/runtime/nav2/status", rclcpp::QoS(1).transient_local(),
-      [this](njord_interfaces::msg::Nav2RuntimeStatus::SharedPtr message) {
+      [this](runtime_interfaces::msg::Nav2RuntimeStatus::SharedPtr message) {
         active_profile_ = message->active_profile;
       });
 
@@ -153,7 +153,7 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Path>::SharedPtr task2_path_sub_;
   rclcpp::Subscription<action_msgs::msg::GoalStatusArray>::SharedPtr action_status_sub_;
   rclcpp::Subscription<std_msgs::msg::String>::SharedPtr mode_sub_;
-  rclcpp::Subscription<njord_interfaces::msg::Nav2RuntimeStatus>::SharedPtr runtime_sub_;
+  rclcpp::Subscription<runtime_interfaces::msg::Nav2RuntimeStatus>::SharedPtr runtime_sub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr ready_pub_;
   rclcpp::Publisher<std_msgs::msg::Empty>::SharedPtr heartbeat_pub_;
   diagnostic_updater::Updater updater_;

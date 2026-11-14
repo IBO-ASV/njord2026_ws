@@ -54,8 +54,8 @@ source /opt/ros/jazzy/setup.bash
 source install/setup.bash
 PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="src/sim/njord_sim:${PYTHONPATH:-}" \
   python3 -m pytest -p no:cacheprovider -q \
-  src/robot/test/test_launch_roles.py src/robot/test/test_platform_manifest.py \
-  src/robot/test/test_livox_config.py scripts/yolo/test/test_cusparselt_metadata.py \
+  src/bringup/robot/test/test_launch_roles.py src/bringup/robot/test/test_platform_manifest.py \
+  src/bringup/robot/test/test_livox_config.py scripts/yolo/test/test_cusparselt_metadata.py \
   src/sim/njord_sim/test/test_suite_reporting.py src/sim/njord_sim/test/test_dependencies.py \
   scripts/operations/test/test_bringup_service.py
 ```

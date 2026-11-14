@@ -4,7 +4,7 @@ from pathlib import Path
 import re
 
 from ament_index_python.packages import get_package_share_directory
-from njord_interfaces.msg import MissionStatus
+from mission_interfaces.msg import MissionStatus
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile

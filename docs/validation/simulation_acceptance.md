@@ -241,7 +241,7 @@ MMGと合わせて15ケース中13ケース合格であり、全条件合格と�
 現在の共通`njord_sim`・mission runner・suite runnerの既定をMMGへ変更し、
 production driver/allocatorと同じ速度制御を通す。
 
-`thruster_driver`に共通のbody速度PI、積分飽和・allocation/static-map後の逆算補正、
+`thruster_controller`に共通のbody速度PI、積分飽和・allocation/static-map後の逆算補正、
 指令filterを追加した。hardware既定はI=0・filter=0で、実機値の自動適用はしない。
 MMG専用overlayはP=(100,100,30)、I=(55,55,16.5)、filter=0.15 s、DOB無効。
 軸順はsurge/sway/yaw、速度単位はm/s・m/s・rad/s。watchdog停止で内部状態をresetする。

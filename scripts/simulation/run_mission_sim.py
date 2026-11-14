@@ -50,7 +50,7 @@ def main():
                 "src/sim/njord_sim",
                 "src/mission/mission_manager/mission_manager",
                 "src/navigation/path_generator/mppi/asv_trajectory_planner",
-                "src/driver/micon/thruster_driver",
+                "src/control/thruster_controller",
                 "src/sim/dutyed_tf_pub_with_disturbance",
             )
             for path in sorted(Path(root).rglob("*"))

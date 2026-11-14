@@ -12,7 +12,7 @@ source /opt/ros/jazzy/setup.bash
 source "${workspace}/install/setup.bash"
 export PATH="${HOME}/.local/bin:${PATH}"
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI="${workspace}/src/robot/config/cyclonedds_agx.xml"
+export CYCLONEDDS_URI="${workspace}/src/bringup/robot/config/cyclonedds_agx.xml"
 export ROS_DOMAIN_ID="${domain}"
 export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
 unset ROS_LOCALHOST_ONLY

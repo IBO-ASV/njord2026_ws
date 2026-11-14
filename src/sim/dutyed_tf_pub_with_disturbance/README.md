@@ -1,4 +1,4 @@
-このpkgはthruster_driverが発行するduty比を受け取り、それにしたがって、base_link frameを移動させるnodeを含みます。
+このpkgはthruster_controllerが発行するduty比を受け取り、それにしたがって、base_link frameを移動させるnodeを含みます。
 
 tf treeは
 * world（gnssがmapへの変換を発行）

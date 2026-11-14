@@ -1,0 +1,317 @@
+[
+  {
+    "run": "task1_2-truth",
+    "exit_code": 0,
+    "test_mode": "none",
+    "velocity_tracking": {
+      "available": true,
+      "frame": "base_link",
+      "active_samples": 2212,
+      "stale_command_samples": 3,
+      "rmse": {
+        "u": 0.05135967763736737,
+        "v": 0.004754921004836235,
+        "r": 0.03463723917430685
+      },
+      "p95_absolute_error": {
+        "u": 0.12658506192449132,
+        "v": 0.009758437555952078,
+        "r": 0.08754990469865608
+      },
+      "note": "Includes acceleration, braking and turns; independent step/sweep criteria qualify the low-level controller."
+    },
+    "task": "task1_2",
+    "final_output": {
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "final_inhibit_reasons": [
+      "no active task control policy"
+    ],
+    "passed": true,
+    "reason": "mission terminal",
+    "mission_result": 8,
+    "action_result_code": 0,
+    "waypoints_visited": 5,
+    "waypoints_total": 5,
+    "minimum_buoy_clearance_m": 0.2934752554863368,
+    "stationary_dwell_s": {},
+    "required_dwell_s": [],
+    "other_ship_clearance_m": null,
+    "opponent_selected": false,
+    "max_starboard_offset_m": 0.0,
+    "cpa_astern": null,
+    "gates_passed": [],
+    "wall_enabled_seen": true,
+    "wall_disabled_seen": true,
+    "maximum_wall_points": 1572,
+    "enabled_wall_cloud_seen": true,
+    "dock_contact_samples": 0,
+    "docking_simultaneous_translation_yaw_samples": null,
+    "cardinal_passages": {
+      "2": {
+        "mark": "W",
+        "distance_m": 1.0711220713581664,
+        "correct_side": true,
+        "x": -0.21397376963889334,
+        "y": -25.037671295875107
+      },
+      "1": {
+        "mark": "E",
+        "distance_m": 1.147874269443724,
+        "correct_side": true,
+        "x": 11.135955698493602,
+        "y": -28.068287185881047
+      }
+    },
+    "final_stationary_s": 3.2530112880049273,
+    "samples": 2434,
+    "events": [
+      {
+        "t": 3.29827147902688,
+        "state": 0,
+        "stage": "",
+        "message": "",
+        "inhibit": [
+          "control state unavailable"
+        ]
+      },
+      {
+        "t": 10.049983288976364,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projecting latitude/longitude waypoint coordinates",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 10.095925136993174,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projected waypoint 1/5",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 10.212096318020485,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projected waypoint 4/5",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 10.263964578974992,
+        "state": 4,
+        "stage": "permission",
+        "message": "waiting for AUTO permission before starting Nav2",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 10.372614542022347,
+        "state": 5,
+        "stage": "navigate",
+        "message": "sending waypoint 1/5: 3",
+        "inhibit": []
+      },
+      {
+        "t": 10.403947335027624,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Nav2 accepted waypoint 1/5",
+        "inhibit": []
+      },
+      {
+        "t": 10.468992409005295,
+        "state": 5,
+        "stage": "navigate",
+        "message": "sending waypoint 2/5: 3.1",
+        "inhibit": []
+      },
+      {
+        "t": 10.506456386006903,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Nav2 accepted waypoint 2/5",
+        "inhibit": []
+      },
+      {
+        "t": 41.94162029598374,
+        "state": 5,
+        "stage": "navigate",
+        "message": "sending waypoint 3/5: 3.2",
+        "inhibit": []
+      },
+      {
+        "t": 41.946636936976574,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Nav2 accepted waypoint 3/5",
+        "inhibit": []
+      },
+      {
+        "t": 68.14756504399702,
+        "state": 5,
+        "stage": "navigate",
+        "message": "sending waypoint 4/5: 3.3",
+        "inhibit": []
+      },
+      {
+        "t": 68.15310044400394,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Nav2 accepted waypoint 4/5",
+        "inhibit": []
+      },
+      {
+        "t": 94.68335567601025,
+        "state": 5,
+        "stage": "navigate",
+        "message": "sending waypoint 5/5: 4",
+        "inhibit": []
+      },
+      {
+        "t": 94.68756469100481,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Nav2 accepted waypoint 5/5",
+        "inhibit": []
+      },
+      {
+        "t": 121.28890404902631,
+        "state": 5,
+        "stage": "navigate",
+        "message": "waypoint route complete",
+        "inhibit": []
+      },
+      {
+        "t": 121.29135390499141,
+        "state": 0,
+        "stage": "",
+        "message": "waypoint route complete",
+        "inhibit": []
+      }
+    ],
+    "evaluation_limits": [
+      "synthetic perception; not image recognition accuracy",
+      "MMG qualification is separate from kinematic runs"
+    ]
+  },
+  {
+    "run": "task2-head_on-truth",
+    "exit_code": 0,
+    "test_mode": "none",
+    "velocity_tracking": {
+      "available": true,
+      "frame": "base_link",
+      "active_samples": 803,
+      "stale_command_samples": 3,
+      "rmse": {
+        "u": 0.058729143631861505,
+        "v": 0.013902493767473979,
+        "r": 0.07508317398225464
+      },
+      "p95_absolute_error": {
+        "u": 0.14150395529005885,
+        "v": 0.03181514723369493,
+        "r": 0.1560842842956634
+      },
+      "note": "Includes acceleration, braking and turns; independent step/sweep criteria qualify the low-level controller."
+    },
+    "task": "task2",
+    "final_output": {
+      "surge": 0.0,
+      "sway": 0.0,
+      "yaw": 0.0
+    },
+    "final_inhibit_reasons": [
+      "no active task control policy"
+    ],
+    "passed": true,
+    "reason": "mission terminal",
+    "mission_result": 8,
+    "action_result_code": 0,
+    "waypoints_visited": 2,
+    "waypoints_total": 2,
+    "minimum_buoy_clearance_m": 1.579580031275263,
+    "stationary_dwell_s": {},
+    "required_dwell_s": [],
+    "other_ship_clearance_m": 2.7257728044758367,
+    "opponent_selected": true,
+    "max_starboard_offset_m": 4.403431654983986,
+    "cpa_astern": false,
+    "gates_passed": [
+      0,
+      1
+    ],
+    "wall_enabled_seen": false,
+    "wall_disabled_seen": true,
+    "maximum_wall_points": 0,
+    "enabled_wall_cloud_seen": false,
+    "dock_contact_samples": 0,
+    "docking_simultaneous_translation_yaw_samples": null,
+    "cardinal_passages": {},
+    "final_stationary_s": 2.299543759028893,
+    "samples": 966,
+    "events": [
+      {
+        "t": 11.634106215031352,
+        "state": 0,
+        "stage": "",
+        "message": "",
+        "inhibit": [
+          "control state unavailable"
+        ]
+      },
+      {
+        "t": 15.006250638049096,
+        "state": 2,
+        "stage": "project_waypoints",
+        "message": "projecting latitude/longitude waypoint coordinates",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 15.014792670030147,
+        "state": 4,
+        "stage": "permission",
+        "message": "waiting for AUTO permission before starting Nav2",
+        "inhibit": [
+          "no active task control policy"
+        ]
+      },
+      {
+        "t": 15.148265965050086,
+        "state": 5,
+        "stage": "navigate",
+        "message": "Task 2 MPPI FollowPath gate enabled",
+        "inhibit": []
+      },
+      {
+        "t": 56.20696345099714,
+        "state": 8,
+        "stage": "navigate",
+        "message": "Task 2 FollowPath goal reached",
+        "inhibit": []
+      },
+      {
+        "t": 56.211667065043,
+        "state": 0,
+        "stage": "",
+        "message": "Task 2 FollowPath goal reached",
+        "inhibit": []
+      }
+    ],
+    "evaluation_limits": [
+      "synthetic perception; not image recognition accuracy",
+      "MMG qualification is separate from kinematic runs"
+    ]
+  }
+]

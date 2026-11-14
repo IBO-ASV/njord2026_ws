@@ -154,7 +154,7 @@ Source extraction/timing: scripts/inspect_aug10_source.py and check_aug10_timing
 Reorder: scripts/reorder_aug10_sensors.py SOURCE_BAG NEW_BAG.
 Run robot/glim_static_bag_check.launch.py with reordered input and duration:=406.
 Stop trial/recorder cleanly. Run prepare_aug10_fusion.py RESULT_DIR SOURCE_NPZ;
-launch src/robot/launch/glim_gnss_comparison.launch.py result_dir:=RESULT_DIR
+launch src/bringup/robot/launch/glim_gnss_comparison.launch.py result_dir:=RESULT_DIR
 by absolute path, then cleanly stop after replay. Analysis uses PYTHONNOUSERSITE=1:
 evaluate_glim_static_tracks.py RESULT_DIR; evaluate_aug10_fusion.py RESULT_DIR
 SOURCE_NPZ; plot_aug10_short_tracks.py RESULT_DIR. Conservative analysis passes
@@ -220,7 +220,7 @@ as recorded data. The complete inspected inventory is saved in
 
 The first 120 s of rosbag2_2026_07_21-16_22_30 was replayed once at real-time
 rate, selecting only the three sensor topics and publishing /clock.
-Current workspace config: src/robot/config/glim_config_headless.
+Current workspace config: src/bringup/robot/config/glim_config_headless.
 GLIM executable is installed in /opt/ros/jazzy, package version 1.2.2;
 there is no GLIM implementation source/build overlay in this workspace.
 The GPU odometry module and headless ROS viewer extension loaded successfully.
@@ -275,7 +275,7 @@ source install/setup.bash
 export ROS_DOMAIN_ID=73
 export ROS_AUTOMATIC_DISCOVERY_RANGE=LOCALHOST
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
-export CYCLONEDDS_URI=$PWD/src/robot/config/cyclonedds_agx.xml
+export CYCLONEDDS_URI=$PWD/src/bringup/robot/config/cyclonedds_agx.xml
 ```
 
 Start a static transform and GLIM in separate terminals with that environment:
@@ -285,7 +285,7 @@ ros2 run tf2_ros static_transform_publisher --x 0.5 --y 0 --z 0.8 \
   --roll 3.141592653589793 --pitch 0 --yaw 0 \
   --frame-id base_link --child-frame-id livox_frame
 ros2 run glim_ros glim_rosnode --ros-args \
-  -p config_path:=$PWD/src/robot/config/glim_config_headless \
+  -p config_path:=$PWD/src/bringup/robot/config/glim_config_headless \
   -p use_sim_time:=true -r /livox/imu_raw:=/livox/imu
 ```
 

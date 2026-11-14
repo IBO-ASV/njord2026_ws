@@ -15,7 +15,7 @@ from geometry_msgs.msg import PoseStamped, PoseWithCovarianceStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 
-from njord_interfaces.msg import BuoyDetection, BuoyDetectionArray
+from perception_interfaces.msg import BuoyDetection, BuoyDetectionArray
 
 
 def _yaw(q):

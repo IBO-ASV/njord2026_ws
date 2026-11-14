@@ -2,7 +2,7 @@
 
 On the real vessel, `zed2i_driver`'s `sdk_node_zed` runs YOLO on the ZED2i
 stereo pair and fuses the result with Livox Mid-360 returns to publish
-`njord_interfaces/BuoyDetectionArray` on `/buoy_detections_3d`
+`perception_interfaces/BuoyDetectionArray` on `/buoy_detections_3d`
 (`src/driver/camera/zed2i_driver/src/sdk_node_zed.cpp`,
 `src/driver/camera/zed2i_driver/config/zed2i_jetson_orin_nano.yaml`). The sim
 has no camera/LiDAR, so nothing publishes that topic and
@@ -35,7 +35,7 @@ configs:
 import json
 import math
 
-from njord_interfaces.msg import BuoyDetection, BuoyDetectionArray
+from perception_interfaces.msg import BuoyDetection, BuoyDetectionArray
 from nav_msgs.msg import Odometry
 import rclpy
 from rclpy.node import Node

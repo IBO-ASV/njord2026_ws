@@ -69,7 +69,7 @@ TopicHeartbeatMonitor::TopicHeartbeatMonitor(const rclcpp::NodeOptions & options
   if (health_signal_topic_.empty()) {
     throw std::invalid_argument("health_signal_topic must not be empty");
   }
-  health_signal_publisher_ = create_publisher<njord_interfaces::msg::HealthSignal>(
+  health_signal_publisher_ = create_publisher<health_interfaces::msg::HealthSignal>(
     health_signal_topic_, rclcpp::QoS(10).transient_local());
 
   if (topic_name_.empty() || topic_type_.empty()) {
@@ -168,9 +168,9 @@ void TopicHeartbeatMonitor::updateDiagnostic(diagnostic_updater::DiagnosticStatu
   const double frequency = measuredFrequency();
   const double age = lastMessageAgeSec();
   int level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-  if (signal.state == njord_interfaces::msg::HealthSignal::ERROR) {
+  if (signal.state == health_interfaces::msg::HealthSignal::ERROR) {
     level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-  } else if (signal.state != njord_interfaces::msg::HealthSignal::OK) {
+  } else if (signal.state != health_interfaces::msg::HealthSignal::OK) {
     level = diagnostic_msgs::msg::DiagnosticStatus::WARN;
   }
 
@@ -194,12 +194,12 @@ void TopicHeartbeatMonitor::updateDiagnostic(diagnostic_updater::DiagnosticStatu
   stat.add("qos_reliability", qos_reliability_);
 }
 
-njord_interfaces::msg::HealthSignal TopicHeartbeatMonitor::makeHealthSignal()
+health_interfaces::msg::HealthSignal TopicHeartbeatMonitor::makeHealthSignal()
 {
   const size_t publishers = count_publishers(topic_name_);
   const double frequency = measuredFrequency();
   const double age = lastMessageAgeSec();
-  auto signal = njord_interfaces::msg::HealthSignal{};
+  auto signal = health_interfaces::msg::HealthSignal{};
   signal.name = monitor_name_;
   signal.age_sec = std::isfinite(age) ? static_cast<float>(age) : -1.0F;
   signal.measured_frequency_hz = static_cast<float>(frequency);
@@ -207,39 +207,39 @@ njord_interfaces::msg::HealthSignal TopicHeartbeatMonitor::makeHealthSignal()
   const auto stamp_ns = stamp.nanoseconds();
   signal.stamp.sec = static_cast<int32_t>(stamp_ns / 1000000000LL);
   signal.stamp.nanosec = static_cast<uint32_t>(stamp_ns % 1000000000LL);
-  signal.state = njord_interfaces::msg::HealthSignal::UNKNOWN;
+  signal.state = health_interfaces::msg::HealthSignal::UNKNOWN;
   signal.message = "unknown";
 
   if (topic_name_.empty() || topic_type_.empty()) {
-    signal.state = njord_interfaces::msg::HealthSignal::ERROR;
+    signal.state = health_interfaces::msg::HealthSignal::ERROR;
     signal.message = "topic or topic_type is not configured";
   } else if (mode_ == Mode::Optional && publishers == 0U && !has_message_) {
-    signal.state = njord_interfaces::msg::HealthSignal::DISABLED;
+    signal.state = health_interfaces::msg::HealthSignal::DISABLED;
     signal.message = "disabled: optional signal has no publisher";
   } else if (publishers == 0U) {
     signal.state = mode_ == Mode::RequiredFrequency ?
-      njord_interfaces::msg::HealthSignal::ERROR :
-      njord_interfaces::msg::HealthSignal::DEGRADED;
+      health_interfaces::msg::HealthSignal::ERROR :
+      health_interfaces::msg::HealthSignal::DEGRADED;
     signal.message = "no publishers";
   } else if (!has_message_) {
     signal.state = mode_ == Mode::RequiredFrequency ?
-      njord_interfaces::msg::HealthSignal::ERROR :
-      njord_interfaces::msg::HealthSignal::DEGRADED;
+      health_interfaces::msg::HealthSignal::ERROR :
+      health_interfaces::msg::HealthSignal::DEGRADED;
     signal.message = "publisher exists but no message received";
   } else if (age > stale_timeout_sec_) {
-    signal.state = njord_interfaces::msg::HealthSignal::STALE;
+    signal.state = health_interfaces::msg::HealthSignal::STALE;
     signal.message = "last message is stale";
   } else if (age > timeout_sec_) {
-    signal.state = njord_interfaces::msg::HealthSignal::DEGRADED;
+    signal.state = health_interfaces::msg::HealthSignal::DEGRADED;
     signal.message = "last message timeout exceeded";
   } else if (mode_ == Mode::RequiredFrequency && frequency < minimum_frequency_hz_) {
-    signal.state = njord_interfaces::msg::HealthSignal::DEGRADED;
+    signal.state = health_interfaces::msg::HealthSignal::DEGRADED;
     signal.message = "frequency below minimum";
   } else if (mode_ == Mode::HeartbeatOnly) {
-    signal.state = njord_interfaces::msg::HealthSignal::OK;
+    signal.state = health_interfaces::msg::HealthSignal::OK;
     signal.message = "OK heartbeat";
   } else {
-    signal.state = njord_interfaces::msg::HealthSignal::OK;
+    signal.state = health_interfaces::msg::HealthSignal::OK;
     std::ostringstream oss;
     oss.precision(3);
     oss << "OK " << frequency << " Hz";

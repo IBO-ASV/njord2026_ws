@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<package format="3">
+  <name>operator_gateway</name><version>0.1.0</version>
+  <description>Validate and dispatch typed operator commands to mission and control services</description>
+  <maintainer email="oswystk15662@keio.jp">NJORD</maintainer><license>Apache-2.0</license>
+  <buildtool_depend>ament_python</buildtool_depend>
+  <depend>rclpy</depend>
+  <depend>std_srvs</depend>
+  <depend>operator_interfaces</depend>
+  <depend>mission_interfaces</depend>
+  <depend>runtime_interfaces</depend>
+  <depend>control_interfaces</depend>
+  <test_depend>python3-pytest</test_depend>
+  <export><build_type>ament_python</build_type></export>
+</package>

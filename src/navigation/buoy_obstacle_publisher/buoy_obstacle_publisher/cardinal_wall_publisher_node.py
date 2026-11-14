@@ -6,7 +6,7 @@ import struct
 
 from geometry_msgs.msg import Point, PointStamped
 from geometry_msgs.msg import PoseWithCovarianceStamped
-from njord_interfaces.msg import BuoyDetection, BuoyDetectionArray
+from perception_interfaces.msg import BuoyDetection, BuoyDetectionArray
 import rclpy
 from rclpy.duration import Duration
 from rclpy.executors import ExternalShutdownException

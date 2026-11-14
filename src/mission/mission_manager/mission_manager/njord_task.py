@@ -11,8 +11,9 @@ import rclpy
 from rclpy.action import ActionClient
 from rclpy.node import Node
 
-from njord_interfaces.action import RunTask
-from njord_interfaces.srv import GetMissionStatus, ListTasks, SetControlMode, StartTask, StopTask
+from mission_interfaces.action import RunTask
+from control_interfaces.srv import SetControlMode
+from mission_interfaces.srv import GetMissionStatus, ListTasks, StartTask, StopTask
 
 
 class TaskClient(Node):

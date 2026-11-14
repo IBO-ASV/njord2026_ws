@@ -16,7 +16,7 @@ find_package(tf2_geometry_msgs REQUIRED)
 find_package(pcl_conversions REQUIRED)
 find_package(pcl_ros REQUIRED)
 find_package(PCL REQUIRED COMPONENTS common io kdtree filters segmentation)
-find_package(njord_interfaces REQUIRED)
+find_package(perception_interfaces REQUIRED)
 
 include_directories(${PCL_INCLUDE_DIRS})
 add_definitions(${PCL_DEFINITIONS})
@@ -32,7 +32,7 @@ ament_target_dependencies(
   tf2_ros
   tf2_geometry_msgs
   pcl_conversions
-  njord_interfaces
+  perception_interfaces
 )
 target_link_libraries(pcl_bouy_det_component ${PCL_LIBRARIES})
 

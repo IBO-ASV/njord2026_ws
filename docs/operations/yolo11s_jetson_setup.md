@@ -20,7 +20,7 @@ python3 scripts/yolo/check_jetson_runtime.py --ros --triton
 
 This selects torch 2.9.1+cu130 / torchvision 0.24.1 from the official CUDA 13
 index, keeps numpy 1.26.4 and leaves the system ROS/CPU Python unchanged. The
-local model `src/robot/config/yolo_model/best.pt` (six buoy classes) was tested
+local model `src/bringup/robot/config/yolo_model/best.pt` (six buoy classes) was tested
 through this ROS node on GPU; pass its path when `yolo11s.pt` is absent. See
 [AGX setup/results](agx_uv_python_setup.md) for CPU switching, the narrowly
 scoped vendor wheel metadata correction and the exact validated environment.
@@ -123,7 +123,7 @@ ros2 launch yolo yolo11s.launch.py \
 ```
 
 Outputs: `/yolo/detections` (vision_msgs/Detection2DArray), `/buoy_roi`
-(njord_interfaces/BuoyRoi), `yolo/debug_image` (rate-limited). All parameters
+(perception_interfaces/BuoyRoi), `yolo/debug_image` (rate-limited). All parameters
 (thresholds, rate limits, ROI crop, class-name/color mapping) are documented
 in `src/detection/yolo/config/yolo11s_params.yaml`; the values marked [TUNE]
 there need tuning against real course footage.

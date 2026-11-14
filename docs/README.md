@@ -5,7 +5,7 @@
 | 用途 | 入口 |
 |---|---|
 | 環境構築・端末別運用 | [2台構成](operations/two_machine_split.md)、[AGX起動](operations/agx_ground_jetson_startup.md) |
-| launch・設定の使い分け | [robot](../src/robot/README.md) |
+| launch・設定の使い分け | [robot](../src/bringup/robot/README.md) |
 | 制御・ミッション設計 | [責務と検証要求](architecture/control_mission.md) |
 | 統合方針・残課題 | [backlog](architecture/integration_backlog.md) |
 | 自己位置推定 | [TF構成](architecture/localization_tf_architecture.md) |

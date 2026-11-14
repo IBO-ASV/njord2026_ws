@@ -14,7 +14,7 @@ def generate_launch_description():
     pkg_robot      = get_package_share_directory("robot")
     pkg_dutyed     = get_package_share_directory("dutyed_tf_pub_with_disturbance")
     pkg_waypoint   = get_package_share_directory("waypoint_publisher")
-    pkg_thruster   = get_package_share_directory("thruster_driver")
+    pkg_thruster   = get_package_share_directory("thruster_controller")
     robot_description_file = os.path.join(pkg_robot, 'urdf', 'robot.urdf.xacro')
     robot_description = Command(['xacro ', robot_description_file])
 
@@ -160,10 +160,10 @@ def generate_launch_description():
     )
 
     # Thruster driver: cmd_vel -> /thruster_command (Int16MultiArray)
-    thruster_driver_node = Node(
-        package="thruster_driver",
-        executable="thruster_driver_node",
-        name="thruster_driver_node",
+    thruster_controller_node = Node(
+        package="thruster_controller",
+        executable="thruster_controller_node",
+        name="thruster_controller_node",
         parameters=[
             os.path.join(pkg_thruster, "config", "config.yaml"),
             {
@@ -256,7 +256,7 @@ def generate_launch_description():
             gui_status_dummy,
             foxglove_logger,
             ground_speed,
-            thruster_driver_node,
+            thruster_controller_node,
             twist_mux,
             robot_state_pub_node,
             global_ekf_node,

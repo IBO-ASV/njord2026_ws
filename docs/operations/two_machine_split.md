@@ -6,7 +6,7 @@ Jetson Orin Nano Super 1台で全ノードを動かしていた構成は、実�
 
 そこで **ZED 2i と Livox MID360S を使う処理だけを Jetson に残し、それ以外を miniPC へ移した**。
 
-同一ソースツリーが両方の端末でビルドできるよう、CUDA / TensorRT / ZED SDK / ROS distro の有無をビルド時に検出して依存とリンク先を切り替える仕組み（`njord_platform`）を入れてある。
+同一ソースツリーが両方の端末でビルドできるよう、CUDA / TensorRT / ZED SDK / ROS distro の有無をビルド時に検出して依存とリンク先を切り替える仕組み（`sensor_build_support`）を入れてある。
 
 ## ノード配置
 
@@ -23,7 +23,7 @@ Jetson Orin Nano Super 1台で全ノードを動かしていた構成は、実�
 
 ### miniPC（`minipc_bringup.launch.py`）
 
-`robot_state_publisher` / static TF / `um982_driver` / `um982_feedback_filter` / `ekf_local` / `ekf_global` / `navsat_transform_node` / `joy_converter` / `command_arbiter` / `thruster_driver` / `micon_driver_fd serial_writer` / `bms` / `alert_lamp` / `buoy_obstacle_publisher` / `diagnostic_monitors` / `foxglove_logger` / back camera + H.26x sender
+`robot_state_publisher` / static TF / `um982_driver` / `um982_feedback_filter` / `ekf_local` / `ekf_global` / `navsat_transform_node` / `joy_converter` / `command_arbiter` / `thruster_controller` / `micon_driver_fd serial_writer` / `bms` / `status_lights` / `buoy_obstacle_publisher` / `diagnostic_monitors` / `foxglove_logger` / back camera + H.26x sender
 
 ESP32 Micon、UM982 GNSS、後方USBカメラはminiPCに接続する。DroggerとWIT IMUはlaunch定義を残しているが、現在は起動リストから外してあり引数も既定falseである。ゲームパッドはGround PCに接続する。
 
@@ -74,14 +74,14 @@ chronyc tracking     # 両機で確認。差が 1 ms 以下であること
 
 ### プラットフォーム検出
 
-`njord_platform` パッケージが `njord_detect_platform()` を提供し、ビルド時に以下を検出する:
+`sensor_build_support` パッケージが `sensor_detect_backends()` を提供し、ビルド時に以下を検出する:
 
 `ROS_DISTRO` / CUDA Toolkit + nvcc / TensorRT (`NvInfer.h` + `libnvinfer`) / ZED SDK (`zed-config.cmake` の CUDA メジャーが一致する場合のみ) / `glim_ros` / `livox_ros_driver2`
 
-検出結果は `share/njord_platform/platform.yaml` と `platform.env` に書き出される。launch ファイルやテストはこれを読めばよく、自前で再検出する必要はない。
+検出結果は `share/sensor_build_support/platform.yaml` と `platform.env` に書き出される。launch ファイルやテストはこれを読めばよく、自前で再検出する必要はない。
 
 ```bash
-cat install/njord_platform/share/njord_platform/platform.yaml
+cat install/sensor_build_support/share/sensor_build_support/platform.yaml
 ```
 
 ### 手順（両機共通）
@@ -123,7 +123,7 @@ ZED SDK の探索は、`zed-config.cmake` に記録された CUDA メジャー�
 ### ヘッダ探索
 
 - `njord_distro_header()` — Jazzy の `.hpp`（`tf2_geometry_msgs` 用）
-- `njord_find_header()` — 実際のインストール先でヘッダを探索する。
+- `sensor_find_header()` — 実際のインストール先でヘッダを探索する。
 
 ## 起動
 
@@ -191,7 +191,7 @@ scripts/operations/install_bringup_service.sh --role minipc --ros-distro jazzy -
 
 miniPC service は `enable_nav2:=false` 固定である。Nav2、waypoint publisher、
 autonomy supervisor は task manager が start/stop を管理するタスク層であり、
-常駐 service に含めない。Mission Manager と control_manager は常駐し、Nav2プロファイル
+常駐 service に含めない。Mission Manager と motion_supervisor は常駐し、Nav2プロファイル
 の互換性を検査してから `/mission/run_task` を受け付ける。
 
 確認・停止・無効化:
@@ -220,7 +220,7 @@ ros2 launch robot standalone_bringup.launch.py
 番号付き実験launchに `enable_legacy_graph:=true` を明示して、他のbringupを
 同時に起動しないこと。
 
-`simple_manual/launch/manual_control.launch.py` は従来経路としてそのまま残してある。
+`manual_bringup/launch/manual_control.launch.py` は従来経路としてそのまま残してある。
 
 ### GLIM の CPU バックエンド
 
@@ -238,7 +238,7 @@ ros2 launch robot jetson_bringup.launch.py glim_backend:=cpu
 
 ### 有線 Ethernet
 
-Jetson と miniPC は有線で直結（またはスイッチ経由）する。Livox MID360S は Jetson 側の別 NIC に繋ぐ（host `192.168.1.5` / LiDAR `192.168.1.114`、`src/robot/config/livox/MID360S_jetson_config.json`）。miniPC から MID360S を起動する場合は `MID360S_minipc_config.json`（host `192.168.1.2`）を使用する。
+Jetson と miniPC は有線で直結（またはスイッチ経由）する。Livox MID360S は Jetson 側の別 NIC に繋ぐ（host `192.168.1.5` / LiDAR `192.168.1.114`、`src/bringup/robot/config/livox/MID360S_jetson_config.json`）。miniPC から MID360S を起動する場合は `MID360S_minipc_config.json`（host `192.168.1.2`）を使用する。
 
 Wi-Fi を固定IPにしつつ Internet 接続を維持するには、DHCP 接続中の gateway/DNS を引き継ぐ。
 NetworkManager 環境では各機で次を実行する（接続中のSSID/認証情報は維持する）。
@@ -296,9 +296,9 @@ colcon build --symlink-install
 colcon test --packages-select robot && colcon test-result --verbose
 ```
 
-`src/robot/test/test_launch_roles.py` が分割の回帰テスト。GPUセンサ処理がminiPCへ戻らないこと、Jetsonに制御ノードが入らないこと、joy/Foxglove bridgeの所有、映像既定値、GLIM/TF、ZenohのLivox raw許可範囲を確認する。
+`src/bringup/robot/test/test_launch_roles.py` が分割の回帰テスト。GPUセンサ処理がminiPCへ戻らないこと、Jetsonに制御ノードが入らないこと、joy/Foxglove bridgeの所有、映像既定値、GLIM/TF、ZenohのLivox raw許可範囲を確認する。
 
-`src/robot/test/test_platform_manifest.py` は `platform.yaml` の妥当性を検証する。
+`src/bringup/robot/test/test_platform_manifest.py` は `platform.yaml` の妥当性を検証する。
 
 CI（`.github/workflows/ros2-ci.yaml`）の `core-simulation-build` ジョブは `ros:jazzy-ros-base-noble` = CUDA 無しなので、miniPC プロファイルの回帰テストとしてそのまま機能する。
 

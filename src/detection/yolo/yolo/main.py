@@ -5,7 +5,7 @@ from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import Image, PointCloud2, PointField
 from vision_msgs.msg import Detection2DArray, Detection2D, ObjectHypothesisWithPose
-from njord_interfaces.msg import BuoyRoi
+from perception_interfaces.msg import BuoyRoi
 import cv2
 import numpy as np
 import struct

@@ -21,10 +21,10 @@ def main():
     out.mkdir(parents=True,exist_ok=True)
     env=dict(os.environ,ROS_DOMAIN_ID=str(a.domain),ROS_LOCALHOST_ONLY='1',RMW_IMPLEMENTATION='rmw_fastrtps_cpp')
     robot=(Path(share('robot'))/'urdf/robot.urdf_modified.urdf').read_text()
-    driver_base=Path(share('thruster_driver'))/'config/config.yaml'
+    driver_base=Path(share('thruster_controller'))/'config/config.yaml'
     selected=Path(share('njord_sim'))/'config/velocity_control.yaml'
     plant=Path(share('dutyed_tf_pub_with_disturbance'))/'config/node_config.yaml'
-    overrides={'thruster_driver_node':{'ros__parameters':{'robot_description':robot,
+    overrides={'thruster_controller_node':{'ros__parameters':{'robot_description':robot,
         'thrusters.reverse':[False]*4,'topics.cmd_vel':'/calibration/cmd_vel',
         'topics.feedback_odometry':'/calibration/odom','topics.sim_thruster_command':'/calibration/forces'}},
         'dutyed_tf_pub_with_disturbance_node':{'ros__parameters':{'publish_tf':False,'thruster_force_sign':[1.]*4,
@@ -37,7 +37,7 @@ def main():
             for _ in range(round(duration/.02)):
                 ref=[0.,0.,0.];ref[axis]=amplitude;rows.append((t,*ref));t+=.02
     write_reference(out/'reference.csv',rows)
-    commands=[['ros2','run','thruster_driver','thruster_driver_node','--ros-args','--params-file',str(driver_base),'--params-file',str(selected),'--params-file',str(out/'overrides.yaml')],
+    commands=[['ros2','run','thruster_controller','thruster_controller_node','--ros-args','--params-file',str(driver_base),'--params-file',str(selected),'--params-file',str(out/'overrides.yaml')],
               ['ros2','run','dutyed_tf_pub_with_disturbance','dutyed_tf_pub_with_disturbance_node','--ros-args','--params-file',str(plant),'--params-file',str(out/'overrides.yaml')],
               [sys.executable,'-m','njord_sim.velocity_experiment','--output',str(out/'samples.csv'),
                '--reference',str(out/'reference.csv'),'--publish-topic','/calibration/cmd_vel','--command-topic','/calibration/cmd_vel',

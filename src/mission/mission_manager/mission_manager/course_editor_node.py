@@ -13,7 +13,8 @@ from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import String
 
-from njord_interfaces.msg import ControlState, MissionStatus
+from control_interfaces.msg import ControlState
+from mission_interfaces.msg import MissionStatus
 
 from .course_editing import atomic_save, revision, validate_edit, waypoint_yaml_edit
 from .task_registry import TaskRegistry

@@ -10,7 +10,9 @@
   <depend>action_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>njord_interfaces</depend>
+  <depend>control_interfaces</depend>
+  <depend>mission_interfaces</depend>
+  <depend>perception_interfaces</depend>
   <depend>rclcpp</depend>
   <depend>rcl_interfaces</depend>
   <depend>sensor_msgs</depend>

@@ -14,7 +14,8 @@
   <depend>action_msgs</depend>
   <depend>nav2_msgs</depend>
   <depend>nav_msgs</depend>
-  <depend>njord_interfaces</depend>
+  <depend>health_interfaces</depend>
+  <depend>runtime_interfaces</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_action</depend>
   <depend>rclcpp_components</depend>

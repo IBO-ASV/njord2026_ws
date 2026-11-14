@@ -11,7 +11,8 @@ find_package(diagnostic_updater REQUIRED)
 find_package(action_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(nav_msgs REQUIRED)
-find_package(njord_interfaces REQUIRED)
+find_package(health_interfaces REQUIRED)
+find_package(runtime_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_action REQUIRED)
 find_package(rclcpp_components REQUIRED)
@@ -26,7 +27,7 @@ target_include_directories(topic_heartbeat_monitor_component PUBLIC
 ament_target_dependencies(topic_heartbeat_monitor_component
   diagnostic_msgs
   diagnostic_updater
-  njord_interfaces
+  health_interfaces runtime_interfaces
   rclcpp
   rclcpp_components
 )
@@ -43,7 +44,7 @@ target_include_directories(health_state_aggregator_component PUBLIC
   "$<INSTALL_INTERFACE:include>"
 )
 ament_target_dependencies(health_state_aggregator_component
-  njord_interfaces
+  health_interfaces runtime_interfaces
   rclcpp
   rclcpp_components
 )
@@ -104,7 +105,7 @@ ament_target_dependencies(autonomy_supervisor_node
   diagnostic_updater
   nav2_msgs
   nav_msgs
-  njord_interfaces
+  health_interfaces runtime_interfaces
   rclcpp
   rclcpp_action
   std_msgs

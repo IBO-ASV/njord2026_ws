@@ -10,7 +10,7 @@ from launch.substitutions import PathJoinSubstitution
 def generate_launch_description():
     mission = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(PathJoinSubstitution([
-            FindPackageShare("mission_manager"), "launch", "mission.launch.py"
+            FindPackageShare("robot"), "launch", "mission_stack.launch.py"
         ])),
         launch_arguments={
             "runtime_mode": "task2_sim",

@@ -79,7 +79,7 @@ GNSSアンテナを接続した Spatial v8.0 は `src/driver/ins/ros2-driver`
 `ttyUSB0` として指定し、115200 baud で Device Information packet を取得できました。
 `/dev/` prefix は driver 側が内部で付けるため、設定ファイルには入れません。
 
-現在の設定は `src/robot/config/adnav_spatial.yaml` です。packet 20
+現在の設定は `src/bringup/robot/config/adnav_spatial.yaml` です。packet 20
 （filtered INS/GNSS state）と packet 28（raw sensors）を 20 Hz で要求します。
 115200 baud で高い packet rate にすると `SERIAL PORT DATA OVERFLOW` が出るため、
 この rate に落としています。
@@ -89,56 +89,37 @@ GNSSアンテナを接続した Spatial v8.0 は `src/driver/ins/ros2-driver`
 ## ディレクトリ構成について
 
 文書は [docs](docs/README.md)、共通スクリプトは [scripts](scripts/README.md)、
-Arduinoソースは `firmware/`、実験生成物はGit対象外の `artifacts/` にまとめています。
-以下のsrc構成図には旧パッケージ名も含まれるため、現行の配置は各パッケージREADMEを参照してください。
+Arduinoソースは `firmware/`、実験生成物はGit対象外の `artifacts/` にまとめます。
+ROS package名と、その実装の役割を分けて配置します。
 
-colcon buildしたあとは以下のようなディレクトリ構造になっていると思います。
-
-```shell
-$ tree -d
-.
-├── bag_files/  # rosbagを保存する場所。なおrosbag自体をgitで管理するわけではなく、入れるところっていうだけ
-├── build/      # colcon buildで生成されたもの。vscodeの左側ではsrcと違い、薄い灰色文字になっているはず
-├── install/    # colcon buildで生成されたもの。vscodeの左側ではsrcと違い、薄い灰色文字になっているはず
-├── log/        # colcon buildで生成されたもの。vscodeの左側ではsrcと違い、薄い灰色文字になっているはず
-└── src
-    ├── bt      # behavior tree周りの諸々（action nodeなど）を入れる。
-    ├── ditection   # 物体認識周り
-    │   ├── pcl_det # Point CLoud DETection
-    │   └── yolo    # You Look Only Once
-    │
-    ├── driver
-    │   ├── camera
-    │   │   ├── usb_camera_driver   # logicool c270用
-    │   │   └── zed2i_driver/ # 現行ZED SDKドライバ
-    │   ├── gnss
-    │   │   ├── drogger_bt  # drogger gnss moduleとblue toothで接続する用
-    │   │   ├── drogger_rws # drogger gnss moduleの中身がublox ZED-F9Pのやつ
-    │   │   ├── drogger_rzs # drogger gnss moduleの中身がseptentorio mozaicのやつ
-    │   │   └── um982_driver # unicore um982用
-    │   └── imu
-    │       ├── sonota # その他（）
-    │       └── wit_node_ros2 # witmotion mpu9250用
-    │           ├── doc
-    │           ├── wit_driver
-    │           ├── wit_msgs
-    │           └── wit_node
-    ├── path_follower # 経路追従アルゴリズム・ノードを入れるところ。
-    ├── path_generator # 経路生成アルゴリズム・ノードを入れるところ。避航も含む
-    └── robot
-        ├── config # ここには最終的にlaunchするときに使う設定ファイルとかを入れる。単体試験は各パッケージlaunch書いてください。
-        ├── launch # ここには最終的にlaunchするときに使うlaunchファイルを入れる。単体試験用launchを呼び出す形で書くと良いとされている
-        ├── meshes # 表示用STLファイルを入れるところ
-        └── urdf # tf設定・表示用のurdfを入れるところ
+```text
+src/
+├── build_tools/       # センサbackend検出・共有CMake設定
+├── interfaces/        # control/mission/health/perception/runtime/operator の型
+├── input/             # joystickなどの操作者入力→速度/モード要求
+├── safety/            # 非常停止入力の選択
+├── communication/     # critical_link、地上局heartbeat
+├── control/           # motion_supervisor、thruster_controller、legacy_command_mux
+├── mission/           # mission_manager: 経路・task実行・停泊・failsafe
+├── system/            # runtime_manager、legacy parameter_gateway
+├── operator/          # operator_gateway、status_lights
+├── bringup/           # robot、manual_bringup、test_bringup
+├── driver/            # GNSS/IMU/camera/LiDAR/serial、rc/sbus_driver
+├── navigation/        # 経路生成・追従・waypoint_transformer
+├── localization/      # 位置推定用adapter/filter
+├── detection/         # 認識・追跡
+├── diagnostics/       # センサ/通信の観測とhealth集約
+├── gui/               # Foxglove、可視化、画像preview
+├── sim/               # hardware-freeの共通mission/速度/同定試験
+└── tools/             # 明示的な機器試験（thruster_tools）
 ```
 
-colcon buildによって生まれた、build・installl・logディレクトリは.gitignoreによって、gitが変更を追跡しないようにしているため、薄い灰色になっています。
-中見ればわかりますが、非常に大量のファイルが生まれ、変更差分が分かりづらくなるため、無視するのが一般的です。
-bag_filesの中身も同様に追跡しないようになっています。
+[責務・package移行表](docs/architecture/control_mission.md)を参照してください。
+`build/`・`install/`・`log/`は生成物、`bag_files/`は計測データです。
+再編前のROS型を使うbag・検証fixtureは書き換えません。
 
-**重要**
-カスタムメッセージをむやみに生やさないでください。
-基本的にros側で適するものが用意されています。
+標準のROSメッセージで表せるものには標準型を使います。独自型は状態コード・
+要求ID・判定理由などの契約を持つものに限定し、役割別の`*_interfaces`へ置きます。
 
 ## visualizerについて
 fox gloveを推奨します。
@@ -673,7 +654,7 @@ ros2 launch robot localization.launch.py
 ```
 
 背面カメラの解像度・フレームレート・`pixel_format`・コントラストは
-`src/robot/config/back_cam.yaml` で設定する。`contrast` はカメラが受け付ける
+`src/bringup/robot/config/back_cam.yaml` で設定する。`contrast` はカメラが受け付ける
 範囲内の整数に変更してから、launch を再起動する。範囲は
 `v4l2-ctl --device=/dev/videoN --list-ctrls` で確認できる。
 
@@ -706,7 +687,7 @@ parameter/remapで個別起動した。
 
 ```bash
 ros2 run robot_state_publisher robot_state_publisher \
-  src/robot/urdf/robot.urdf_modified.urdf
+  src/bringup/robot/urdf/robot.urdf_modified.urdf
 
 ros2 run tf2_ros static_transform_publisher \
   --x 0 --y 0 --z 0 --roll 0 --pitch 0 --yaw 0 \
@@ -714,12 +695,12 @@ ros2 run tf2_ros static_transform_publisher \
 
 ros2 run robot_localization ekf_node --ros-args \
   -r __node:=ekf_filter_node_local \
-  --params-file src/robot/config/ekf_local.yaml \
+  --params-file src/bringup/robot/config/ekf_local.yaml \
   -r odometry/filtered:=odometry/filtered/local
 
 ros2 run robot_localization ekf_node --ros-args \
   -r __node:=ekf_filter_node_global \
-  --params-file src/robot/config/ekf_global.yaml \
+  --params-file src/bringup/robot/config/ekf_global.yaml \
   -r odometry/filtered:=odometry/filtered/global
 
 ros2 run robot_localization navsat_transform_node --ros-args \
@@ -784,7 +765,7 @@ Collision Monitor、Docking Serverも無条件起動する。この試験ではT
 
 ```bash
 PARAMS=src/sim/task1_sim/config/task1_nav2_params.yaml
-BT=/home/ibo_asv/njord2026_ws/src/robot/config/navigate_to_pose_w_replanning_and_recovery.xml
+BT=/home/ibo_asv/njord2026_ws/src/bringup/robot/config/navigate_to_pose_w_replanning_and_recovery.xml
 
 ros2 run nav2_controller controller_server --ros-args \
   --params-file "$PARAMS" -r cmd_vel:=cmd_vel_nav
@@ -839,8 +820,8 @@ topics = {
     '/zed2i/yolo/debug_image': 'sensor_msgs/msg/Image',
     '/back_cam/yolo/debug_image': 'sensor_msgs/msg/Image',
     '/virtual_obstacles': 'sensor_msgs/msg/PointCloud2',
-    '/buoy_roi': 'njord_interfaces/msg/BuoyRoi',
-    '/back_buoy_roi': 'njord_interfaces/msg/BuoyRoi',
+    '/buoy_roi': 'perception_interfaces/msg/BuoyRoi',
+    '/back_buoy_roi': 'perception_interfaces/msg/BuoyRoi',
     '/buoy_detections': 'geometry_msgs/msg/PointStamped',
     '/odometry/filtered/local': 'nav_msgs/msg/Odometry',
     '/odometry/filtered/global': 'nav_msgs/msg/Odometry',
@@ -941,7 +922,7 @@ UM982は`/dev/ttyUSB2`を開いて連続受信できているため、USBハブ�
 Spatialはtopic rateを満たしたが、`NavSatFix.status.status`は`-1`で実fixではない。
 UM982も試験時の座標値は0だった。そのためGNSS由来のglobal localizationは未成立である。
 
-最大のblockerは`glim_ros`未導入である。`src/robot/config/glim_config`は存在するが、
+最大のblockerは`glim_ros`未導入である。`src/bringup/robot/config/glim_config`は存在するが、
 実行パッケージはworkspace、`/opt/ros/jazzy`、APT cacheのいずれにもない。このため
 GLIMが担当する`/odom`と`map -> odom -> base_link`が生成されず、EKFはtopicをadvertise
 するだけで出力できない。Task1 Nav2はcontroller、Natural Cubic Spline smoother、

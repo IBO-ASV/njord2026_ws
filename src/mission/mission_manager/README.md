@@ -3,7 +3,7 @@
 `mission_manager` は、NJORD タスクを一つずつ実行する正規のミッション API です。タスク設定は [config/task_registry.yaml](config/task_registry.yaml) で管理します。
 
 ```bash
-ros2 launch mission_manager mission.launch.py active_nav2_profile:=task1
+ros2 launch robot mission_stack.launch.py active_nav2_profile:=task1
 ```
 
 ## 操作
@@ -18,7 +18,7 @@ ros2 run mission_manager njord-task status
 ros2 run mission_manager njord-task stop
 ```
 
-`check` は経路と Nav2 プロファイルを検証する dry-run です。`start --auto` は `/control/set_mode` に AUTO を要求しますが、実際の開始は `control_manager` が `/control/state` で許可するまで待ちます。
+`check` は経路と Nav2 プロファイルを検証する dry-run です。`start --auto` は `/control/set_mode` に AUTO を要求しますが、実際の開始は `motion_supervisor` が `/control/state` で許可するまで待ちます。
 `njord-task`は`mission_manager`パッケージのconsole scriptです。単体コマンドとしてPATHに登録されていない環境では、上記のように`ros2 run mission_manager njord-task ...`で実行します。
 
 ## 主な入出力
@@ -31,7 +31,7 @@ ros2 run mission_manager njord-task stop
 | Publish | `/mission/status` | 実行状態、進捗、AUTO 阻害理由 |
 | Publish | `/mission/last_result` | IDLEに戻っても保持する直前の終了結果（transient local） |
 | Publish | `/mission/plan` | 投影後の全ウェイポイント（sim・GUI確認用） |
-| Publish | `/mission/task_ready`, `/mission/task_requirements_ready` | `control_manager` への AUTO readiness |
+| Publish | `/mission/task_ready`, `/mission/task_requirements_ready` | `motion_supervisor` への AUTO readiness |
 | Subscribe | `/control/state` | AUTO 許可状態 |
 
 `/mission/run_task is unavailable` は、このパッケージの `mission_manager_node` が起動していない、または同じ ROS domain にいないことを示します。Nav2 未起動は、開始後に Nav2 goal が拒否される別の問題です。

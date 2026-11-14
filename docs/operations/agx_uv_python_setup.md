@@ -19,7 +19,7 @@ python3 scripts/yolo/check_jetson_runtime.py --ros --triton
 
 # Run the existing standard Ultralytics ROS detector with the existing local model:
 ros2 launch yolo yolo11s.launch.py \
-  yolo_model_path:=$PWD/src/robot/config/yolo_model/best.pt \
+  yolo_model_path:=$PWD/src/bringup/robot/config/yolo_model/best.pt \
   device:=cuda:0 backend:=pytorch
 ```
 

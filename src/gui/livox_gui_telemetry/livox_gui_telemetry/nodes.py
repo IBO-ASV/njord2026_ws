@@ -3,7 +3,7 @@ import struct
 
 import rclpy
 from geometry_msgs.msg import TransformStamped
-from njord_interfaces.msg import MissionStatus
+from mission_interfaces.msg import MissionStatus
 from rclpy.duration import Duration
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data

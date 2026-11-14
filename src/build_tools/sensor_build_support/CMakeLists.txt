@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.8)
+project(sensor_build_support)
+find_package(ament_cmake REQUIRED)
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/SensorBuildSupport.cmake)
+sensor_detect_backends()
+sensor_write_build_manifest()
+ament_package(CONFIG_EXTRAS "cmake/SensorBuildSupport.cmake")

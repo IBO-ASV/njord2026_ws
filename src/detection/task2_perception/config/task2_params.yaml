@@ -133,7 +133,7 @@ task2_buoy_selector:
     # Same base_link-relative tracker contract as opponent_selector.
     tracked_objects_in_map_frame: false
     ego_odom_topic: "/task2/ego_odom"
-    output_topic: "/task2/buoy_detections"  # njord_interfaces/BuoyDetectionArray
+    output_topic: "/task2/buoy_detections"  # perception_interfaces/BuoyDetectionArray
     legacy_point_topic: "/buoy_detections"  # PointStamped compatibility feed
     map_frame: "map"
     base_frame: "base_link"

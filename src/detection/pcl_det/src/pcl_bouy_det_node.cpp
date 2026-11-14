@@ -8,7 +8,7 @@
 
 #include "geometry_msgs/msg/point_stamped.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
-#include "njord_interfaces/msg/buoy_roi.hpp"
+#include "perception_interfaces/msg/buoy_roi.hpp"
 #include "pcl/common/centroid.h"
 #include "pcl/point_cloud.h"
 #include "pcl/point_types.h"
@@ -68,7 +68,7 @@ public:
       input_topic_, rclcpp::SensorDataQoS(),
       std::bind(&PclBuoyDetectionNode::PointCloudCallback, this, std::placeholders::_1));
 
-    sub_roi_ = create_subscription<njord_interfaces::msg::BuoyRoi>(
+    sub_roi_ = create_subscription<perception_interfaces::msg::BuoyRoi>(
       roi_topic_, 10,
       std::bind(&PclBuoyDetectionNode::RoiCallback, this, std::placeholders::_1));
 
@@ -81,7 +81,7 @@ public:
   }
 
 private:
-  void RoiCallback(const njord_interfaces::msg::BuoyRoi::SharedPtr msg)
+  void RoiCallback(const perception_interfaces::msg::BuoyRoi::SharedPtr msg)
   {
     latest_roi_ = *msg;
     have_roi_ = true;
@@ -230,10 +230,10 @@ private:
   double roi_timeout_sec_{};
 
   bool have_roi_{false};
-  njord_interfaces::msg::BuoyRoi latest_roi_;
+  perception_interfaces::msg::BuoyRoi latest_roi_;
 
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr sub_cloud_;
-  rclcpp::Subscription<njord_interfaces::msg::BuoyRoi>::SharedPtr sub_roi_;
+  rclcpp::Subscription<perception_interfaces::msg::BuoyRoi>::SharedPtr sub_roi_;
   rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr pub_detection_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;

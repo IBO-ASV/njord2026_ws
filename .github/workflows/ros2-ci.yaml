@@ -64,8 +64,8 @@ jobs:
     env:
       # colcon must not discover robot's SDK/hardware exec_depends (e.g. zed2i_driver): it requires discovered deps to be built.
       CORE_PACKAGE_PATHS: >-
-        src/njord_platform
-        src/njord_interfaces
+        src/build_tools/sensor_build_support
+        src/interfaces/control_interfaces src/interfaces/mission_interfaces src/interfaces/health_interfaces src/interfaces/perception_interfaces src/interfaces/runtime_interfaces src/interfaces/operator_interfaces
         src/detection/pcl_det
         src/detection/yolo
         src/navigation/path_generator/natural_cubic_spline
@@ -73,9 +73,9 @@ jobs:
         src/navigation/path_generator/catmull_rom
         src/navigation/buoy_obstacle_publisher
         src/diagnostics/diagnostic_monitors
-        src/driver/micon/thruster_driver
+        src/control/thruster_controller
         src/driver/micon/micon_driver_fd
-        src/robot
+        src/bringup/robot
         src/sim/dutyed_tf_pub_with_disturbance
         src/sim/sensor_sim_with_noise
         src/sim/operation_validator
@@ -111,7 +111,7 @@ jobs:
           source /opt/ros/jazzy/setup.bash
           source install/setup.bash
           colcon test --event-handlers console_direct+ --paths $CORE_PACKAGE_PATHS --packages-select \
-            njord_platform \
+            sensor_build_support \
             dutyed_tf_pub_with_disturbance \
             operation_validator \
             task1_sim \
@@ -149,9 +149,11 @@ jobs:
         run: |
           source /opt/ros/jazzy/setup.bash
           colcon build --cmake-args -DBUILD_TESTING=OFF --paths \
-            src/njord_interfaces src/robot src/alert_lamp \
-            src/control/control_manager src/mission/mission_manager \
-            src/mission/waypoint_transformer \
+            src/interfaces/control_interfaces src/interfaces/mission_interfaces src/interfaces/health_interfaces src/interfaces/perception_interfaces src/interfaces/runtime_interfaces src/interfaces/operator_interfaces src/bringup/robot src/operator/status_lights \
+            src/control/motion_supervisor src/mission/mission_manager \
+            src/system/runtime_manager src/operator/operator_gateway \
+            src/control/thruster_controller src/sim/dutyed_tf_pub_with_disturbance \
+            src/navigation/waypoint_transformer \
             src/navigation/path_generator/waypoint_publisher \
             src/navigation/path_generator/natural_cubic_spline \
             src/sim/task1_sim src/sim/task3_sim src/sim/njord_sim
@@ -162,7 +164,7 @@ jobs:
           source install/setup.bash
           export PYTHONPATH="$PWD/src/navigation/path_generator/mppi:$PYTHONPATH"
           python3 -m pytest -q src/mission/mission_manager/test \
-            src/control/control_manager/test src/sim/njord_sim/test \
+            src/control/motion_supervisor/test src/sim/njord_sim/test \
             src/navigation/path_generator/mppi/test/test_opponent_cog.py \
             src/navigation/path_generator/mppi/test/test_path_guard.py \
             src/navigation/path_generator/mppi/test/test_path_permission.py

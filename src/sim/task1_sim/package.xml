@@ -16,7 +16,7 @@
   <depend>sensor_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>visualization_msgs</depend>
-  <depend>njord_interfaces</depend>
+  <depend>perception_interfaces</depend>
   <depend>buoy_obstacle_publisher</depend>
   <depend>nav2_bringup</depend>
   <depend>nav2_common</depend>
@@ -24,7 +24,7 @@
   <depend>waypoint_publisher</depend>
   <depend>operation_validator</depend>
   <depend>dutyed_tf_pub_with_disturbance</depend>
-  <depend>thruster_driver</depend>
+  <depend>thruster_controller</depend>
   <exec_depend>tf_frame_arrow_publisher</exec_depend>
   <exec_depend>foxglove_bridge</exec_depend>
   <depend>robot</depend>

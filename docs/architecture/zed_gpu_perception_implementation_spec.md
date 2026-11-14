@@ -165,7 +165,7 @@ MID-360S -> Livox component -> PointCloud2      |
 
 ### 5.1 `BuoyDetection.msg`
 
-`src/njord_interfaces/msg/BuoyDetection.msg`を次の内容で追加する。
+`src/perception_interfaces/msg/BuoyDetection.msg`を次の内容で追加する。
 
 ```text
 uint8 CLASS_GREEN=0
@@ -197,11 +197,11 @@ uint8 position_source
 
 ### 5.2 `BuoyDetectionArray.msg`
 
-`src/njord_interfaces/msg/BuoyDetectionArray.msg`を次の内容で追加する。
+`src/perception_interfaces/msg/BuoyDetectionArray.msg`を次の内容で追加する。
 
 ```text
 std_msgs/Header header
-njord_interfaces/BuoyDetection[] detections
+perception_interfaces/BuoyDetection[] detections
 ```
 
 規則:
@@ -215,7 +215,7 @@ njord_interfaces/BuoyDetection[] detections
 
 ### 5.3 interface build更新
 
-`src/njord_interfaces/CMakeLists.txt`の`msg_files`へ2ファイルを追加する。
+`src/interfaces/perception_interfaces/CMakeLists.txt`の`msg_files`へ2ファイルを追加する。
 `geometry_msgs`と`std_msgs`は既にinterface依存に含まれているため再利用する。
 
 ### 5.4 既存topicとの関係
@@ -277,7 +277,7 @@ publisherの組み立てを担当し、推論、融合、壁geometryのアルゴ
 `zed2i_driver/package.xml`とCMakeへ次を追加する。
 
 - `geometry_msgs`
-- `njord_interfaces`
+- `perception_interfaces`
 - `tf2`
 - `tf2_ros`
 - `tf2_geometry_msgs`
@@ -793,7 +793,7 @@ frameごとのinfo logは禁止する。回復不能なCUDA/TensorRT errorはcom
 ### Step 1: interface
 
 1. 2つのmsgを追加。
-2. `njord_interfaces`のCMakeを更新。
+2. `perception_interfaces`のCMakeを更新。
 3. message生成buildと簡単なimport/compile testを実行。
 
 ### Step 2: ROS非依存ロジック
@@ -911,10 +911,10 @@ CPU reference depth実装はCUDA版とのtest oracleに使い、本番frame経�
 workspaceの通常環境に合わせてsetupをsourceした後、少なくとも以下を実行する。
 
 ```bash
-colcon build --packages-up-to njord_interfaces zed2i_driver pcl_det robot yolo \
+colcon build --packages-up-to perception_interfaces zed2i_driver pcl_det robot yolo \
   --cmake-args -DZED2I_DRIVER_BUILD_SDK_NODE=OFF
 
-colcon test --packages-select njord_interfaces zed2i_driver pcl_det yolo
+colcon test --packages-select perception_interfaces zed2i_driver pcl_det yolo
 colcon test-result --verbose
 ```
 
@@ -942,7 +942,7 @@ FP16差でthreshold近辺だけ不一致になる場合は、該当sample、scor
 ### 実装後の検証状態（2026-07-21）
 
 この変更はx86_64開発端末で、TensorRT/ZED GPU runtimeを有効化しない
-`njord_interfaces` / `zed2i_driver` のbuildと、ROS非依存の知覚ロジックunit testを
+`perception_interfaces` / `zed2i_driver` のbuildと、ROS非依存の知覚ロジックunit testを
 完了している。ZED GPU buffer、TensorRT engine、MID-360S、実際のTFを必要とする検証は
 この端末では実行できないため、**Jetson Orin Nano Super実機で実施予定**とする。
 

@@ -1,0 +1,89 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>robot</name>
+  <version>0.0.0</version>
+  <description>TODO: Package description</description>
+  <maintainer email="oswystk15662@keio.jp">osw</maintainer>
+  <license>TODO: License declaration</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+  <test_depend>sensor_build_support</test_depend>
+
+  <depend>geometry_msgs</depend>
+  <depend>nav2_core</depend>
+  <depend>nav2_costmap_2d</depend>
+  <depend>nav_msgs</depend>
+  <depend>rclcpp</depend>
+  <depend>rclcpp_lifecycle</depend>
+  <depend>sensor_msgs</depend>
+  <depend>pluginlib</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
+
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>status_lights</exec_depend>
+  <exec_depend>buoy_obstacle_publisher</exec_depend>
+  <exec_depend>adnav_driver</exec_depend>
+  <exec_depend>diagnostic_monitors</exec_depend>
+  <exec_depend>drogger_wired_flex</exec_depend>
+  <exec_depend>dwb_core</exec_depend>
+  <exec_depend>dwb_critics</exec_depend>
+  <exec_depend>dwb_plugins</exec_depend>
+  <exec_depend>foxglove_bridge</exec_depend>
+  <exec_depend>foxglove_logger</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">glim_ros</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">livox_ros_driver2</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <exec_depend>nav2_common</exec_depend>
+  <exec_depend>nav2_controller</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>nav2_regulated_pure_pursuit_controller</exec_depend>
+  <exec_depend>nav2_velocity_smoother</exec_depend>
+  <exec_depend>micon_driver_fd</exec_depend>
+  <exec_depend>ntripcaster</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">pcl_det</exec_depend>
+  <exec_depend>rclcpp_components</exec_depend>
+  <exec_depend>rclpy</exec_depend>
+  <exec_depend>robot_localization</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>joystick_control</exec_depend>
+  <exec_depend>sbus_driver</exec_depend>
+  <exec_depend>emergency_stop_selector</exec_depend>
+  <exec_depend>legacy_command_mux</exec_depend>
+  <exec_depend>ground_station_heartbeat</exec_depend>
+  <exec_depend>std_srvs</exec_depend>
+  <exec_depend>tf_frame_arrow_publisher</exec_depend>
+  <exec_depend>usb_cam</exec_depend>
+  <exec_depend>waypoint_publisher</exec_depend>
+  <exec_depend>waypoint_transformer</exec_depend>
+  <exec_depend>witmotion_imu_driver</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>xacro</exec_depend>
+  <exec_depend>zed2i_driver</exec_depend>
+  <exec_depend>critical_link</exec_depend>
+  <exec_depend>motion_supervisor</exec_depend>
+  <exec_depend>mission_manager</exec_depend>
+  <exec_depend>runtime_manager</exec_depend>
+  <exec_depend>operator_gateway</exec_depend>
+  <exec_depend>asv_trajectory_planner</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">pcl_preprocessing</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">pcl_segmentation</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">ship_tracking</exec_depend>
+  <exec_depend condition="$NJORD_ENABLE_GPU_SENSORS == 1">task2_perception</exec_depend>
+  <exec_depend>task1_buoy_roi</exec_depend>
+
+  <test_depend>ament_cmake_pytest</test_depend>
+  <test_depend>ament_cmake_gtest</test_depend>
+  <test_depend>ament_lint_auto</test_depend>
+  <test_depend>ament_lint_common</test_depend>
+  <test_depend>python3-yaml</test_depend>
+
+  <export>
+    <build_type>ament_cmake</build_type>
+    <nav2_core plugin="${prefix}/goal_checker_plugin.xml"/>
+    <nav2_core plugin="${prefix}/controller_plugin.xml"/>
+  </export>
+</package>

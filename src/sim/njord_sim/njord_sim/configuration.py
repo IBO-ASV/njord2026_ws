@@ -211,7 +211,7 @@ def configurations(task_id, directory):
     navfile = directory / "nav2.yaml"
     navfile.write_text(yaml.safe_dump(nav))
     policy = yaml.safe_load(
-        (Path(share("control_manager")) / "config/control_policy.yaml").read_text()
+        (Path(share("motion_supervisor")) / "config/control_policy.yaml").read_text()
     )
     common = policy["control_policy"]["common"]
     common.update(

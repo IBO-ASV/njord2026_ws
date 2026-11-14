@@ -3,7 +3,7 @@
 #include "zed2i_driver/perception_types.hpp"
 
 #include <geometry_msgs/msg/transform_stamped.hpp>
-#include <njord_interfaces/msg/buoy_detection_array.hpp>
+#include <perception_interfaces/msg/buoy_detection_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
 
@@ -13,7 +13,7 @@
 namespace zed2i_driver
 {
 
-njord_interfaces::msg::BuoyDetectionArray to_detection_array(
+perception_interfaces::msg::BuoyDetectionArray to_detection_array(
   const std::vector<PositionedDetection> & detections, const std_msgs::msg::Header & header);
 
 sensor_msgs::msg::PointCloud2 to_virtual_wall_cloud(

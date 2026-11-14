@@ -225,7 +225,7 @@ source install/setup.bash
 ROS_DOMAIN_ID=120 RMW_IMPLEMENTATION=rmw_fastrtps_cpp ROS_LOCALHOST_ONLY=1 \
   /usr/bin/python3 -m pytest -q \
   scripts/yolo/test/test_cusparselt_metadata.py \
-  src/control/control_manager/test src/mission/mission_manager/test \
+  src/control/motion_supervisor/test src/mission/mission_manager/test \
   src/sim/njord_sim/test \
   src/navigation/path_generator/mppi/test/test_path_guard.py \
   src/detection/task2_perception/test

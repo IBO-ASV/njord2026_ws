@@ -34,7 +34,7 @@
 
 ```bash
 source install/setup.bash
-ros2 launch simple_manual manual_control.launch.py \
+ros2 launch manual_bringup manual_control.launch.py \
   enable_thruster:=false enable_nav2:=false lidar_model:=mid360s
 ```
 

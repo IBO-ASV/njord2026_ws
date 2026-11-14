@@ -19,7 +19,7 @@ from rclpy.time import Time
 from tf2_ros import Buffer, TransformListener
 from visualization_msgs.msg import Marker, MarkerArray
 
-from njord_interfaces.msg import BuoyDetection, BuoyDetectionArray
+from perception_interfaces.msg import BuoyDetection, BuoyDetectionArray
 
 try:
     from tf2_ros import TransformException

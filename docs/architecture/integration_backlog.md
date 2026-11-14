@@ -46,7 +46,7 @@ GitHubのIssue・PR状態は再照会していません。過去の `Pending` �
 GUI、Task1 sim、diagnosticのコードはすでに存在するため、下記の古い項目を
 そのまま「未着手一覧」として使わない。GUIは操作性と実回線、diagnosticは実センサ欠測と
 配線を確認する。性能ロードマップの未実装記載も履歴を含み、現行GPU経路は
-`src/robot/README.md`とcamera packageを優先する。
+`src/bringup/robot/README.md`とcamera packageを優先する。
 
 ---
 
@@ -92,7 +92,7 @@ independently.
 
 - `.antigravity/rules`
 - empty `Docs/about_*.md` files
-- empty `src/robot/launch/task2_all.launch.py` and `task3_all.launch.py`
+- empty `src/bringup/robot/launch/task2_all.launch.py` and `task3_all.launch.py`
 - incomplete `manual_with_odom` package
 - empty `cubic_spline` package
 - empty `src/ros2.repos`
@@ -194,7 +194,7 @@ integrate/
 
 ---
 
-## `simple_manual/manual_control.launch.py` を使う動作確認の優先順位
+## `manual_bringup/manual_control.launch.py` を使う動作確認の優先順位
 
 `manual_control.launch.py` は操縦系だけでなく、MID360S、ZED2i、後方カメラ、
 UM982、Drogger、Localization（Spatial、GLIM、local/global EKF）も起動する。
@@ -206,7 +206,7 @@ Spatialへ付け替える**。これにより、付け替えはSpatial試験開�
 | 優先度 | 確認する系統 | 実施内容・完了条件 | アンテナ |
 | --- | --- | --- | --- |
 | P0 | 安全・起動前確認 | 船体を安全に固定し、推進器の周囲を無人にする。Jetson・地上PCを同一Wi-Fiへ接続し、コントローラーをBluetooth接続する。 | 変更なし |
-| P1 | 操縦・推進（最優先） | 地上PCで`joy_node`を起動して接続メッセージを確認する。Jetsonで`ros2 launch simple_manual manual_control.launch.py`を起動し、`/joy`、joy_converterの出力、`/thruster_command`を`ros2 topic echo`で確認する。ボタン割り当て、前後・左右・ヨーの向き、停止時に推力指令が0になることを確認する。マイコンと通信できない場合は`micon_driver_fd`/`serial_writer`を先に切り分ける。 | 変更なし |
+| P1 | 操縦・推進（最優先） | 地上PCで`joy_node`を起動して接続メッセージを確認する。Jetsonで`ros2 launch manual_bringup manual_control.launch.py`を起動し、`/joy`、joy_converterの出力、`/thruster_command`を`ros2 topic echo`で確認する。ボタン割り当て、前後・左右・ヨーの向き、停止時に推力指令が0になることを確認する。マイコンと通信できない場合は`micon_driver_fd`/`serial_writer`を先に切り分ける。 | 変更なし |
 | P2 | 常設センサ・認識・Localizationの起動 | 同じ起動のままMID360S、ZED2i、後方カメラ、前後YOLO、UM982、Drogger、Spatial、GLIM、EKFのノード・topicが起動することを確認する。まず起動失敗、USB/serial競合、画像/点群未配信を解消する。点群ブイ検出は現在launch内でコメントアウトされているため、この起動だけでは確認対象外とする。 | UM982/Droggerは現状のまま。SpatialはアンテナなしでもROS通信・IMU topicのみ確認 |
 | P3 | UM982・Droggerの単体GNSS | 屋外・天空視界ありで、両者が現在のアンテナ構成でfixを取得すること、座標が妥当であること、UM982の`/sensor/vehicle_gnss/fix/raw`とDroggerの設定topic（既定`/gnss/fix`）が継続配信されることを確認する。RTKは通常fixが安定してから実施する。 | 変更なし |
 | P4 | SpatialのGNSS/INS（アンテナ付け替え後） | launchを停止してから、原則として**Droggerのアンテナを外してSpatialへ接続**する（コネクタや試験目的の都合でUM982を外す場合は、外した機器と復旧先を記録する）。屋外で再起動し、SpatialのGNSS fix、Navigation Filter初期化、`/odometry/gps/spatial`、global EKFの安定性を確認する。単体数分間の位置ばらつきを記録し、EKF共分散設定の根拠にする。最後にRTK対応を試験する。 | DroggerまたはUM982からSpatialへ1本移設 |

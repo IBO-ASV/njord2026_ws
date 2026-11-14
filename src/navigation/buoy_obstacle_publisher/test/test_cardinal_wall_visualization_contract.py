@@ -18,7 +18,7 @@ def test_task1_launches_nearest_active_wall_track_limit_at_four():
     sim_launch = (repo_root / "src" / "sim" / "task1_sim" / "launch" / "task1_sim.launch.py").read_text(
         encoding="utf-8"
     )
-    minipc_launch = (repo_root / "src" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
+    minipc_launch = (repo_root / "src" / "bringup" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
         encoding="utf-8"
     )
     assert '"max_active_wall_tracks": 4' in sim_launch
@@ -29,7 +29,7 @@ def test_task1_launches_nearest_active_wall_track_limit_at_four():
 
 def test_task4_wall_uses_3d_buoy_positions_and_map_frame():
     repo_root = PACKAGE_ROOT.parents[2]
-    minipc_launch = (repo_root / "src" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
+    minipc_launch = (repo_root / "src" / "bringup" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
         encoding="utf-8"
     )
     assert 'name="task4_buoy_wall_publisher"' in minipc_launch
@@ -52,7 +52,7 @@ def test_wall_node_supports_latest_camera_track_expiry_for_task4():
 
 def test_task4_keeps_unpassed_buoy_walls_when_camera_loses_sight():
     repo_root = PACKAGE_ROOT.parents[2]
-    minipc_launch = (repo_root / "src" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
+    minipc_launch = (repo_root / "src" / "bringup" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
         encoding="utf-8"
     )
     assert '"track_ttl_s": 0.0' in minipc_launch
@@ -61,13 +61,16 @@ def test_task4_keeps_unpassed_buoy_walls_when_camera_loses_sight():
 
 def test_yolo_to_ros_class_contract_covers_colours_and_cardinal_marks():
     repo_root = PACKAGE_ROOT.parents[2]
-    interface = (repo_root / "src" / "njord_interfaces" / "msg" / "BuoyDetection.msg").read_text(
+    interface = (repo_root / "src" / "interfaces" / "perception_interfaces" / "msg" / "BuoyDetection.msg").read_text(
         encoding="utf-8"
     )
     assert interface.splitlines()[:6] == [
         "uint8 CLASS_GREEN=0", "uint8 CLASS_RED=1", "uint8 CLASS_NORTH=2",
         "uint8 CLASS_EAST=3", "uint8 CLASS_SOUTH=4", "uint8 CLASS_WEST=5",
     ]
+    # The SDK delegates typed publication to the shared conversion helper.
+    # Check the class ID forwarding rather than a comment in the SDK node.
     zed_source = (repo_root / "src" / "driver" / "camera" / "zed2i_driver" / "src" /
-                  "sdk_node_zed.cpp").read_text(encoding="utf-8")
-    assert "0 green, 1 red, 2 north, 3 east, 4 south, 5 west" in zed_source
+                  "detection_message_utils.cpp").read_text(encoding="utf-8")
+    assert "perception_interfaces::msg::BuoyDetection detection" in zed_source
+    assert "detection.class_id = static_cast<uint8_t>(std::clamp(item.detection.class_id, 0, 255))" in zed_source

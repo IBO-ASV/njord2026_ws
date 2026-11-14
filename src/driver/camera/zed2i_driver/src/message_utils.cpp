@@ -141,16 +141,16 @@ sensor_msgs::msg::PointCloud2::UniquePtr depth_to_point_cloud_msg(
   return msg;
 }
 
-njord_interfaces::msg::BuoyDetectionArray to_detection_array_msg(
+perception_interfaces::msg::BuoyDetectionArray to_detection_array_msg(
   const std::vector<PositionedDetection> & detections,
   const std::string & frame_id, const rclcpp::Time & stamp)
 {
-  njord_interfaces::msg::BuoyDetectionArray message;
+  perception_interfaces::msg::BuoyDetectionArray message;
   message.header.stamp = stamp;
   message.header.frame_id = frame_id;
   message.detections.reserve(detections.size());
   for (const auto & item : detections) {
-    njord_interfaces::msg::BuoyDetection detection;
+    perception_interfaces::msg::BuoyDetection detection;
     detection.class_id = static_cast<uint8_t>(std::clamp(item.detection.class_id, 0, 255));
     detection.confidence = std::clamp(item.detection.confidence, 0.0F, 1.0F);
     detection.position.x = item.position_base[0];
@@ -158,22 +158,22 @@ njord_interfaces::msg::BuoyDetectionArray to_detection_array_msg(
     detection.position.z = item.position_base[2];
     switch (item.source) {
       case PositionSource::kZedDepth:
-        detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_ZED_DEPTH;
+        detection.position_source = perception_interfaces::msg::BuoyDetection::POSITION_ZED_DEPTH;
         break;
       case PositionSource::kLidarFused:
-        detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_LIDAR_FUSED;
+        detection.position_source = perception_interfaces::msg::BuoyDetection::POSITION_LIDAR_FUSED;
         break;
       default:
-        detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_NONE;
+        detection.position_source = perception_interfaces::msg::BuoyDetection::POSITION_NONE;
         detection.position.x = std::numeric_limits<double>::quiet_NaN();
         detection.position.y = std::numeric_limits<double>::quiet_NaN();
         detection.position.z = std::numeric_limits<double>::quiet_NaN();
         break;
     }
-    if (detection.position_source != njord_interfaces::msg::BuoyDetection::POSITION_NONE &&
+    if (detection.position_source != perception_interfaces::msg::BuoyDetection::POSITION_NONE &&
       (!std::isfinite(detection.position.x) || !std::isfinite(detection.position.y) ||
       !std::isfinite(detection.position.z))) {
-      detection.position_source = njord_interfaces::msg::BuoyDetection::POSITION_NONE;
+      detection.position_source = perception_interfaces::msg::BuoyDetection::POSITION_NONE;
       detection.position.x = std::numeric_limits<double>::quiet_NaN();
       detection.position.y = std::numeric_limits<double>::quiet_NaN();
       detection.position.z = std::numeric_limits<double>::quiet_NaN();

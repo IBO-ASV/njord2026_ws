@@ -13,7 +13,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(sensor_msgs REQUIRED)
 find_package(geometry_msgs REQUIRED)
-find_package(njord_interfaces REQUIRED)
+find_package(perception_interfaces REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
@@ -25,11 +25,11 @@ find_package(cv_bridge REQUIRED)
 find_package(PkgConfig QUIET)
 include(CheckLanguage)
 
-find_package(njord_platform REQUIRED)
-njord_detect_platform()
+find_package(sensor_build_support REQUIRED)
+sensor_detect_backends()
 
 # Probe the installed cv_bridge headers, including locally built variants.
-njord_find_header(ZED2I_DRIVER_CV_BRIDGE_HEADER "${cv_bridge_INCLUDE_DIRS}"
+sensor_find_header(ZED2I_DRIVER_CV_BRIDGE_HEADER "${cv_bridge_INCLUDE_DIRS}"
   cv_bridge/cv_bridge.hpp
   cv_bridge/cv_bridge.h
 )
@@ -55,7 +55,7 @@ set(DEPENDENCIES
   rclcpp
   sensor_msgs
   geometry_msgs
-  njord_interfaces
+  perception_interfaces
   tf2
   tf2_ros
   tf2_geometry_msgs
@@ -94,8 +94,8 @@ rclcpp_components_register_node(zed2i_cpu_component
 
 option(ZED2I_DRIVER_BUILD_SDK_NODE "Build the ZED SDK backed node when the Stereolabs SDK is available" ON)
 
-# ZED SDK / CUDA / TensorRT availability is detected once by njord_platform's
-# njord_detect_platform() (called above), including the "do not load
+# ZED SDK / CUDA / TensorRT availability is detected once by sensor_build_support's
+# sensor_detect_backends() (called above), including the "do not load
 # zed-config.cmake with an incompatible CUDA toolkit" guard. Here we just
 # combine that with this package's own build-time toggles.
 set(ZED2I_DRIVER_USE_ZED_SDK OFF)

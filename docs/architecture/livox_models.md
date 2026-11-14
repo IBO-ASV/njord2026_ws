@@ -1,6 +1,6 @@
 # Livox Mid-360 / Mid-360s 設定設計
 
-2026-07-12の設計記録から設定条件と保留事項を統合しました。現行launchは `src/robot/launch/lidar.launch.py`、機種設定は `src/robot/config/livox/` を参照してください。以下の当時の既定値を現行運用値と混同しないでください。
+2026-07-12の設計記録から設定条件と保留事項を統合しました。現行launchは `src/bringup/robot/launch/lidar.launch.py`、機種設定は `src/bringup/robot/config/livox/` を参照してください。以下の当時の既定値を現行運用値と混同しないでください。
 
 ## 2. 事実確認（コード調査）
 
@@ -21,12 +21,12 @@
 vendored submodule を**一切改変せず**、robot パッケージ側で完結させる。
 
 1. **config を robot 側に配置**
-   - `src/robot/config/livox/MID360_config.json`（既存 vendored のコピー）
-   - `src/robot/config/livox/MID360S_config.json`（コピーで net-info ブロックキー
+   - `src/bringup/robot/config/livox/MID360_config.json`（既存 vendored のコピー）
+   - `src/bringup/robot/config/livox/MID360S_config.json`（コピーで net-info ブロックキー
      `"MID360"` → `"Mid360s"` のみ変更。`lidar_summary_info.lidar_type:8`・`lidar_configs`・
      ポート・IP は据え置き）
    - robot CMake は既に `install(DIRECTORY launch config urdf ...)` なので追加不要。
-2. **robot 側 launch 新設** `src/robot/launch/lidar.launch.py`
+2. **robot 側 launch 新設** `src/bringup/robot/launch/lidar.launch.py`
    - vendored `livox_ros_driver2` の `livox_ros_driver2_node` を直接起動。
    - `lidar_model` 引数（`mid360` 既定 / `mid360s`）で `user_config_path` を上記 config に切替。
    - **9 パラメータを msg_MID360_launch.py から完全転記**（下記チェックリスト）。

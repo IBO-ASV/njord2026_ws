@@ -35,7 +35,7 @@ def test_coordinate_projection_has_a_bounded_failure_path():
 
 
 def test_persistent_minipc_bringup_starts_the_task1_wall_node():
-    source = (REPO_ROOT / "src" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
+    source = (REPO_ROOT / "src" / "bringup" / "robot" / "launch" / "minipc_bringup.launch.py").read_text(
         encoding="utf-8"
     )
     assert 'executable="cardinal_wall_publisher"' in source

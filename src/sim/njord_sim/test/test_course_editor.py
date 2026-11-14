@@ -11,7 +11,8 @@ from njord_sim.scenario import scenario
 from rcl_interfaces.msg import Parameter, ParameterValue
 from rcl_interfaces.srv import SetParametersAtomically
 
-from njord_interfaces.msg import ControlState, MissionStatus
+from control_interfaces.msg import ControlState
+from mission_interfaces.msg import MissionStatus
 
 
 def test_sim_editor_save_guards_persistence_and_restart_geometry(tmp_path, monkeypatch):

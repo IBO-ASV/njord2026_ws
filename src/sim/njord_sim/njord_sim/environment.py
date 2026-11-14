@@ -28,12 +28,8 @@ from std_msgs.msg import Bool, Float32, Header, UInt8
 from tf2_ros import StaticTransformBroadcaster, TransformBroadcaster
 from visualization_msgs.msg import Marker, MarkerArray
 
-from njord_interfaces.msg import (
-    BuoyDetection,
-    BuoyDetectionArray,
-    HealthSignal,
-    HealthState,
-)
+from health_interfaces.msg import HealthSignal, HealthState
+from perception_interfaces.msg import BuoyDetection, BuoyDetectionArray
 
 from .clearing import (
     SCAN_ANGLE_INCREMENT,

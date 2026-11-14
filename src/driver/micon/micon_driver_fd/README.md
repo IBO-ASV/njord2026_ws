@@ -15,7 +15,7 @@ be added alongside it without changing the manual-control package.
   and `/safety/emergency_stop` (`std_msgs/msg/UInt8`): `RUNNING=0`, `SOFT_EMG=1`,
   `HARD_EMG=2`
 - parameters: `serial_port` (default `/dev/ttyUSB0`), `baud` (default `115200`),
-  `command_topic` (default `/thruster_command` from `thruster_driver`). Set
+  `command_topic` (default `/thruster_command` from `thruster_controller`). Set
   `ground_station_heartbeat_timeout_sec` to a
   positive value to require `std_msgs/msg/Empty` messages on
   `ground_station_heartbeat_topic` (default `/heartbeat/ground_station`); a

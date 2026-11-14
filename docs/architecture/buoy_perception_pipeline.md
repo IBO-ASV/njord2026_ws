@@ -14,7 +14,7 @@ flowchart LR
 
 ## ROI contract
 
-`njord_interfaces/msg/BuoyRoi` describes an angular and radial search region:
+`perception_interfaces/msg/BuoyRoi` describes an angular and radial search region:
 
 - `r_predict` and `r_range`: predicted range and half-width in metres
 - `theta_predict` and `theta_range`: predicted bearing and half-width in radians

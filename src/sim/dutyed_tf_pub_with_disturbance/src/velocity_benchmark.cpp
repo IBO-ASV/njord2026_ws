@@ -7,8 +7,8 @@
 #include <iomanip>
 #include <sstream>
 #include <stdexcept>
-#include "thruster_driver/velocity_control.hpp"
-#include "thruster_driver/allocation.hpp"
+#include "thruster_controller/velocity_control.hpp"
+#include "thruster_controller/allocation.hpp"
 #include "dutyed_tf_pub_with_disturbance/mmg_doyle_model.hpp"
 
 int main(int argc, char ** argv)
@@ -26,7 +26,7 @@ int main(int argc, char ** argv)
     if (p.mass_kg <= 0 || p.m_x < 0 || p.m_y < 0 || p.I_zG <= 0 || p.J_z < 0 || p.Lpp <= 0 || p.D <= 0)
       throw std::runtime_error("invalid plant parameters");
     njord::sim::MMGDoyleModel plant(p);
-    using Control = njord::thruster_driver::VelocityControl;
+    using Control = njord::thruster_controller::VelocityControl;
     Control controller;
     Control::Axes kp{param("control.p.surge",28.29),param("control.p.sway",28.29),param("control.p.yaw",12.17)};
     Control::Axes ki{param("control.i.surge",0),param("control.i.sway",0),param("control.i.yaw",0)};
@@ -43,7 +43,7 @@ int main(int argc, char ** argv)
     for(double gain:forward) if(!std::isfinite(gain)||gain<=0) throw std::runtime_error("invalid actuator gain");
     for(double gain:reverse) if(!std::isfinite(gain)||gain<=0) throw std::runtime_error("invalid actuator gain");
     if (cap <= 0 || scale <= 0 || lag < 0) throw std::runtime_error("invalid actuator parameters");
-    const std::vector<njord::thruster_driver::ThrusterGeometry> geometry = {
+    const std::vector<njord::thruster_controller::ThrusterGeometry> geometry = {
       {-0.1803,-0.25,2.356194,cap,false},{-0.1803,0.25,-2.356194,cap,false},
       {0.1803,-0.25,0.785398,cap,false},{0.1803,0.25,-0.785398,cap,false}};
     std::ifstream input(n->declare_parameter<std::string>("input_csv",""));
@@ -64,12 +64,12 @@ int main(int argc, char ** argv)
       if (!std::isfinite(t) || dt <= 0 || dt > 0.1) throw std::runtime_error("invalid sample interval");
       previous=t;
       auto wrench = mode != "velocity" ? ref : controller.step(ref,{state.u,state.v,state.r},dt,kp,ki,limits,reference_tau);
-      auto commands = njord::thruster_driver::allocateWrench(geometry,{wrench[0],wrench[1],wrench[2]},1e-4);
+      auto commands = njord::thruster_controller::allocateWrench(geometry,{wrench[0],wrench[1],wrench[2]},1e-4);
       if(mode=="thruster") {
         commands = {ref[0]/cap,ref[1]/cap,ref[2]/cap,fourth/cap};
         for(auto & value:commands) value=std::clamp(value,-1.,1.);
       }
-      const auto achieved = njord::thruster_driver::commandToWrench(geometry,commands);
+      const auto achieved = njord::thruster_controller::commandToWrench(geometry,commands);
       controller.trackApplied(wrench,{achieved[0],achieved[1],achieved[2]},dt,ki);
       bool saturated=false;
       for(size_t i=0;i<4;++i) {
@@ -79,7 +79,7 @@ int main(int argc, char ** argv)
       }
       std::vector<double> physical;
       for(size_t i=0;i<4;++i) physical.push_back(forces[i]/cap);
-      const auto applied=njord::thruster_driver::commandToWrench(geometry,physical);
+      const auto applied=njord::thruster_controller::commandToWrench(geometry,physical);
       out<<t;
       for(double x:ref) out<<','<<x;
       out<<','<<state.u<<','<<state.v<<','<<state.r;

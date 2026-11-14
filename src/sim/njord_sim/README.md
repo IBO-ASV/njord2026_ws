@@ -9,7 +9,7 @@ runner explicitly disables it so parallel runs do not compete for a GUI port.
 ```bash
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-colcon build --symlink-install --packages-select thruster_driver dutyed_tf_pub_with_disturbance njord_sim
+colcon build --symlink-install --packages-select thruster_controller dutyed_tf_pub_with_disturbance njord_sim
 source install/setup.bash
 python3 scripts/simulation/run_mission_sim.py --task task1 --output /tmp/njord/task1
 python3 scripts/simulation/run_mission_sim.py --task task1_2 --model mmg --output /tmp/njord/task1-mmg
@@ -85,7 +85,7 @@ sim route and noisy estimate; `/sim/truth/odom` stays available for inspection.
 Battery telemetry is an explicitly synthetic display value.
 
 The default model is MMG with the production velocity controller and thruster
-allocator. Rebuild `thruster_driver`, `dutyed_tf_pub_with_disturbance` and `njord_sim`
+allocator. Rebuild `thruster_controller`, `dutyed_tf_pub_with_disturbance` and `njord_sim`
 before using this default. `--model kinematic` explicitly selects the lightweight
 0.3 s velocity-response stand-in and bypasses thruster control. Neither model
 is calibrated against the real vessel.
@@ -280,7 +280,7 @@ the layout and restart the sim to apply these changes to an existing session.
 
 Mission completion alone does not qualify velocity tracking. The kinematic
 model prescribes a 0.3 s velocity response and bypasses thruster control.
-The MMG path runs the production `thruster_driver` velocity controller and
+The MMG path runs the production `thruster_controller` velocity controller and
 allocator. Its former P-only settings leave drag-dependent steady errors.
 The simulated MMG launch now adds `config/velocity_control.yaml`: P/I gains,
 a reference filter, per-axis wrench limits and allocation anti-windup.
@@ -301,7 +301,7 @@ tracking before navigation (all commands below run from the workspace root):
 ```bash
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-colcon build --symlink-install --packages-select thruster_driver dutyed_tf_pub_with_disturbance njord_sim
+colcon build --symlink-install --packages-select thruster_controller dutyed_tf_pub_with_disturbance njord_sim
 source install/setup.bash
 python3 scripts/calibration/calibrate_velocity.py --plot --output artifacts/new-calibration
 # After identifying a real model: add --mmg-config artifacts/real-mmg/candidate.yaml

@@ -1,3 +1,0 @@
-float32 remaining
-float32 tempreture
-string message

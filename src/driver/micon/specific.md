@@ -6,7 +6,7 @@ sim で使っている `/thruster_command` と実機 ESP32 の USB serial を接
 
 ## thruster
 
-- `thruster_driver` は `cmd_vel` と feedback odometry から4スラスタの Newton 指令を生成する。
+- `thruster_controller` は `cmd_vel` と feedback odometry から4スラスタの Newton 指令を生成する。
 - 出力は `/thruster_command` (`std_msgs/msg/Float32MultiArray`, 4要素, Newton) のみ。
 - 実機送信は `micon_driver_fd/serial_writer` が担当し、値は再スケールしない。
 

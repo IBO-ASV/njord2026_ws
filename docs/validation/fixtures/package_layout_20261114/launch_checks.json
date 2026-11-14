@@ -1,0 +1,37 @@
+[
+  {
+    "package": "robot",
+    "file": "mission_stack.launch.py",
+    "returncode": 0
+  },
+  {
+    "package": "robot",
+    "file": "minipc_bringup.launch.py",
+    "returncode": 0
+  },
+  {
+    "package": "manual_bringup",
+    "file": "manual_control.launch.py",
+    "returncode": 0
+  },
+  {
+    "package": "sbus_driver",
+    "file": "sbus_joy.launch.py",
+    "returncode": 0
+  },
+  {
+    "package": "status_lights",
+    "file": "status_lights.launch.py",
+    "returncode": 0
+  },
+  {
+    "package": "thruster_controller",
+    "file": "thruster_controller.launch.py",
+    "returncode": 0
+  },
+  {
+    "package": "task2_sim",
+    "file": "task2_sim_bringup.launch.py",
+    "returncode": 0
+  }
+]

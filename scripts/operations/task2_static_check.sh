@@ -53,8 +53,8 @@ done < <(
         ls src/navigation/path_generator/mppi/launch/planner_real.launch.py 2>/dev/null
         ls src/detection/task2_perception/launch/task2_perception.launch.py 2>/dev/null
         ls src/detection/yolo/launch/yolo11s.launch.py 2>/dev/null
-        ls src/robot/launch/navigation_launch_task2.py 2>/dev/null
-        ls src/robot/launch/task2_mission_adapter.launch.py 2>/dev/null
+        ls src/bringup/robot/launch/navigation_launch_task2.py 2>/dev/null
+        ls src/bringup/robot/launch/task2_mission_adapter.launch.py 2>/dev/null
         ls src/sim/task2_sim/launch/task2_sim.launch.py 2>/dev/null
         ls src/sim/task2_sim/task2_sim/cmd_vel_kinematic_sim.py 2>/dev/null
         ls scripts/benchmark/benchmark_mppi.py 2>/dev/null
@@ -81,7 +81,7 @@ while IFS= read -r f; do
     YAML_FILES+=("$f")
 done < <(
     {
-        ls src/robot/config/nav2_params_task2_*.yaml 2>/dev/null
+        ls src/bringup/robot/config/nav2_params_task2_*.yaml 2>/dev/null
         ls src/navigation/path_generator/mppi/config/mppi_params.yaml 2>/dev/null
         ls src/navigation/path_generator/waypoint_publisher/config/task2_waypoints.yaml 2>/dev/null
         find src -maxdepth 5 -path '*task2_perception*' -name '*.yaml' 2>/dev/null
@@ -103,7 +103,7 @@ done < <(
         ls src/navigation/path_generator/waypoint_publisher/package.xml 2>/dev/null
         ls src/detection/task2_perception/package.xml 2>/dev/null
         find src -maxdepth 4 -path '*task2*' -name 'package.xml' 2>/dev/null
-        ls src/robot/config/navigate_through_poses_w_replanning_and_recovery.xml 2>/dev/null
+        ls src/bringup/robot/config/navigate_through_poses_w_replanning_and_recovery.xml 2>/dev/null
     } | sort -u
 )
 
@@ -140,8 +140,8 @@ if [ "${#MISSION_TESTS_PRESENT[@]}" -gt 0 ]; then
         report FAIL "pytest mission Task2 checks" "$(echo "${OUT}" | tail -n1)" || true
 fi
 
-if [ -f src/robot/test/test_launch_roles.py ]; then
-    OUT="$(python3 -m pytest src/robot/test/test_launch_roles.py -k task2 -q 2>&1)" && \
+if [ -f src/bringup/robot/test/test_launch_roles.py ]; then
+    OUT="$(python3 -m pytest src/bringup/robot/test/test_launch_roles.py -k task2 -q 2>&1)" && \
         report PASS "pytest Task2 robot launch checks" "$(echo "${OUT}" | tail -n1)" || \
         report FAIL "pytest Task2 robot launch checks" "$(echo "${OUT}" | tail -n1)" || true
 else

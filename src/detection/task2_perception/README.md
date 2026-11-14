@@ -83,7 +83,7 @@ rosbagでこの一連の認識を確認する場合は、`robot/task2_bag_percep
 
 - **Inverted LiDAR**: the Mid-360 is mounted upside-down. The nominal
   roll = pi correction lives ONLY in the URDF `lidar_joint`
-  (`src/robot/urdf/robot.urdf.xacro`); all nodes consume TF. The
+  (`src/bringup/robot/urdf/robot.urdf.xacro`); all nodes consume TF. The
   `lidar_inverted` / `lidar_*_deg` parameters of the cloud filter are an
   emergency manual pre-rotation for URDF-less setups and warn loudly when
   active. **HUMAN: measure the real mount angles before trusting

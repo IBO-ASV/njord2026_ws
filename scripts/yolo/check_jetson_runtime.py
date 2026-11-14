@@ -19,7 +19,7 @@ def main():
         "--model",
         type=Path,
         default=Path(__file__).resolve().parents[2]
-        / "src/robot/config/yolo_model/best.pt",
+        / "src/bringup/robot/config/yolo_model/best.pt",
     )
     parser.add_argument(
         "--ros", action="store_true", help="also exercise cv_bridge and rclpy"

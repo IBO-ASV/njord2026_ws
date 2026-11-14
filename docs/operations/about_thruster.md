@@ -1,11 +1,11 @@
 通常操作手順
 1. コントローラーと陸上PCをつなぎ、```ros2 run joy joy_node```
-2. jetsonと陸上PCを同じwifiにつないでいることを確認し、jetson側で```ros2 launch simple_manual manual_control.launch.py```
+2. jetsonと陸上PCを同じwifiにつないでいることを確認し、jetson側で```ros2 launch manual_bringup manual_control.launch.py```
 3. コントローラー左スティックで前後左右、R/L1?でyaw
-4. もし回転速度が早すぎたら、```src/driver/micon/thruster_driver/config/config.yaml```のmax_thrustを下げる
+4. もし回転速度が早すぎたら、```src/control/thruster_controller/config/config.yaml```のmax_thrustを下げる
 
 thruster_id_check手順
-1. jetsonで ```ros2 launch simple_manual thruster_id_test.launch.py```
+1. jetsonで ```ros2 launch manual_bringup thruster_id_test.launch.py```
 2. 10secおきに、RR, RL, FR, FLの順で正転するか確認
 
 できなかったときの確認
