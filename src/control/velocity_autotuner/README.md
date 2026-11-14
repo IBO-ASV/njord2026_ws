@@ -26,3 +26,5 @@ Emergency stop, manual/SBUS selection, stale odometry or thrust feedback, and ex
 Results are written under `output_dir` (default `~/njord_tuning`): a CSV of trial metrics and a YAML with the selected gains. FF uses steady-state speed error; P and D use integrated absolute error, overshoot, and thrust slew. Search is bounded interval refinement, not an assumption that every response is monotonic.
 
 This version tunes surge velocity gains only. Matching the individual thruster output ratios (FR/FL/RR/RL) remains a separate, manually measured calibration; the tuner does not issue direct per-thruster movement commands.
+
+The Mission Control Foxglove panel can set the three test limits before starting through the tuner node's standard `/velocity_autotuner/set_parameters_atomically` service, so the operator does not need to restart the node to change them. Parameters are locked while a session is reserved.

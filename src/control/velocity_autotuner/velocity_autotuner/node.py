@@ -7,6 +7,7 @@ import rclpy
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from rcl_interfaces.srv import GetParameters, SetParameters
+from rcl_interfaces.msg import SetParametersResult
 from rclpy.node import Node
 from rclpy.parameter import Parameter
 from std_msgs.msg import Bool, Float32MultiArray, String
@@ -35,7 +36,6 @@ class VelocityAutotuner(Node):
         self.controller=str(self.declare_parameter('controller_node','/thruster_controller_node').value).rstrip('/')
         odom_topic=str(self.declare_parameter('odom_topic','/odometry/filtered/local').value)
         force_topic=str(self.declare_parameter('force_topic','/debug/current_force').value)
-        self._validate()
         self.state=None; self.speed=None; self.odom_at=0.0; self.force=None; self.force_at=0.0
         self.prev_force=None; self.force_sample_at=0.0; self.reserved=False; self.status='IDLE'
         self.failure=''; self.operation=''; self.future=None; self.operation_at=0.0; self.old={}
@@ -54,6 +54,7 @@ class VelocityAutotuner(Node):
         self.create_service(Trigger,'/velocity_tuning/stop',self._stop)
         self.get_client=self.create_client(GetParameters,self.controller+'/get_parameters')
         self.set_client=self.create_client(SetParameters,self.controller+'/set_parameters')
+        self.add_on_set_parameters_callback(self._parameter_update)
         self.create_timer(.05,self._tick)
 
     def _validate(self):
@@ -62,6 +63,21 @@ class VelocityAutotuner(Node):
         if self.d_filter < 0: raise ValueError('derivative filter time must be nonnegative')
         for bounds in (self.ff_bounds,self.p_bounds,self.d_bounds):
             if len(bounds)!=2 or not (0 <= bounds[0] < bounds[1]): raise ValueError('gain bounds must be increasing and nonnegative')
+
+    def _parameter_update(self, parameters):
+        result=SetParametersResult()
+        if self.reserved:
+            result.successful=False; result.reason='Cannot change test settings during an active tuning session'; return result
+        proposed={'target_speed_mps':self.target,'max_test_speed_mps':self.max_speed,'test_max_thruster_thrust_n':self.thrust_cap}
+        for p in parameters:
+            if p.name not in proposed: continue
+            if p.type_ != Parameter.Type.DOUBLE or not math.isfinite(p.value):
+                result.successful=False; result.reason=f'{p.name} must be a finite double'; return result
+            proposed[p.name]=float(p.value)
+        if not (0 < proposed['target_speed_mps'] <= proposed['max_test_speed_mps'] and proposed['test_max_thruster_thrust_n'] > 0):
+            result.successful=False; result.reason='Require 0 < target speed <= maximum speed and positive thrust cap'; return result
+        self.target=proposed['target_speed_mps']; self.max_speed=proposed['max_test_speed_mps']; self.thrust_cap=proposed['test_max_thruster_thrust_n']
+        result.successful=True; result.reason='Tuning settings accepted'; return result
 
     def _control_state(self,msg):
         self.state=msg
@@ -100,6 +116,8 @@ class VelocityAutotuner(Node):
         q=SetParameters.Request(); q.parameters=[self._param(k,v) for k,v in values.items()]
         f=self.set_client.call_async(q); f.add_done_callback(cb)
     def _start(self,q,r):
+        try: self._validate()
+        except ValueError as e: r.success=False; r.message=str(e); return r
         if self.reserved or self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted or self.speed is None or time.monotonic()-self.odom_at>1:
             r.success=False; r.message='Need fresh odometry and ready AUTO, with no active session'; return r
         if not self.get_client.service_is_ready() or not self.set_client.service_is_ready(): r.success=False; r.message='Controller parameter services unavailable'; return r

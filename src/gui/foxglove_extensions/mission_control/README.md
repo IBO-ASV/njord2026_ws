@@ -73,3 +73,11 @@ Waypoint display inputs:
 
 A headless Firefox visual check with simulated telemetry is saved at
 [Mission Control preview](../../../../docs/reference/mission_control_preview_20261113.png).
+
+## Velocity tuning controls
+
+The panel includes a **速度ゲイン調整** section when connected to the AGX bridge. Enter target speed, test speed ceiling, and per-thruster thrust ceiling, then click **自動調整を開始**. The panel applies these values to `/velocity_autotuner/set_parameters_atomically` and starts `/velocity_tuning/start` only if the latest control state is AUTO-permitted and not in emergency stop.
+
+**一時停止して手動へ** pauses the tuner and requests MANUAL. After repositioning, **AUTOで再開** requests AUTO, waits for an updated `/control/state` showing AUTO permission, then resumes the interrupted candidate. **終了して設定を復元** requests MANUAL, waits for the mode update, then calls the tuner stop service. The panel displays tuner phase, measured forward speed, and the FR/FL/RR/RL force feedback.
+
+The AGX bridge must expose the tuner services and `/velocity_tuning/status`, `/odometry/filtered/local`, and `/debug/current_force` topics. The tuner must be started from the same ROS workspace as the updated motion supervisor and thruster controller. Values are locked while tuning is active. Starting a trial can move the vessel; the UI is only an operator control surface and the ROS safety supervisor/arbiter remains authoritative.

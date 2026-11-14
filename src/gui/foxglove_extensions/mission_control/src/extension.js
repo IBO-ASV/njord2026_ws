@@ -64,6 +64,20 @@ function initPanel(context) {
   const explanation = element('p', '開始操作はタスク準備とAUTO要求を送ります。安全条件を満たすまでは自律出力されません。', 'font-size:12px;color:#bbcad7;margin:8px 0');
   const startHint = element('p', '', 'margin:8px 0;white-space:pre-wrap');
   actions.append(explanation,startHint);
+  const tuningBox=section('速度ゲイン調整');
+  tuningBox.append(element('p','開始すると船体へ速度指令が出ます。AUTO許可と計測値を確認してから開始してください。','font-size:12px;color:#fde68a;margin:6px 0'));
+  const tuningInputs=element('div',undefined,'display:flex;flex-wrap:wrap;gap:10px;margin:8px 0');
+  function numericInput(labelText,step) { const wrap=element('label',undefined,'display:flex;flex-direction:column;gap:3px;min-width:130px;flex:1'); wrap.append(element('span',labelText,'font-size:12px;color:#bbcad7')); const input=element('input'); input.type='number'; input.step=step; input.min='0'; input.value=''; input.style.cssText='padding:8px;border:1px solid #536c80;border-radius:5px;background:#17232d;color:#edf3fa;font:inherit'; wrap.append(input); tuningInputs.append(wrap); return input; }
+  const targetInput=numericInput('目標速度 (m/s)','0.01');
+  const maxSpeedInput=numericInput('速度上限 (m/s)','0.01');
+  const thrustCapInput=numericInput('推力上限 (N / 基)','1');
+  const tuneToolbar=element('div',undefined,'display:flex;flex-wrap:wrap;gap:8px');
+  const tuneStart=element('button','自動調整を開始'), tunePause=element('button','一時停止して手動へ'), tuneResume=element('button','AUTOで再開'), tuneStop=element('button','終了して設定を復元');
+  for(const b of [tuneStart,tunePause,tuneResume,tuneStop]) b.style.cssText='padding:8px 10px;border:1px solid #536c80;border-radius:5px;background:#223342;color:#edf3fa;font:inherit';
+  tuneStart.style.background='#14532d'; tunePause.style.background='#854d0e'; tuneStop.style.background='#881337'; tuneToolbar.append(tuneStart,tunePause,tuneResume,tuneStop);
+  const tuneStatus=element('p','調整器の状態: 未受信','margin:8px 0;white-space:pre-wrap');
+  const tuneMetrics=element('p','実測速度: — · 推力 [FR, FL, RR, RL]: —','font-size:12px;color:#bbcad7;margin:6px 0;white-space:pre-wrap');
+  tuningBox.append(tuningInputs,tuneToolbar,tuneStatus,tuneMetrics);
 
   const statusBody = table(section('運転状態'));
   const requested = row(statusBody, '要求モード');
@@ -101,6 +115,7 @@ function initPanel(context) {
   let mission=null,control=null,summary=null,lampMessage=null,requirements=null;
   let lastMission=0,lastControl=0,lastHealth=0,lastLamp=0,lastRequirements=0,lastSerial=0;
   let busy=false,tasks=[],lastExecution='',lastPathSafety=0,pathSafe=false,serialStatus='',pendingStart=false;
+  let tuningMessage='',lastTuning=0,tuningOdom=null,lastTuningOdom=0,tuningForces=null,lastTuningForces=0;
   const fresh = t=>t>0&&Date.now()-t<3000;
   const active = ()=>mission?.execution_id&&mission.state>=1&&mission.state<=7;
   function startBlockers() {
@@ -116,6 +131,20 @@ function initPanel(context) {
   function render() {
     const task = tasks.find(t=>t.task_id===select.value);
     const blockers = startBlockers();
+    const tuningPhase=fresh(lastTuning)?tuningMessage.split(/\s+/,1)[0]:'STALE';
+    const tunerActive=['PREPARING','RUNNING','PAUSED','RESTORING','COMPLETE'].includes(tuningPhase);
+    const targetValue=Number(targetInput.value),maxSpeedValue=Number(maxSpeedInput.value),capValue=Number(thrustCapInput.value);
+    const tuningConfigValid=Number.isFinite(targetValue)&&targetValue>0&&Number.isFinite(maxSpeedValue)&&maxSpeedValue>=targetValue&&Number.isFinite(capValue)&&capValue>0;
+    tuneStart.disabled=busy||tunerActive||!tuningConfigValid||!fresh(lastControl)||control.requested_mode!==1||control.auto_permitted!==true||control.emergency_stop===true;
+    tunePause.disabled=busy||tuningPhase!=='RUNNING';
+    tuneResume.disabled=busy||tuningPhase!=='PAUSED'||!fresh(lastControl)||control.emergency_stop===true;
+    tuneStop.disabled=busy||!tunerActive||!fresh(lastControl);
+    for(const input of [targetInput,maxSpeedInput,thrustCapInput]) input.disabled=busy||tunerActive;
+    for(const b of [tuneStart,tunePause,tuneResume,tuneStop]) { b.style.opacity=b.disabled?'0.45':'1'; b.style.cursor=b.disabled?'not-allowed':'pointer'; }
+    set(tuneStatus,`${fresh(lastTuning)?tuningMessage:'調整器の状態: 未受信 / STALE'}\n${fresh(lastControl)?`モード=${control.requested_mode===1?'AUTO':'MANUAL'} · AUTO許可=${control.auto_permitted?'あり':'なし'}`:'制御状態: 未受信'}`,tuningPhase==='RUNNING'?'ok':tuningPhase==='PAUSED'?'wait':undefined);
+    const actualSpeed=fresh(lastTuningOdom)&&tuningOdom?`${Number(tuningOdom.twist?.twist?.linear?.x||0).toFixed(3)} m/s`:'— / STALE';
+    const actualForces=fresh(lastTuningForces)&&tuningForces?`[${tuningForces.map(v=>Number(v).toFixed(1)).join(', ')}] N`:'— / STALE';
+    tuneMetrics.textContent=`実測速度: ${actualSpeed} · 推力 [FR, FL, RR, RL]: ${actualForces}`;
     start.disabled = busy||pendingStart||blockers.length>0||!task||task.availability>1||mission?.state!==0;
     stop.disabled = busy||(!active()&&!(fresh(lastControl)&&control.requested_mode===1));
     select.disabled = busy||pendingStart||Boolean(active());
@@ -191,7 +220,19 @@ function initPanel(context) {
     if(active())return call('/mission/stop_task',{execution_id:mission.execution_id,return_to_manual:true});
     return call('/control/set_mode',{requested_mode:0});
   };
-  const baseTopics=['/mission/status','/mission/last_result','/control/state','/health/state','/alert_lamp/command','/control/requirements','/micon/thruster_command_status'];
+  const waitForControl=async predicate=>{for(let i=0;i<30;i++){if(fresh(lastControl)&&predicate(control))return true;await new Promise(resolve=>setTimeout(resolve,100));}return false;};
+  const modeRequest=requested_mode=>call('/control/set_mode',{requested_mode,request_id:`foxglove-tuning-${Date.now()}`});
+  tuneStart.onclick=async()=>{
+    render(); if(tuneStart.disabled)return;
+    const parameters=[['target_speed_mps',Number(targetInput.value)],['max_test_speed_mps',Number(maxSpeedInput.value)],['test_max_thruster_thrust_n',Number(thrustCapInput.value)]].map(([name,value])=>({name,value:{type:3,double_value:value}}));
+    const configured=await call('/velocity_autotuner/set_parameters_atomically',{parameters});
+    if(!configured?.result?.successful){feedback.textContent=configured?.result?.reason||'調整条件を設定できませんでした';return;}
+    const result=await call('/velocity_tuning/start',{}); if(!result?.success)feedback.textContent=result?.message||'調整を開始できませんでした';
+  };
+  tunePause.onclick=async()=>{ if(tunePause.disabled)return; const result=await call('/velocity_tuning/pause',{}); if(!result?.success)return; await modeRequest(0); };
+  tuneResume.onclick=async()=>{ if(tuneResume.disabled)return; const mode=await modeRequest(1); if(!mode?.accepted)return; if(!await waitForControl(state=>state.requested_mode===1&&state.auto_permitted&&!state.emergency_stop)){feedback.textContent='AUTO許可を確認できません。調整は再開していません。';return;} const result=await call('/velocity_tuning/resume',{}); if(!result?.success)feedback.textContent=result?.message||'再開できませんでした'; };
+  tuneStop.onclick=async()=>{ if(tuneStop.disabled)return; const mode=await modeRequest(0); if(!mode?.accepted)return; if(!await waitForControl(state=>state.requested_mode===0)){feedback.textContent='MANUALへの切替を確認できません。設定復元は実行していません。';return;} const result=await call('/velocity_tuning/stop',{}); if(!result?.success)feedback.textContent=result?.message||'停止・復元できませんでした'; };
+  const baseTopics=['/mission/status','/mission/last_result','/control/state','/health/state','/alert_lamp/command','/control/requirements','/micon/thruster_command_status','/velocity_tuning/status','/odometry/filtered/local','/debug/current_force'];
   let task2Subscribed=false;
   function updateSubscriptions() {
     const enabled=mission?.task_id==='task2'&&mission.state>=1&&mission.state<=7;
@@ -211,6 +252,9 @@ function initPanel(context) {
             break;
           case '/micon/thruster_command_status':serialStatus=message.data;lastSerial=Date.now();break;
           case '/mission/task2/path_safe':pathSafe=message.data;lastPathSafety=Date.now();break;
+          case '/velocity_tuning/status':tuningMessage=message.data;lastTuning=Date.now();break;
+          case '/odometry/filtered/local':tuningOdom=message;lastTuningOdom=Date.now();break;
+          case '/debug/current_force':tuningForces=message.data;lastTuningForces=Date.now();break;
           case '/mission/last_result':pendingStart=false;feedback.textContent=`直近の結果 ${message.task_id}: ${STATES[message.state]} · ${message.message}`;break;
           case '/mission/status':
             mission=message;updateSubscriptions();lastMission=Date.now();
