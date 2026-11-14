@@ -64,3 +64,4 @@ PYTHONDONTWRITEBYTECODE=1 PYTHONPATH="src/sim/njord_sim:${PYTHONPATH:-}" \
 ## AGX velocity tuning
 
 With the AGX bringup running from this workspace, start the idle velocity tuner in another AGX terminal with `scripts/operations/run_agx_velocity_tuner.sh`. The script applies the same ROS domain 126 and CycloneDDS profile as `run_agx_pair.sh vessel`; the tuner publishes no movement command until started from Mission Control.
+詳細な画面操作・試験結果の見方は `docs/operations/velocity_gain_autotuning.md` を参照してください。
