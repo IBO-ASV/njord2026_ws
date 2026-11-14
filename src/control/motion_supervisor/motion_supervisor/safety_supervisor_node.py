@@ -97,6 +97,12 @@ class SafetySupervisor(Node):
     def _on_nav_command(self, _message) -> None:
         self._nav_received_ns = self.get_clock().now().nanoseconds
 
+    def _on_tune_command(self, _message) -> None:
+        self._tuning_received_ns = self.get_clock().now().nanoseconds
+
+    def _on_tuning_active(self, message: Bool) -> None:
+        self._tuning_active = bool(message.data)
+
     def _on_sbus_command(self, _message) -> None:
         self._sbus_received_ns = self.get_clock().now().nanoseconds
 

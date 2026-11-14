@@ -38,6 +38,7 @@ class VelocityAutotuner(Node):
         force_topic=str(self.declare_parameter('force_topic','/debug/current_force').value)
         self.state=None; self.speed=None; self.odom_at=0.0; self.force=None; self.force_at=0.0
         self.prev_force=None; self.force_sample_at=0.0; self.reserved=False; self.status='IDLE'
+        self.param_future=None; self.completed=False
         self.failure=''; self.operation=''; self.future=None; self.operation_at=0.0; self.old={}
         self.chosen={'ff':0.0,'p':0.0,'d':0.0}; self.stage=''; self.search=None; self.candidate=0.0
         self.trial_at=0.0; self.samples=[]; self.iae=0.0; self.overshoot=0.0; self.slew=0.0; self.slew_n=0
@@ -114,34 +115,54 @@ class VelocityAutotuner(Node):
     def _param(self,n,v): return Parameter(n,value=v).to_parameter_msg()
     def _call_set(self,values,cb):
         q=SetParameters.Request(); q.parameters=[self._param(k,v) for k,v in values.items()]
-        f=self.set_client.call_async(q); f.add_done_callback(cb)
+        self.param_future=self.set_client.call_async(q)
+        def finished(f):
+            self.param_future=None
+            cb(f)
+        self.param_future.add_done_callback(finished)
+
+    @staticmethod
+    def _check_set(f):
+        results=f.result().results
+        if not results or not all(x.successful for x in results):
+            raise RuntimeError('Controller rejected parameters: ' + '; '.join(x.reason for x in results if not x.successful))
     def _start(self,q,r):
         try: self._validate()
         except ValueError as e: r.success=False; r.message=str(e); return r
         if self.reserved or self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted or self.speed is None or time.monotonic()-self.odom_at>1:
             r.success=False; r.message='Need fresh odometry and ready AUTO, with no active session'; return r
         if not self.get_client.service_is_ready() or not self.set_client.service_is_ready(): r.success=False; r.message='Controller parameter services unavailable'; return r
+        self.old={}; self.stage=''; self.completed=False; self.chosen={'ff':0.0,'p':0.0,'d':0.0}
         self.reserved=True; self.status='PREPARING'; self.operation='start'
         q=GetParameters.Request(); q.names=['safety.max_thruster_thrust_n','control.i.surge','control.ff.surge','control.p.surge','control.d.surge','input_scaling.max_linear_x']
         self.future=self.get_client.call_async(q); r.success=True; r.message='Preparing'; return r
     def _pause(self,q,r):
-        if not self.reserved: r.success=False; r.message='No active session'; return r
+        if not self.reserved or self.status not in ('PREPARING','RUNNING','PAUSED'):
+            r.success=False; r.message='No pausable session'; return r
         self._pause_now('Paused by operator'); r.success=True; r.message='Zero command; manual mode can take control'; return r
     def _pause_now(self,why):
         if self.stage and self.trial_at: self._write_row('INTERRUPTED',None,None,'INTERRUPTED')
         self.status='PAUSED'; self.failure=why; self.trial_at=0.
     def _resume(self,q,r):
-        if not self.reserved or self.status!='PAUSED' or self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted:
+        if self.operation or self.param_future is not None or self.future is not None or not self.stage or self.completed or not self.reserved or self.status!='PAUSED' or self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted:
             r.success=False; r.message='Return to ready AUTO before resume'; return r
         self.status='RUNNING'; self.failure=''; self._begin_trial(); r.success=True; r.message='Resumed current candidate'; return r
     def _stop(self,q,r):
         if not self.reserved or self.state is None or self.state.requested_mode!=ControlState.MODE_MANUAL:
             r.success=False; r.message='Select MANUAL before stopping/restoring'; return r
+        if self.param_future is not None or self.future is not None:
+            r.success=False; r.message='Parameter operation pending; retry stop after it finishes'; return r
+        if not self.old:
+            self.reserved=False; self.status='IDLE'; r.success=True; r.message='No settings changed'; return r
         restore={'safety.max_thruster_thrust_n':self.old['safety.max_thruster_thrust_n'],'control.i.surge':self.old['control.i.surge']}
-        if self.status!='COMPLETE': restore.update({k:self.old[k] for k in ('control.ff.surge','control.p.surge','control.d.surge')})
-        self.status='RESTORING'; self._call_set(restore,self._restored); r.success=True; r.message='Restoring saved settings'; return r
+        if not self.completed: restore.update({k:self.old[k] for k in ('control.ff.surge','control.p.surge','control.d.surge')})
+        self.trial_at=0.; self.status='RESTORING'; self._call_set(restore,self._restored); r.success=True; r.message='Restoring saved settings'; return r
     def _restored(self,f):
-        self.reserved=False; self.status='IDLE'; self.trial_at=0.; self._close_csv()
+        try:
+            self._check_set(f)
+        except Exception as e:
+            self.operation='restore_failed'; self._fault('Restore failed; retry stop: ' + str(e)); return
+        self.reserved=False; self.status='IDLE'; self.failure=''; self.trial_at=0.; self._close_csv()
     def _fault(self,s): self._pause_now(s)
     def _tick(self):
         now=time.monotonic(); self.active_pub.publish(Bool(data=self.reserved)); cmd=Twist()
@@ -151,7 +172,8 @@ class VelocityAutotuner(Node):
             elif abs(self.speed)>self.max_speed: self._fault('Speed limit exceeded; zero command')
             elif elapsed>=self.pre_stop: cmd.linear.x=self.target
             limit=self.pre_stop+(self.settle+self.window if self.stage=='ff' else self.step_duration)
-            if elapsed>=limit: self._finish_trial()
+            if self.status=='RUNNING' and elapsed>=limit: self._finish_trial()
+            if self.status!='RUNNING' or not self.trial_at: cmd=Twist()
         self.cmd_pub.publish(cmd)
         self.status_pub.publish(String(data=f'{self.status} {self.stage} {self.candidate:.3g} {self.failure}'))
         if self.future and self.future.done():
@@ -167,11 +189,12 @@ class VelocityAutotuner(Node):
             elif self.operation=='candidate': self._candidate_applied(f)
     def _prepared(self,f):
         try:
-            if not all(x.successful for x in f.result().results): raise RuntimeError('Controller rejected safety settings')
+            self._check_set(f)
             self.output_dir.mkdir(parents=True,exist_ok=True); self.run_id=datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
             self.csv_stream=(self.output_dir/f'velocity_tuning_{self.run_id}.csv').open('w',newline='')
             self.writer=csv.writer(self.csv_stream); self.writer.writerow(['stage','candidate','score','signed_error','overshoot_mps','iae','thrust_slew','result'])
-            self.status='RUNNING'; self._next_stage('ff')
+            if self.status=='PREPARING': self.status='RUNNING'
+            self._next_stage('ff')
         except Exception as e: self._fault(str(e))
     def _next_stage(self,s):
         self.stage=s; b={'ff':self.ff_bounds,'p':self.p_bounds,'d':self.d_bounds}[s]
@@ -190,12 +213,14 @@ class VelocityAutotuner(Node):
         self.operation='candidate'; self._call_set(vals,self._candidate_applied)
     def _candidate_applied(self,f):
         try:
-            if not all(x.successful for x in f.result().results): raise RuntimeError('Controller rejected gain')
-            self.operation=''; self._begin_trial()
-        except Exception as e: self._fault(str(e))
+            self._check_set(f)
+            self.operation=''
+            if self.status=='RUNNING': self._begin_trial()
+        except Exception as e:
+            self.operation='candidate_failed'; self._fault(str(e))
     def _begin_trial(self): self.samples=[]; self.iae=0.; self.overshoot=0.; self.slew=0.; self.slew_n=0; self.last_sample=0.; self.trial_at=time.monotonic()
     def _finish_trial(self):
-        vals=[v for t,v in self.samples if t>=self.pre_stop+(self.settle if self.stage=='ff' else 0)]
+        vals=[v for t,v in self.samples if t>=(self.settle if self.stage=='ff' else 0)]
         if len(vals)<3: self._fault('Not enough fresh odometry data'); return
         if self.stage=='ff': mean=sum(vals)/len(vals); signed=mean-self.target; score=abs(signed)
         else: signed=0.; score=self.iae+self.over_weight*self.overshoot+self.slew_weight*math.sqrt(self.slew/max(1,self.slew_n))
@@ -204,10 +229,17 @@ class VelocityAutotuner(Node):
         if self.writer:
             self.writer.writerow([stage,self.candidate,'' if score is None else score,'' if signed is None else signed,self.overshoot,self.iae,self.slew,result]); self.csv_stream.flush()
     def _complete(self):
-        self.status='COMPLETE'; self.operation=''; self.trial_at=0.
-        p=self.output_dir/f'velocity_gains_{self.run_id}.yaml'
-        p.write_text(f'control:\n  ff:\n    surge: {self.chosen["ff"]:.6g}\n  p:\n    surge: {self.chosen["p"]:.6g}\n  d:\n    surge: {self.chosen["d"]:.6g}\n')
-        self._close_csv()
+        self.status='FINALIZING'; self.operation=''; self.trial_at=0.
+        self._call_set({f'control.{key}.surge':value for key,value in self.chosen.items()},self._completed)
+    def _completed(self,f):
+        try:
+            self._check_set(f)
+            p=self.output_dir/f'velocity_gains_{self.run_id}.yaml'
+            p.write_text('control:\n' + ''.join(
+                f'  {key}:\n    surge: {value:.6g}\n' for key,value in self.chosen.items()))
+            self.completed=True; self.status='COMPLETE'; self._close_csv()
+        except Exception as e:
+            self.operation='finalize_failed'; self._fault('Finalization failed: ' + str(e))
     def _close_csv(self):
         if self.csv_stream: self.csv_stream.close(); self.csv_stream=None; self.writer=None
 
