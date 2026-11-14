@@ -7,6 +7,7 @@
 | `setup/` | ビルド、環境設定、依存導入 |
 | `operations/` | AGX・bringup・Zenoh起動、サービス、録画、診断 |
 | `network/` | Wi-Fi・有線LAN・Livox IP設定 |
+| `calibration/` | 速度追従・推力ペア補正・MMG同定（実機への適用は自動で行わない） |
 | `simulation/` | mission/suite実行、観測、汎用評価 |
 | `visualization/` | Foxglove preview・clip・replay |
 | `yolo/` | runtime検証、モデルexport・benchmark、YOLO起動 |

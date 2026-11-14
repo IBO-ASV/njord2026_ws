@@ -1,0 +1,46 @@
+{
+  "passed": true,
+  "rank": 10,
+  "condition_number": 2.789810579863438,
+  "holdout_relative_force_error": 2.3002021627317365e-14,
+  "effective_parameters": {
+    "Mx": 11.0,
+    "My": 19.99999999999999,
+    "Iz_eff": 2.9999999999999982,
+    "R_0": -0.19999999999999848,
+    "Y_0": 0.0009999999999999803,
+    "Y_v": -0.19999999999999693,
+    "Y_r": 0.020000000000000212,
+    "N_0": 0.001000000000000054,
+    "N_v": -0.2000000000000001,
+    "N_r": -0.019999999999999803
+  },
+  "mmg": {
+    "R_0": -0.19999999999999848,
+    "Y_0": 0.0009999999999999803,
+    "Y_v": -0.19999999999999693,
+    "Y_r": 0.020000000000000212,
+    "N_0": 0.001000000000000054,
+    "N_v": -0.2000000000000001,
+    "N_r": -0.019999999999999803,
+    "Lpp": 1.0,
+    "D": 0.25,
+    "mass_kg": 10.0,
+    "I_zG": 1.5,
+    "x_G": 0.0,
+    "m_x": 1.0,
+    "m_y": 9.99999999999999,
+    "J_z": 1.4999999999999982
+  },
+  "assumptions": [
+    "x_G=0",
+    "calibrated applied force in N/Nm",
+    "body-frame water-relative velocity",
+    "known Lpp/D and measured dry mass/inertia",
+    "no unmodeled current/actuator lag"
+  ],
+  "data_sha256": {
+    "/home/ibo/njord2026_ws/docs/validation/fixtures/velocity_calibration_20261114/identification_train.csv.gz": "adc1ed1f5f28b369a60f6baedd41fb477228f6f3f637bf370f1bca19e86d605f",
+    "/home/ibo/njord2026_ws/docs/validation/fixtures/velocity_calibration_20261114/identification_holdout.csv.gz": "ee0605d83c4cd20d493a24bb49e7cd6d8442e414e5f713af113c5abddcf50237"
+  }
+}

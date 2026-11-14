@@ -1,0 +1,184 @@
+{
+  "test_mode": "none",
+  "velocity_tracking": {
+    "available": true,
+    "frame": "base_link",
+    "active_samples": 2335,
+    "stale_command_samples": 0,
+    "rmse": {
+      "u": 0.047507736549582756,
+      "v": 0.004786517318451942,
+      "r": 0.031716702055840665
+    },
+    "p95_absolute_error": {
+      "u": 0.1206193450686688,
+      "v": 0.008805862635307225,
+      "r": 0.0753774429873242
+    },
+    "note": "Includes acceleration, braking and turns; independent step/sweep criteria qualify the low-level controller."
+  },
+  "task": "task1_2",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 5,
+  "waypoints_total": 5,
+  "minimum_buoy_clearance_m": 0.2308122789593437,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [],
+  "other_ship_clearance_m": null,
+  "opponent_selected": false,
+  "max_starboard_offset_m": 0.0,
+  "cpa_astern": null,
+  "gates_passed": [],
+  "wall_enabled_seen": true,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 1572,
+  "enabled_wall_cloud_seen": true,
+  "dock_contact_samples": 0,
+  "docking_simultaneous_translation_yaw_samples": null,
+  "cardinal_passages": {
+    "2": {
+      "mark": "W",
+      "distance_m": 1.0269760796355594,
+      "correct_side": true,
+      "x": -0.1907824785330622,
+      "y": -24.996083619580848
+    },
+    "1": {
+      "mark": "E",
+      "distance_m": 1.135161716506515,
+      "correct_side": true,
+      "x": 11.270616695011444,
+      "y": -27.971134716546924
+    }
+  },
+  "final_stationary_s": 3.2002647060435265,
+  "samples": 2493,
+  "events": [
+    {
+      "t": 5.769519365974702,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "control state unavailable"
+      ]
+    },
+    {
+      "t": 10.020859367970843,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.034076594980434,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.066718362970278,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 1/5: 3",
+      "inhibit": []
+    },
+    {
+      "t": 10.07136795896804,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 1/5",
+      "inhibit": []
+    },
+    {
+      "t": 10.133291835023556,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 2/5: 3.1",
+      "inhibit": []
+    },
+    {
+      "t": 10.140028049994726,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 2/5",
+      "inhibit": []
+    },
+    {
+      "t": 42.73760251398198,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 3/5: 3.2",
+      "inhibit": []
+    },
+    {
+      "t": 42.74263646698091,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 3/5",
+      "inhibit": []
+    },
+    {
+      "t": 72.27296144899447,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 4/5: 3.3",
+      "inhibit": []
+    },
+    {
+      "t": 72.27854421001393,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 4/5",
+      "inhibit": []
+    },
+    {
+      "t": 99.92811179399723,
+      "state": 5,
+      "stage": "navigate",
+      "message": "sending waypoint 5/5: 4",
+      "inhibit": []
+    },
+    {
+      "t": 99.93215258297278,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Nav2 accepted waypoint 5/5",
+      "inhibit": []
+    },
+    {
+      "t": 126.93323950597551,
+      "state": 8,
+      "stage": "navigate",
+      "message": "waypoint route complete",
+      "inhibit": []
+    },
+    {
+      "t": 126.93551499198657,
+      "state": 0,
+      "stage": "",
+      "message": "waypoint route complete",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

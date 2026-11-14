@@ -1,0 +1,33 @@
+{
+  "passed": true,
+  "holdout_relative_yaw_accel_error": 0.035582312474840054,
+  "rank": 9,
+  "relative_response": [
+    0.9071677084980327,
+    1.112693335935563,
+    1.0,
+    0.8458560617330663,
+    1.211023818219581,
+    0.9044391322488741,
+    0.7923832786620242,
+    1.046850256348007
+  ],
+  "fit_rmse_yaw_accel": 0.0066439462853166865,
+  "static_map.thrusters.forward_gain": [
+    0.6543085831515417,
+    0.7121308747623448,
+    0.7923832786620242,
+    0.7569213207496318
+  ],
+  "static_map.thrusters.reverse_gain": [
+    0.8734694491870161,
+    0.8761045938954182,
+    1.0,
+    0.9367826448373707
+  ],
+  "note": "Relative balance only; dry inertia and absolute force are not identified. Gains reduce stronger directions to weakest.",
+  "data_sha256": {
+    "/home/ibo/njord2026_ws/artifacts/velocity_calibration_20261114_final/pair_train_combined.csv": "ebc9f4d10d9d4db4cdb8fcbfcfae6da398cc9fb921f974d969104cd0f9fc39d4",
+    "/home/ibo/njord2026_ws/artifacts/velocity_calibration_20261114_final/pair_holdout_combined.csv": "602c1845fb0b2056430c5293be0d280d6a8045d583090141a8fb74426cc8de83"
+  }
+}

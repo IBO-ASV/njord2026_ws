@@ -1,0 +1,163 @@
+{
+  "test_mode": "none",
+  "velocity_tracking": {
+    "available": true,
+    "frame": "base_link",
+    "active_samples": 1297,
+    "stale_command_samples": 0,
+    "rmse": {
+      "u": 0.03076885528765777,
+      "v": 0.015869915546508826,
+      "r": 0.0515558303134977
+    },
+    "p95_absolute_error": {
+      "u": 0.08171997420488736,
+      "v": 0.028893166040397787,
+      "r": 0.09892811362439692
+    },
+    "note": "Includes acceleration, braking and turns; independent step/sweep criteria qualify the low-level controller."
+  },
+  "task": "task3_1",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 4,
+  "waypoints_total": 4,
+  "minimum_buoy_clearance_m": null,
+  "stationary_dwell_s": {
+    "0": 10.450008777959738
+  },
+  "required_dwell_s": [
+    10.0
+  ],
+  "other_ship_clearance_m": null,
+  "opponent_selected": false,
+  "max_starboard_offset_m": 0.0,
+  "cpa_astern": null,
+  "gates_passed": [],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 0,
+  "enabled_wall_cloud_seen": false,
+  "dock_contact_samples": 0,
+  "docking_simultaneous_translation_yaw_samples": null,
+  "cardinal_passages": {},
+  "final_stationary_s": 2.8503677989938296,
+  "samples": 1753,
+  "events": [
+    {
+      "t": 6.554554631002247,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.068080945988186,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.129342035972513,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projected waypoint 1/4",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.211893527011853,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projected waypoint 2/4",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.295211203978397,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.412168965965975,
+      "state": 5,
+      "stage": "stage_1_gate",
+      "message": "sending docking stage_1_gate",
+      "inhibit": []
+    },
+    {
+      "t": 10.5781405029702,
+      "state": 5,
+      "stage": "stage_1",
+      "message": "sending docking stage_1",
+      "inhibit": []
+    },
+    {
+      "t": 44.60102841100888,
+      "state": 5,
+      "stage": "stage_2",
+      "message": "sending docking stage_2",
+      "inhibit": []
+    },
+    {
+      "t": 49.40475038299337,
+      "state": 5,
+      "stage": "stage_2_wait",
+      "message": "waiting at berth for 10 seconds",
+      "inhibit": []
+    },
+    {
+      "t": 61.80706330901012,
+      "state": 5,
+      "stage": "stage_3",
+      "message": "sending docking stage_3",
+      "inhibit": []
+    },
+    {
+      "t": 69.13193714496447,
+      "state": 5,
+      "stage": "stage_4",
+      "message": "sending docking stage_4",
+      "inhibit": []
+    },
+    {
+      "t": 87.92682331596734,
+      "state": 5,
+      "stage": "complete",
+      "message": "docking route complete",
+      "inhibit": []
+    },
+    {
+      "t": 87.93034441501368,
+      "state": 0,
+      "stage": "",
+      "message": "docking route complete",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

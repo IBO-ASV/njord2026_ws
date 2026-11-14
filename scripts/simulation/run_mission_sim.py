@@ -12,7 +12,7 @@ def main():
     p.add_argument("--noise", action="store_true")
     p.add_argument("--disturbance", action="store_true")
     p.add_argument("--seed", type=int, default=2026)
-    p.add_argument("--model", choices=["kinematic", "mmg"], default="kinematic")
+    p.add_argument("--model", choices=["kinematic", "mmg"], default="mmg")
     p.add_argument("--timeout", type=int, default=900)
     p.add_argument("--domain", type=int, default=89)
     p.add_argument("--output", required=True)
@@ -24,6 +24,8 @@ def main():
     for name in ("initial-x-offset", "initial-y-offset", "initial-yaw-offset",
                  "detection-loss-period", "detection-loss-duration"):
         p.add_argument("--" + name, type=float, default=0.0)
+    p.add_argument("--mmg-config", default="")
+    p.add_argument("--velocity-control-config", default="")
     a = p.parse_args()
     if not 0 <= a.detection_loss_duration <= a.detection_loss_period:
         p.error("detection loss requires 0 <= duration <= period")
@@ -48,8 +50,11 @@ def main():
                 "src/sim/njord_sim",
                 "src/mission/mission_manager/mission_manager",
                 "src/navigation/path_generator/mppi/asv_trajectory_planner",
+                "src/driver/micon/thruster_driver",
+                "src/sim/dutyed_tf_pub_with_disturbance",
             )
-            for path in sorted(Path(root).rglob("*.py"))
+            for path in sorted(Path(root).rglob("*"))
+            if path.is_file() and path.suffix in (".py", ".cpp", ".hpp", ".yaml")
         },
         "working_tree_dirty": bool(
             subprocess.check_output(
@@ -84,6 +89,7 @@ def main():
                     )],
                     f"dropout_after:={a.dropout_after}",
                     f"config_dir:={out / 'config'}",
+                    *[f"{name}:={getattr(a,name)}" for name in ("mmg_config","velocity_control_config") if getattr(a,name)],
                 ],
                 env=env,
                 stdout=log,

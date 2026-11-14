@@ -1,0 +1,77 @@
+Arguments (pass arguments as '<name>:=<value>'):
+
+    'task':
+        One of: ['task1', 'task1_2', 'task2', 'task3_1', 'task3_2', 'task4']
+        (default: 'task1')
+
+    'model':
+        One of: ['kinematic', 'mmg']
+        (default: 'mmg')
+
+    'noise':
+        One of: ['false', 'true']
+        (default: 'false')
+
+    'seed':
+        no description given
+        (default: '2026')
+
+    'disturbance':
+        no description given
+        (default: 'false')
+
+    'encounter':
+        no description given
+        (default: 'head_on')
+
+    'config_dir':
+        no description given
+        (default: '')
+
+    'mmg_config':
+        no description given
+        (default: '')
+
+    'velocity_control_config':
+        no description given
+        (default: '/home/ibo/njord2026_ws/install/njord_sim/share/njord_sim/config/velocity_control.yaml')
+
+    'foxglove':
+        One of: ['true', 'false']
+        (default: 'true')
+
+    'foxglove_port':
+        no description given
+        (default: '8767')
+
+    'foxglove_address':
+        no description given
+        (default: '0.0.0.0')
+
+    'dropout_after':
+        no description given
+        (default: '0.0')
+
+    'opponent_variable_speed':
+        One of: ['true', 'false']
+        (default: 'false')
+
+    'initial_x_offset':
+        no description given
+        (default: '0.0')
+
+    'initial_y_offset':
+        no description given
+        (default: '0.0')
+
+    'initial_yaw_offset':
+        no description given
+        (default: '0.0')
+
+    'detection_loss_period':
+        no description given
+        (default: '0.0')
+
+    'detection_loss_duration':
+        no description given
+        (default: '0.0')

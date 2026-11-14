@@ -1,0 +1,9 @@
+thruster_driver_node:
+  ros__parameters:
+    control.i.surge: 55.0
+    control.i.sway: 55.0
+    control.i.yaw: 16.5
+    control.p.surge: 100.0
+    control.p.sway: 100.0
+    control.p.yaw: 30.0
+    control.reference_tau_sec: 0.15

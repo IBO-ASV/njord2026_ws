@@ -20,12 +20,14 @@ def main():
     p.add_argument("--timeout", type=int, default=None)
     p.add_argument("--domain-base", type=int, default=100)
     p.add_argument("--output", required=True)
-    p.add_argument("--model", choices=["kinematic", "mmg"], default="kinematic")
+    p.add_argument("--model", choices=["kinematic", "mmg"], default="mmg")
     p.add_argument("--disturbance", action="store_true")
     p.add_argument("--opponent-variable-speed", action="store_true")
     for name in ("initial-x-offset", "initial-y-offset", "initial-yaw-offset",
                  "detection-loss-period", "detection-loss-duration"):
         p.add_argument("--" + name, type=float, default=0.0)
+    p.add_argument("--mmg-config", default="")
+    p.add_argument("--velocity-control-config", default="")
     a = p.parse_args()
     if a.workers < 1 or a.domain_base < 0 or a.domain_base + a.workers > 233:
         p.error("workers must be positive and domains must be in 0..232")
@@ -75,6 +77,9 @@ def main():
         for option_name in ("initial_x_offset", "initial_y_offset", "initial_yaw_offset",
                      "detection_loss_period", "detection_loss_duration"):
             command += ["--" + option_name.replace("_", "-"), str(getattr(a, option_name))]
+        for config_name in ("mmg_config", "velocity_control_config"):
+            if getattr(a, config_name):
+                command += ["--"+config_name.replace("_","-"),getattr(a,config_name)]
         if seed is not None:
             command += ["--noise", "--seed", str(seed)]
         try:

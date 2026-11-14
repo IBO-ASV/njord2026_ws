@@ -115,3 +115,14 @@ BlueRobotics T200 @16V の最大推力 **≈51.5N** です。
 > スラスタ関連の配列 (`ids`, `links`, `angle_rad`, `reverse`, `max_thrust`,
 > `static_map.thrusters.*`) は必ず `thrusters.ids` と同じ長さにしてください。
 > 長さが不一致だとノード起動時に例外で停止します。
+
+
+## Velocity qualification
+
+`control.i.surge/sway/yaw` (default 0) enables integral correction in physical
+wrench units. `control.reference_tau_sec` (default 0) filters body-velocity
+references. Both are startup-only; zero defaults preserve the existing hardware
+P law. Per-axis saturation and allocation/static-map feedback limit windup.
+Command or odometry watchdog stops reset integral and reference-filter state.
+The MMG mission launch supplies a separate qualified simulation overlay; it does
+not change hardware defaults. See [experiments, pair balance and identification](../../../sim/njord_sim/README.md#velocity-qualification-and-vessel-identification).

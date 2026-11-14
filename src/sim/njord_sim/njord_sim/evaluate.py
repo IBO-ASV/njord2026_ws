@@ -31,6 +31,20 @@ def yaw(q):
     return math.atan2(2 * (q.w * q.z + q.x * q.y), 1 - 2 * (q.y * q.y + q.z * q.z))
 
 
+def terminal_observation_reason(elapsed, stationary, fault=False):
+    # The velocity qualification allows six seconds to settle; retain two
+    # independent seconds of stationary truth before accepting the mission.
+    if fault:
+        # Cancellation/sensor loss is scored by stopped body velocity and zero
+        # output, not stationarity at the route's final geographic goal.
+        return "mission terminal" if elapsed >= 4.0 else None
+    if elapsed >= 4.0 and stationary >= 2.0:
+        return "mission terminal"
+    if elapsed >= 10.0:
+        return "mission terminal: final stationarity not reached within 10 seconds"
+    return None
+
+
 class Evaluation(Node):
     def __init__(self, args):
         super().__init__("njord_sim_evaluate")
@@ -52,6 +66,8 @@ class Evaluation(Node):
         self.result = None
         self.action_result = None
         self.command = Twist()
+        self.command_at = None
+        self.velocity_samples = []
         self.other = None
         self.min_ship_clearance = math.inf
         self.opponent_selected = False
@@ -80,7 +96,7 @@ class Evaluation(Node):
         )
         self.create_subscription(Odometry, "/sim/truth/odom", self.on_truth, 10)
         self.create_subscription(
-            Twist, "/cmd_vel", lambda m: setattr(self, "command", m), 10
+            Twist, "/cmd_vel", self.on_command, 10
         )
         self.create_subscription(
             Odometry, "/sim/truth/opponent", lambda m: setattr(self, "other", m), 10
@@ -139,9 +155,18 @@ class Evaluation(Node):
         if m.task_id == self.args.task and m.state in (8, 9, 10):
             self.result = m.state
 
+    def on_command(self, message):
+        self.command = message
+        self.command_at = time.monotonic()
+
     def on_truth(self, m):
         t = time.monotonic() - self.t0
         self.received = time.monotonic()
+        if self.command_at is not None:
+            v = m.twist.twist
+            self.velocity_samples.append((t, self.command.linear.x, self.command.linear.y,
+                self.command.angular.z, v.linear.x, v.linear.y, v.angular.z,
+                self.received-self.command_at))
         p = m.pose.pose.position
         heading = yaw(m.pose.pose.orientation)
         speed = math.hypot(m.twist.twist.linear.x, m.twist.twist.linear.y)
@@ -267,9 +292,10 @@ class Evaluation(Node):
         )
         if stationary:
             self.stop_since = self.stop_since if self.stop_since is not None else t
-            self.stop_duration = max(self.stop_duration, t - self.stop_since)
+            self.stop_duration = t - self.stop_since
         else:
             self.stop_since = None
+            self.stop_duration = 0.0
 
     def save(self, reason):
         out = Path(self.args.output)
@@ -285,6 +311,12 @@ class Evaluation(Node):
                                  "x", "y", "yaw", "cmd_surge", "cmd_sway", "cmd_yaw_rate",
                                  "speed", "yaw_rate", "hull_corner_wall_distance_m"))
                 writer.writerows(self.docking_samples)
+        with (out / "velocity_tracking.csv").open("w") as f:
+            writer = csv.writer(f, lineterminator="\n")
+            writer.writerow(("time_s","ref_u","ref_v","ref_r","u","v","r","command_age_s"))
+            writer.writerows(self.velocity_samples)
+        from .calibration import mission_tracking_metrics
+        tracking = mission_tracking_metrics(self.velocity_samples)
         required = [
             10.0 if i == 0 and self.args.task != "task3_2" else 5.0
             for i in range(len(self.s.docks))
@@ -345,6 +377,7 @@ class Evaluation(Node):
                 )
         summary = {
             "test_mode": fault_mode,
+            "velocity_tracking": tracking,
             "task": self.args.task,
             "final_output": {
                 "surge": self.command.linear.x,
@@ -475,8 +508,11 @@ def main(args=None):
                 opts.cancel_after = 0.0
             if node.result is not None:
                 terminal_at = terminal_at or time.monotonic()
-                if time.monotonic() - terminal_at > 4.0:
-                    reason = "mission terminal"
+                terminal_reason = terminal_observation_reason(
+                    time.monotonic() - terminal_at, node.stop_duration,
+                    bool(opts.expected_cancel or opts.dropout_after))
+                if terminal_reason is not None:
+                    reason = terminal_reason
                     break
             if opts.task == "task2" and node.execution and len(node.samples) > 2:
                 recent = [row for row in node.samples if row[0] >= elapsed - 45.0]

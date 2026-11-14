@@ -1,0 +1,38 @@
+{
+  "passed": true,
+  "axes": {
+    "u": {
+      "rmse": 0.04545542944465783,
+      "steady_rmse": 0.002947355821548606,
+      "peak_error": 0.5
+    },
+    "v": {
+      "rmse": 0.019857914962444375,
+      "steady_rmse": 0.0012313531733553773,
+      "peak_error": 0.19795725064225592
+    },
+    "r": {
+      "rmse": 0.01774087219508414,
+      "steady_rmse": 0.0031593920287726765,
+      "peak_error": 0.19521086316458436
+    }
+  },
+  "maximum_settling_s": 0.5797255039215088,
+  "worst_steady_bias": [
+    0.005678620597328641,
+    0.0025503832925030507,
+    0.006233321502681727
+  ],
+  "worst_overshoot_fraction": [
+    0.0,
+    0.03074589480574555,
+    0.04242622423077033
+  ],
+  "final_velocity": [
+    1.3775740908172233e-07,
+    -8.137944853451886e-07,
+    -0.0007855963134294089
+  ],
+  "saturation_fraction": null,
+  "mode": "production ROS driver + MMG, isolated /calibration topics; not hardware"
+}

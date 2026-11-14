@@ -233,3 +233,109 @@ MMGと合わせて15ケース中13ケース合格であり、全条件合格と�
 失敗caseのconfigとtrajectory.csvは同fixtureの各caseディレクトリにある。
 生成したconfigのSHA256は全caseで保存し、全ログ/成功caseの軌跡は
 `artifacts/software_readiness_20261113/`へ保存した。
+
+## 速度制御・推力ペア・機体同定の追試（2026-11-14）
+
+従来の既定kinematicモデルは速度を時定数0.3秒で近づけるstand-inで、
+推進器を通した速度追従の確認ではなかった。MMG側はP制御で定常偏差が残った。
+現在の共通`njord_sim`・mission runner・suite runnerの既定をMMGへ変更し、
+production driver/allocatorと同じ速度制御を通す。
+
+`thruster_driver`に共通のbody速度PI、積分飽和・allocation/static-map後の逆算補正、
+指令filterを追加した。hardware既定はI=0・filter=0で、実機値の自動適用はしない。
+MMG専用overlayはP=(100,100,30)、I=(55,55,16.5)、filter=0.15 s、DOB無効。
+軸順はsurge/sway/yaw、速度単位はm/s・m/s・rad/s。watchdog停止で内部状態をresetする。
+
+### 独立速度試験とモデル同定
+
+production C++制御・allocator・MMGを使う加速実験を追加した。
+9つの制御候補を3つの調整用plantで評価し、別seedの8 plantと24 kg loaded plantを
+holdoutにした。質量、付加質量/慣性、抵抗、推力scale/上限、actuator時定数を変える。
+loaded plantは推力scale 0.8・上限50 N/基も含む。
+
+合格条件は、定常偏差/RMSEが(0.05 m/s,0.05 m/s,0.03 rad/s)以内、
+整定6秒以内、指令軸の行き過ぎ20%以内、動的RMSEが(0.15,0.10,0.10)以内、
+最終残留速度が(0.03,0.03,0.02)以内。選定候補は調整3 plantとholdout 9 plantすべて合格。
+
+| 軸 | 旧Pの最大定常偏差 | 選定候補の最大定常偏差（nominal） |
+|---|---:|---:|
+| surge | 0.381 m/s | 0.00704 m/s |
+| sway | 0.0935 m/s | 0.000202 m/s |
+| yaw | 0.188 rad/s | 0.00461 rad/s |
+
+nominalの最大整定時間は3.32 s。holdoutの最大整定時間は4.24 s、最大定常偏差は
+surge 0.0106 m/s未満、sway 0.00187 m/s未満、yaw 0.00928 rad/s未満だった。
+実際のROS driverとMMG nodeを接続した実時間試験も合格し、
+定常RMSEは(0.00295 m/s,0.00123 m/s,0.00316 rad/s)。
+全試験は専用ROS domainと模擬topicで行い、serial/CAN hardwareを起動していない。
+
+既存driverには、起動パラメータの宣言終了前にlive-update検証を登録する問題もあった。
+新規ビルドで`duty_resolution`を拒否して起動できなくなったため登録順を修正し、
+実ノード起動とstartup-only/live parameterの回帰試験を追加した。
+
+MMG同定はx_G=0の積分力学釣り合いから10個の有効係数を解き、独立force waveformで検証。
+合成真値から既知係数を復元し、速度にノイズ（u/v:0.002 m/s、r:0.001 rad/s）を
+加えた学習データでも、独立holdoutの相対force予測誤差は約0.254%だった。
+これは同じモデル族内の検証であり、実機の物理係数を同定した結果ではない。
+絶対推力換算・実測dry質量/慣性・水相対速度が必要で、未知の潮流・CG offset・
+actuator lagや、現在のMMGの構造誤差を万能に同定するものではない。
+
+### 推力ペアの検証
+
+FR+FL（前進、FL調整）、FL+RL（-y横移動、RL調整）、RL+RR（後進、RR調整）を
+正逆それぞれ複数強度で試験する。最後を前進にするには負の物理推力を使うため、
+正転/逆転の推力差を別に推定する必要がある。
+
+通常allocatorを通すと4基へ再配分されるため、benchには個別推力modeを設けた。
+既知の正逆不均衡を入れたplantから相対8係数を推定し、独立強度で検証した。
+電気配線のreverseを考慮した補正後、全6方向で横方向force比<1%、
+yaw moment/forceの残差<0.005 mを満たした。最大横方向force比は約0.256%。
+補正は強い方向を弱い方向へ合わせ、絶対推力や慣性をペア試験だけから確定しない。
+実機向けにはpassive CSV recorderと独立holdout付き推定CLIを用意した。
+実機ペア駆動そのものは自動化・実行していない。
+
+### 共通missionでの確認
+
+| matrix | 結果 | 条件 |
+|---|---|---|
+| 全タスクMMG truth | 9/9 | Task1/1.2、Task2 4遭遇、Task3.1/3.2、Task4 |
+| Task2複合条件 | 4/4 | MMG、seed 2026、noise/外乱、初期pose offset、他船加減速、周期的検出欠落 |
+| 他タスク測位noise | 5/5（再試験を含む） | 既定MMG、seed 2026、Task1/1.2/3.1/3.2/4 |
+| Task3.2 cancel | 1/1 | 50 sでtyped cancellation、最終出力全軸0 |
+
+標準head_onの最小他船間隔は2.190 m。Task2複合条件のstarboardは他船間隔6.068 m、
+最小ブイ余裕0.708 mだった。各caseに`velocity_tracking.csv`と動的RMSE/p95を保存した。
+これらは加速・減速・回頭を含む数値で、独立速度試験の定常偏差とは区別する。
+
+測位noiseの初回Task3.2は、Mission成功・接触0・必要停泊時間を満たしたが、
+終了後4秒固定の観測が静止1秒の時点で終わり不合格だった。2秒の静止基準は維持し、
+通常終了は静止確認まで最大10秒観測する。動き出したら静止時間を0に戻す。
+途中cancel/欠測は最終目標地点への到着ではなく、既存のbody停止・出力0条件で評価する。
+修正後のTask3.2再試験は連続静止2.80秒で合格。初回不合格の結果・軌跡も保存した。
+他の合格caseも、保存真値から最終の連続静止2秒以上を再確認した。
+
+旧kinematicの複合starboard失敗は比較用に保存する。旧モデルは位置へ直接driftを加え、
+速度制御も通らないため、新しいMMG結果を同一modelの修正として比較しない。
+安全半径内からの離脱や古い他船観測の解除など、guardの境界条件の独立検証は残る。
+今回の有限条件の合格を一般的な避航や実機性能の保証とは扱わない。
+
+手順は[njord_sim README](../../src/sim/njord_sim/README.md#velocity-qualification-and-vessel-identification)。
+[速度比較図](fixtures/velocity_calibration_20261114/velocity_tracking.png)、
+[加速実験report](fixtures/velocity_calibration_20261114/calibration_report.json)、
+[ROS閉ループreport](fixtures/velocity_calibration_20261114/ros_loop_report.json)、
+[mission集計・元の不合格・静止再監査](fixtures/velocity_calibration_20261114/summary.json)を保存した。
+fixtureのCSVはgzip圧縮で、`njord_sim.calibration.load_csv`でも読み込める。
+全raw logは`artifacts/velocity_calibration_20261114_final`、
+`velocity_missions_20261114_verified`、`velocity_task2_robustness_20261114`、
+`velocity_missions_noise_20261114`、`velocity_task3_2_stationarity_20261114`、
+`velocity_cancel_qualified_20261114`（いずれも`artifacts/`内）。
+
+検証: Python 221件合格、thruster driver C++ 12件・model C++ 3件合格。
+途中で打ち切った候補・起動失敗のrunは`interrupted.json`を付け、合格集計へ混ぜていない。
+機体/制御binary・source SHA256、各caseのmanifest・設定hashも保存する。
+
+
+実測recorderは、推力ペアreportと実測FR正転の絶対換算scaleを指定すると、
+正逆の応答差を反映したwrenchを同定CSVへ書く。raw物理指令も別列に保持する。
+CSVからのMMG/推力補正CLIも合成データで実行し、holdout合格とcandidate生成を確認した。
+fixture内の`synthetic_*candidate.yaml`は検証用であり実機補正値ではない。

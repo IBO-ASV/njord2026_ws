@@ -1,0 +1,20 @@
+/**:
+  ros__parameters:
+    input_csv: /home/ibo/njord2026_ws/artifacts/velocity_calibration_20261114_final/identification_train.csv
+    mmg.D: 0.25
+    mmg.I_zG: 1.5
+    mmg.J_z: 1.5
+    mmg.Lpp: 1.0
+    mmg.N_0: 0.001
+    mmg.N_r: -0.02
+    mmg.N_v: -0.2
+    mmg.R_0: -0.2
+    mmg.Y_0: 0.001
+    mmg.Y_r: 0.02
+    mmg.Y_v: -0.2
+    mmg.m_x: 1.0
+    mmg.m_y: 10.0
+    mmg.mass_kg: 10.0
+    mmg.x_G: 0.0
+    mode: force
+    output_csv: /home/ibo/njord2026_ws/artifacts/velocity_calibration_20261114_final/identification_train/samples.csv

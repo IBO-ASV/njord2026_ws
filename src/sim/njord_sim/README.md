@@ -9,7 +9,7 @@ runner explicitly disables it so parallel runs do not compete for a GUI port.
 ```bash
 source /opt/ros/jazzy/setup.bash
 source install/setup.bash
-colcon build --symlink-install --paths src/sim/njord_sim
+colcon build --symlink-install --packages-select thruster_driver dutyed_tf_pub_with_disturbance njord_sim
 source install/setup.bash
 python3 scripts/simulation/run_mission_sim.py --task task1 --output /tmp/njord/task1
 python3 scripts/simulation/run_mission_sim.py --task task1_2 --model mmg --output /tmp/njord/task1-mmg
@@ -84,10 +84,11 @@ execution ID. State older than 3 s disables start. The map publishes the private
 sim route and noisy estimate; `/sim/truth/odom` stays available for inspection.
 Battery telemetry is an explicitly synthetic display value.
 
-The default model is an explicitly labelled kinematic model with a 0.3 s
-velocity response. `--model mmg` uses the existing C++ MMG / T200 force model
-and the production thruster allocator/controller. Neither is a calibrated
-model of the real vessel.
+The default model is MMG with the production velocity controller and thruster
+allocator. Rebuild `thruster_driver`, `dutyed_tf_pub_with_disturbance` and `njord_sim`
+before using this default. `--model kinematic` explicitly selects the lightweight
+0.3 s velocity-response stand-in and bypasses thruster control. Neither model
+is calibrated against the real vessel.
 
 ## Coordinates and sensors
 
@@ -274,3 +275,150 @@ This display sampling never changes the full-rate truth trajectory used for
 scoring. The common Foxglove layout hides individual obstacle-layer grids and
 `/received_global_plan`; combined local/global costmaps remain visible. Reimport
 the layout and restart the sim to apply these changes to an existing session.
+
+## Velocity qualification and vessel identification
+
+Mission completion alone does not qualify velocity tracking. The kinematic
+model prescribes a 0.3 s velocity response and bypasses thruster control.
+The MMG path runs the production `thruster_driver` velocity controller and
+allocator. Its former P-only settings leave drag-dependent steady errors.
+The simulated MMG launch now adds `config/velocity_control.yaml`: P/I gains,
+a reference filter, per-axis wrench limits and allocation anti-windup.
+Qualification uses DOB disabled. Hardware defaults remain P-only (I=0, filter=0). Integral gains/filter are
+startup parameters; command/feedback watchdogs reset both stored states.
+
+Targets are body-frame surge `u`, sway `v` [m/s], and yaw rate `r` [rad/s].
+For world-frame desired derivatives use
+`u = cos(yaw)*xdot + sin(yaw)*ydot`,
+`v = -sin(yaw)*xdot + cos(yaw)*ydot`, `r = yawdot`.
+A zero yaw-rate target is not an absolute heading-hold controller; use the
+outer navigation/heading controller for that. Transient cross-axis response
+and thrust imbalance must be measured separately.
+
+Build the actual controller/model first, then qualify isolated velocity
+tracking before navigation (all commands below run from the workspace root):
+
+```bash
+source /opt/ros/jazzy/setup.bash
+source install/setup.bash
+colcon build --symlink-install --packages-select thruster_driver dutyed_tf_pub_with_disturbance njord_sim
+source install/setup.bash
+python3 scripts/calibration/calibrate_velocity.py --plot --output artifacts/new-calibration
+# After identifying a real model: add --mmg-config artifacts/real-mmg/candidate.yaml
+python3 scripts/calibration/check_velocity_ros.py --output artifacts/new-ros-loop
+python3 scripts/simulation/run_sim_suite.py --model mmg --truth --seeds '' \
+  --encounters head_on,port,starboard,none --workers 2 --output artifacts/new-mmg-missions
+```
+
+The accelerated C++ benchmark shares the production controller header,
+allocator and MMG equations. It publishes no topics and never starts serial
+hardware. Positive/negative axis steps, stops/reversals and a coupled waveform
+score steady bias/RMSE (0.05 m/s, 0.05 m/s, 0.03 rad/s), settling <=6 s,
+active-axis overshoot <=20%, dynamic RMSE (0.15,0.10,0.10) and final residual
+velocity (0.03,0.03,0.02). Gains are selected on three plants; nine independent
+holdouts vary mass, added mass/inertia, damping, actuator scale and delay,
+including a 24 kg loaded model. The real-time ROS check additionally exercises
+parameter loading, driver subscriptions, 50 Hz feedback and the actual node.
+It uses only isolated `/calibration/*` topics, no hardware transport.
+
+Each MMG mission copies its selected plant and velocity YAML into `config/`
+and writes `velocity_tracking.csv` plus body-axis RMSE/p95 in evaluation JSON.
+These include acceleration and turns and are observational mission metrics;
+independent step/sweep criteria qualify the low-level controller. Change the
+plant/controller explicitly with `--mmg-config PATH` and
+`--velocity-control-config PATH` on either mission or suite runners.
+Controller tuning does not validate perception-loss recovery or path safety.
+
+### Pair thrust balance before model identification
+
+Use physical forces, not electrical channel signs. Channel order is
+**RR, RL, FR, FL**. With the current geometry:
+
+| Pair | Positive physical thrust | Relative adjustment |
+|---|---|---|
+| FR + FL | forward | FR anchor, vary FL |
+| FL + RL | sideways toward -y | keep FL reference, vary RL |
+| RL + RR | backward | keep RL reference, vary RR |
+
+Making the last pair go forward requires negative physical thrust on both
+motors and tests their reverse response. Three fixed equal-pulse pairs do not
+identify all eight forward/reverse gains. Sweep the adjustable motor through
+several levels, repeat all three pairs in both directions from near rest,
+include zero-force coasts, and reserve independent levels/repeats for holdout.
+The generated `pair_plan` provides this design. Pair tests must bypass the
+normal wrench allocator, which otherwise redistributes the requested wrench
+to four motors; the offline benchmark has an explicit per-thruster mode.
+
+The fit uses short near-rest yaw acceleration, not GPS track slope. It solves
+relative forward/reverse response with a nuisance yaw-acceleration bias and
+checks rank/signs and independent holdout error. Corrections reduce stronger
+channels to the weakest and map physical directions back through each channel's
+wiring reversal to the driver's electrical `forward_gain` / `reverse_gain`.
+Known synthetic mismatches are validated by re-running all six pair directions
+and checking cross-force fraction <1% and yaw-moment/force residual <0.005 m.
+This is a scalar-gain model: mounting angle errors, different spool-up dynamics,
+current, heading bias and geometry changes require separate checks. Repeat
+under the intended voltage/loading and check both yaw and transverse motion.
+
+### Reuse measured data
+
+The recorder is passive by default; no thruster transport or controller is
+started. It accepts only `base_link` twist, logs timestamps, command/force ages,
+yaw, body velocities and inferred physical wrench. The default electrical-to-
+physical wiring signs are `-1,1,1,-1` in RR/RL/FR/FL order; pass explicit signs
+for other verified wiring. Passive pair recording does not require `/cmd_vel`.
+
+```bash
+ros2 run njord_sim velocity_experiment --output real_train.csv --duration 180
+# Explicit optional velocity excitation via the existing MANUAL control path:
+ros2 run njord_sim velocity_experiment --output real_speed.csv \
+  --reference artifacts/new-calibration/velocity_reference.csv \
+  --publish-topic /cmd_vel_manual --command-topic /cmd_vel
+```
+
+Publishing requires an explicit topic and velocity reference. It zeros output
+and latches an abort on feedback loss; clean termination sends zero commands.
+The full generated reference includes +/-1.029 m/s surge and 0.4 m/s sway;
+choose the actual field-test amplitudes/area before activating it. Pair plans
+are not automatically published to real thrusters by this recorder; use a
+controlled individual-actuator trial and record it passively. The existing
+single-motor `thruster_id_test` is not a paired balance experiment.
+
+```bash
+python3 scripts/calibration/identify_vessel.py --balance \
+  --training real_pair_train.csv --holdout real_pair_holdout.csv \
+  --output artifacts/real-balance
+python3 scripts/calibration/identify_vessel.py \
+  --training real_train.csv --holdout real_holdout.csv \
+  --mass "$VESSEL_MEASURED_MASS_KG" --iz "$VESSEL_MEASURED_IZ" \
+  --output artifacts/real-mmg
+```
+
+Balance fitting emits a complete `candidate.yaml` preserving the supplied
+`--driver-config` channel order, geometry, safety and base settings. MMG fitting
+emits a plant candidate only if excitation rank and independent force-prediction
+error pass. These tools write candidates; they never apply them to hardware.
+Do not replace a complete driver config with a sparse simulation overlay.
+
+The MMG fitter uses integrated force/motion balances, avoiding pointwise noisy
+velocity differentiation. It currently requires x_G=0, known Lpp/draft,
+calibrated applied thrust and water-relative body velocity in steady/sheltered
+water. Dry mass and dry yaw inertia must be measured anchors: logs identify
+`mass+m_x`, `mass+m_y`, `I_zG+J_z`, not their components separately. Relative
+thrust balance does not identify absolute Newtons. For identified real thrust,
+pass `--balance-report artifacts/real-balance/report.json` and
+`--force-anchor-scale` (measured FR-positive actual N / command N) to the recorder.
+Its `command_rr/rl/fr/fl` columns retain the signed physical commands, while
+`tau_x/y/n` then use the calibrated directional responses and absolute anchor.
+Without these options the wrench is nominal command Newtons. With only nominal command
+Newtons the result is an effective command-response model, not independently
+measured physical hydrodynamic coefficients. Unknown current, force scale and
+CG offset cannot be silently folded into a claim of physical identification.
+
+
+Normal mission acceptance retains two seconds of current continuous stationary
+truth at the final goal. After action completion the observer waits at least
+four seconds and, if needed, up to ten seconds for that condition. Motion resets
+the duration; a prior stationary interval cannot substitute for the final stop.
+Cancellation/sensor-loss checks retain their separate body-stop and zero-output
+criteria rather than requiring arrival at the route's final goal.

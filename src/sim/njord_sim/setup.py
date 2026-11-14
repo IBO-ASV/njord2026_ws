@@ -19,6 +19,7 @@ setup(
     entry_points={
         "console_scripts": [
             "environment = njord_sim.environment:main",
+            "velocity_experiment = njord_sim.velocity_experiment:main",
             "evaluate = njord_sim.evaluate:main",
         ]
     },

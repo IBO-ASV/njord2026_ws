@@ -52,6 +52,11 @@ install(DIRECTORY launch config
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  ament_add_gtest(test_node_startup test/test_node_startup.cpp)
+  target_link_libraries(test_node_startup thruster_driver_component)
+  ament_target_dependencies(test_node_startup rclcpp rcl_interfaces geometry_msgs nav_msgs std_msgs)
+  ament_add_gtest(test_velocity_control test/test_velocity_control.cpp)
+  target_link_libraries(test_velocity_control thruster_allocation)
   ament_add_gtest(test_allocation test/test_allocation.cpp)
   target_link_libraries(test_allocation thruster_allocation)
 endif()

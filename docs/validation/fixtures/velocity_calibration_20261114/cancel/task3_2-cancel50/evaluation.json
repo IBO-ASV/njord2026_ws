@@ -1,0 +1,125 @@
+{
+  "test_mode": "cancel",
+  "velocity_tracking": {
+    "available": true,
+    "frame": "base_link",
+    "active_samples": 796,
+    "stale_command_samples": 0,
+    "rmse": {
+      "u": 0.027676893913725336,
+      "v": 0.009877017460341128,
+      "r": 0.04614583867127044
+    },
+    "p95_absolute_error": {
+      "u": 0.0708778183946639,
+      "v": 0.02073394996293747,
+      "r": 0.09334026184519695
+    },
+    "note": "Includes acceleration, braking and turns; independent step/sweep criteria qualify the low-level controller."
+  },
+  "task": "task3_2",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 9,
+  "action_result_code": 1,
+  "waypoints_visited": 3,
+  "waypoints_total": 4,
+  "minimum_buoy_clearance_m": null,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [
+    5.0
+  ],
+  "other_ship_clearance_m": null,
+  "opponent_selected": false,
+  "max_starboard_offset_m": 0.0,
+  "cpa_astern": null,
+  "gates_passed": [],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 0,
+  "enabled_wall_cloud_seen": false,
+  "dock_contact_samples": 0,
+  "docking_simultaneous_translation_yaw_samples": {
+    "stage_2": 165,
+    "stage_3": 0
+  },
+  "cardinal_passages": {},
+  "final_stationary_s": 0.0,
+  "samples": 1020,
+  "events": [
+    {
+      "t": 3.6375230879639275,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.035200710990466,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.063156184973195,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 10.108560496999417,
+      "state": 5,
+      "stage": "stage_1_gate",
+      "message": "sending docking stage_1_gate",
+      "inhibit": []
+    },
+    {
+      "t": 10.189387357968371,
+      "state": 5,
+      "stage": "stage_1",
+      "message": "sending docking stage_1",
+      "inhibit": []
+    },
+    {
+      "t": 41.07830756000476,
+      "state": 5,
+      "stage": "stage_2",
+      "message": "sending docking stage_2",
+      "inhibit": []
+    },
+    {
+      "t": 50.01780387398321,
+      "state": 7,
+      "stage": "stage_2",
+      "message": "cancellation requested",
+      "inhibit": []
+    },
+    {
+      "t": 50.033325614989735,
+      "state": 0,
+      "stage": "",
+      "message": "docking task canceled",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

@@ -61,7 +61,7 @@ class Environment(Node):
         self.noise = self.declare_parameter("noise", False).value
         self.dropout_after = self.declare_parameter("dropout_after", 0.0).value
         self.seed = self.declare_parameter("seed", 2026).value
-        self.model = self.declare_parameter("model", "kinematic").value
+        self.model = self.declare_parameter("model", "mmg").value
         self.encounter = self.declare_parameter("encounter", "head_on").value
         self.external_force = self.declare_parameter("disturbance", False).value
         self.rng = random.Random(self.seed)

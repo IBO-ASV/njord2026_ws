@@ -2,6 +2,7 @@
 #define THRUSTER_DRIVER_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
+#include "thruster_driver/velocity_control.hpp"
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
 
 #include <geometry_msgs/msg/twist.hpp>
@@ -90,6 +91,9 @@ private:
   double feedback_timeout_sec_{0.5};
   bool stop_on_feedback_timeout_{true};
 
+  VelocityControl velocity_control_;
+  double reference_tau_{0.0};
+  VelocityControl::Axes ki_{};
   double kp_surge_{1.0};
   double kp_sway_{1.0};
   double kp_yaw_{1.0};

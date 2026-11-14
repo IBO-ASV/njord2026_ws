@@ -1,0 +1,80 @@
+thruster_driver_node:
+  ros__parameters:
+    allocation.regularization_lambda: 0.0001
+    allocation.wrench_sign:
+    - 1.0
+    - 1.0
+    - 1.0
+    control.dob.enable: false
+    control.dob.filter_tau_sec: 0.1
+    control.dob.observer_gain: 1.0
+    control.feedback_timeout_sec: 0.5
+    control.max_surge_wrench: 145.7
+    control.max_sway_wrench: 145.7
+    control.max_yaw_wrench: 206.0
+    control.nominal.damping.linear.surge: 0.2
+    control.nominal.damping.linear.sway: 0.2
+    control.nominal.damping.linear.yaw: 0.02
+    control.nominal.damping.quadratic.surge: 0.0
+    control.nominal.damping.quadratic.sway: 0.0
+    control.nominal.damping.quadratic.yaw: 0.0
+    control.nominal.iz: 1.5
+    control.nominal.mass: 24.0
+    control.p.surge: 28.29
+    control.p.sway: 28.29
+    control.p.yaw: 12.17
+    control.rate_hz: 50.0
+    control.stop_on_feedback_timeout: true
+    control.use_velocity_feedback: true
+    duty_resolution: 1000
+    input_mode: cmd_vel
+    input_scaling.max_angular_z: 1.0
+    input_scaling.max_linear_x: 1.1
+    input_scaling.max_linear_y: 1.0
+    safety.watchdog_timeout_sec: 0.5
+    static_map.deadzone_neg: 0.0
+    static_map.deadzone_pos: 0.0
+    static_map.thrusters.forward_gain:
+    - 0.6543085831515417
+    - 0.7121308747623448
+    - 0.7923832786620242
+    - 0.7569213207496318
+    static_map.thrusters.offset:
+    - 0.0
+    - 0.0
+    - 0.0
+    - 0.0
+    static_map.thrusters.reverse_gain:
+    - 0.8734694491870161
+    - 0.8761045938954182
+    - 1.0
+    - 0.9367826448373707
+    thrusters.angle_rad:
+    - 2.356194
+    - -2.356194
+    - 0.785398
+    - -0.785398
+    thrusters.ids:
+    - RR
+    - RL
+    - FR
+    - FL
+    thrusters.links:
+    - thruster_RR
+    - thruster_RL
+    - thruster_FR
+    - thruster_FL
+    thrusters.max_thrust:
+    - 100.0
+    - 100.0
+    - 100.0
+    - 100.0
+    thrusters.reverse:
+    - true
+    - false
+    - false
+    - true
+    topics.cmd_vel: cmd_vel
+    topics.duty_array: thruster_command
+    topics.feedback_odometry: /odometry/filtered/local
+    topics.sim_thruster_command: /thruster_command

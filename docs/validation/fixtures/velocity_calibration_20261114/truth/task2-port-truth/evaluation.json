@@ -1,0 +1,102 @@
+{
+  "test_mode": "none",
+  "velocity_tracking": {
+    "available": true,
+    "frame": "base_link",
+    "active_samples": 798,
+    "stale_command_samples": 0,
+    "rmse": {
+      "u": 0.06212341764474417,
+      "v": 0.010156714121787288,
+      "r": 0.07093714417112056
+    },
+    "p95_absolute_error": {
+      "u": 0.1373153203040943,
+      "v": 0.02072921027083685,
+      "r": 0.14495658242995757
+    },
+    "note": "Includes acceleration, braking and turns; independent step/sweep criteria qualify the low-level controller."
+  },
+  "task": "task2",
+  "final_output": {
+    "surge": 0.0,
+    "sway": 0.0,
+    "yaw": 0.0
+  },
+  "final_inhibit_reasons": [
+    "no active task control policy"
+  ],
+  "passed": true,
+  "reason": "mission terminal",
+  "mission_result": 8,
+  "action_result_code": 0,
+  "waypoints_visited": 2,
+  "waypoints_total": 2,
+  "minimum_buoy_clearance_m": 1.1351936765212447,
+  "stationary_dwell_s": {},
+  "required_dwell_s": [],
+  "other_ship_clearance_m": 3.6352677057518687,
+  "opponent_selected": true,
+  "max_starboard_offset_m": 0.003672151170930338,
+  "cpa_astern": true,
+  "gates_passed": [
+    0,
+    1
+  ],
+  "wall_enabled_seen": false,
+  "wall_disabled_seen": true,
+  "maximum_wall_points": 0,
+  "enabled_wall_cloud_seen": false,
+  "dock_contact_samples": 0,
+  "docking_simultaneous_translation_yaw_samples": null,
+  "cardinal_passages": {},
+  "final_stationary_s": 2.351226614031475,
+  "samples": 943,
+  "events": [
+    {
+      "t": 10.031341666996013,
+      "state": 0,
+      "stage": "",
+      "message": "",
+      "inhibit": [
+        "control state unavailable"
+      ]
+    },
+    {
+      "t": 13.234299039992038,
+      "state": 2,
+      "stage": "project_waypoints",
+      "message": "projecting latitude/longitude waypoint coordinates",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 13.245378881983925,
+      "state": 4,
+      "stage": "permission",
+      "message": "waiting for AUTO permission before starting Nav2",
+      "inhibit": [
+        "no active task control policy"
+      ]
+    },
+    {
+      "t": 13.344666926015634,
+      "state": 5,
+      "stage": "navigate",
+      "message": "Task 2 MPPI FollowPath gate enabled",
+      "inhibit": []
+    },
+    {
+      "t": 53.99872501002392,
+      "state": 0,
+      "stage": "",
+      "message": "Task 2 FollowPath goal reached",
+      "inhibit": []
+    }
+  ],
+  "evaluation_limits": [
+    "synthetic perception; not image recognition accuracy",
+    "MMG qualification is separate from kinematic runs"
+  ]
+}

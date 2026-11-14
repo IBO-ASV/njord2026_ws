@@ -134,6 +134,11 @@ def launch(context):
 
         nodes.extend(task2_nodes(directory, seed))
     if model == "mmg":
+        import shutil
+        plant_config = LaunchConfiguration("mmg_config").perform(context) or str(Path(share("dutyed_tf_pub_with_disturbance"))/"config/node_config.yaml")
+        controller_config = LaunchConfiguration("velocity_control_config").perform(context)
+        shutil.copyfile(plant_config, Path(directory)/"mmg.yaml")
+        shutil.copyfile(controller_config, Path(directory)/"velocity_control.yaml")
         description = (
             Path(share("robot")) / "urdf/robot.urdf_modified.urdf"
         ).read_text()
@@ -143,10 +148,7 @@ def launch(context):
                     package="dutyed_tf_pub_with_disturbance",
                     executable="dutyed_tf_pub_with_disturbance_node",
                     parameters=[
-                        str(
-                            Path(share("dutyed_tf_pub_with_disturbance"))
-                            / "config/node_config.yaml"
-                        ),
+                        plant_config,
                         {
                             "publish_tf": False,
                             "topic_odom": "/sim/physics/odom",
@@ -170,6 +172,7 @@ def launch(context):
                     executable="thruster_driver_node",
                     parameters=[
                         str(Path(share("thruster_driver")) / "config/config.yaml"),
+                        controller_config,
                         {
                             "robot_description": description,
                             "control.dob.enable": False,
@@ -189,7 +192,7 @@ def generate_launch_description():
         [
             DeclareLaunchArgument("task", default_value="task1", choices=list(TASKS)),
             DeclareLaunchArgument(
-                "model", default_value="kinematic", choices=["kinematic", "mmg"]
+                "model", default_value="mmg", choices=["kinematic", "mmg"]
             ),
             DeclareLaunchArgument(
                 "noise", default_value="false", choices=["false", "true"]
@@ -198,6 +201,8 @@ def generate_launch_description():
             DeclareLaunchArgument("disturbance", default_value="false"),
             DeclareLaunchArgument("encounter", default_value="head_on"),
             DeclareLaunchArgument("config_dir", default_value=""),
+            DeclareLaunchArgument("mmg_config", default_value=""),
+            DeclareLaunchArgument("velocity_control_config", default_value=str(Path(share("njord_sim"))/"config/velocity_control.yaml")),
             DeclareLaunchArgument(
                 "foxglove", default_value="true", choices=["true", "false"]
             ),

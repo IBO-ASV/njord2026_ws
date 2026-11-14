@@ -69,6 +69,15 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
   kp_surge_ = this->declare_parameter<double>("control.p.surge", 1.0);
   kp_sway_ = this->declare_parameter<double>("control.p.sway", 1.0);
   kp_yaw_ = this->declare_parameter<double>("control.p.yaw", 1.0);
+  reference_tau_ = this->declare_parameter<double>("control.reference_tau_sec", 0.0);
+  if (!std::isfinite(reference_tau_) || reference_tau_ < 0) throw std::runtime_error("invalid reference filter");
+  ki_ = {
+    this->declare_parameter<double>("control.i.surge", 0.0),
+    this->declare_parameter<double>("control.i.sway", 0.0),
+    this->declare_parameter<double>("control.i.yaw", 0.0)};
+  for (double gain : ki_) {
+    if (!std::isfinite(gain) || gain < 0) throw std::runtime_error("integral gains must be finite and nonnegative");
+  }
   max_surge_wrench_ = std::max(
     1.0, this->declare_parameter<double>("control.max_surge_wrench", 1.0));
   max_sway_wrench_ = std::max(
@@ -111,8 +120,6 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
   deadzone_pos_ = this->declare_parameter<double>("static_map.deadzone_pos", 0.0);
   deadzone_neg_ = this->declare_parameter<double>("static_map.deadzone_neg", 0.0);
 
-  parameter_callback_handle_ = this->add_on_set_parameters_callback(
-    std::bind(&ThrusterDriverNode::onSetParameters, this, std::placeholders::_1));
 
   duty_resolution_ = this->declare_parameter<int>("duty_resolution", 1000);
 
@@ -164,6 +171,9 @@ ThrusterDriverNode::ThrusterDriverNode(const rclcpp::NodeOptions & options)
   } else {
     throw std::runtime_error("input_mode must be 'cmd_vel' or 'duty_array'");
   }
+
+  parameter_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&ThrusterDriverNode::onSetParameters, this, std::placeholders::_1));
 
   RCLCPP_INFO(
     this->get_logger(),
@@ -225,6 +235,7 @@ void ThrusterDriverNode::controlTimerCallback()
 
   if (cmd_timeout || (feedback_timeout && stop_on_feedback_timeout_)) {
     publishCommands(std::vector<double>(thrusters_.size(), 0.0));
+    velocity_control_.reset();
     have_prev_meas_ = false;
     prev_wrench_ = {0.0, 0.0, 0.0};
     return;
@@ -241,6 +252,12 @@ void ThrusterDriverNode::controlTimerCallback()
     commands[i] = applyStaticMap(commands[i], thrusters_[i]);
   }
 
+  std::vector<ThrusterGeometry> geometry;
+  for (const auto & t : thrusters_) geometry.push_back({t.x, t.y, t.angle_rad, t.max_thrust, t.reverse});
+  const auto achieved = commandToWrench(geometry, commands);
+  velocity_control_.trackApplied(
+    {wrench[0], wrench[1], wrench[2]},
+    {achieved[0]*allocation_wrench_sign_[0], achieved[1]*allocation_wrench_sign_[1], achieved[2]*allocation_wrench_sign_[2]}, dt, ki_);
   publishCommands(commands);
   prev_wrench_ = wrench;
 }
@@ -449,10 +466,11 @@ std::vector<double> ThrusterDriverNode::computeWrench(double dt)
   const double ref_sway = clamp(latest_cmd_.linear.y, -max_linear_y_, max_linear_y_);
   const double ref_yaw = clamp(latest_cmd_.angular.z, -max_angular_z_, max_angular_z_);
 
-  std::vector<double> wrench = {
-    kp_surge_ * (ref_surge - meas_surge_),
-    kp_sway_ * (ref_sway - meas_sway_),
-    kp_yaw_ * (ref_yaw - meas_yaw_)};
+  const auto regulated = velocity_control_.step(
+    {ref_surge, ref_sway, ref_yaw}, {meas_surge_, meas_sway_, meas_yaw_}, dt,
+    {kp_surge_, kp_sway_, kp_yaw_}, ki_,
+    {max_surge_wrench_, max_sway_wrench_, max_yaw_wrench_}, reference_tau_);
+  std::vector<double> wrench(regulated.begin(), regulated.end());
 
   if (dob_enable_ && have_prev_meas_) {
     const std::vector<double> meas = {meas_surge_, meas_sway_, meas_yaw_};

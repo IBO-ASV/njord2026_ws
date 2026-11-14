@@ -1,0 +1,44 @@
+dutyed_tf_pub_with_disturbance_node:
+  ros__parameters:
+    update_rate_hz: 50.0
+    topic_thruster_command: "/thruster_command"
+    topic_odom: "/odom"
+
+    frame_world: "world"
+    frame_map: "map"
+    frame_odom: "odom"
+    frame_base_link: "base_link"
+
+    map_offset_xyyaw: [0.0, 0.0, 0.0]
+    odom_offset_xyyaw: [0.0, 0.0, 0.0]
+
+    # /thruster_command is Float32MultiArray[RR, RL, FR, FL] in Newton.
+    # Match thruster_driver.thrusters.reverse: the two port-side actuators
+    # are electrically reversed, so their command signs must be converted
+    # back before they are applied as physical forces in the simulator.
+    thruster_force_sign: [1.0, -1.0, 1.0, -1.0]
+
+    mmg:
+      Lpp: 1.0
+      D: 0.25
+      mass_kg: 10.0
+      I_zG: 1.5
+      x_G: 0.0
+      m_x: 1.0
+      m_y: 10.0
+      J_z: 1.5
+      R_0: -0.2
+      Y_0: 0.001
+      Y_v: -0.2
+      Y_r: 0.02
+      N_0: 0.001
+      N_v: -0.2
+      N_r: -0.02
+
+    disturbance:
+      natural_frequency_hz: 0.18
+      damping_ratio: 0.8
+      sigma_u: 0.12
+      sigma_v: 0.12
+      sigma_r: 0.04
+      seed: 2026

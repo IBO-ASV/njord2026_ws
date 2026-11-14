@@ -12,6 +12,7 @@ find_package(nav_msgs REQUIRED)
 find_package(tf2 REQUIRED)
 find_package(tf2_ros REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(thruster_driver REQUIRED)
 
 add_library(${PROJECT_NAME}_models SHARED
   src/t200_model.cpp
@@ -45,8 +46,13 @@ add_executable(${PROJECT_NAME}_node src/main.cpp)
 target_link_libraries(${PROJECT_NAME}_node ${PROJECT_NAME}_node_component)
 ament_target_dependencies(${PROJECT_NAME}_node rclcpp)
 
+add_executable(velocity_benchmark src/velocity_benchmark.cpp)
+target_link_libraries(velocity_benchmark ${PROJECT_NAME}_models)
+ament_target_dependencies(velocity_benchmark rclcpp thruster_driver)
+
 install(
   TARGETS
+    velocity_benchmark
     ${PROJECT_NAME}_models
     ${PROJECT_NAME}_node_component
     ${PROJECT_NAME}_node
@@ -65,7 +71,6 @@ install(DIRECTORY launch config
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
-  find_package(thruster_driver REQUIRED)
   ament_add_gtest(test_thruster_mmg_consistency test/test_thruster_mmg_consistency.cpp)
   target_link_libraries(test_thruster_mmg_consistency ${PROJECT_NAME}_models)
   ament_target_dependencies(test_thruster_mmg_consistency thruster_driver)
