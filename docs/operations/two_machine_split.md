@@ -240,6 +240,17 @@ ros2 launch robot jetson_bringup.launch.py glim_backend:=cpu
 
 Jetson と miniPC は有線で直結（またはスイッチ経由）する。Livox MID360S は Jetson 側の別 NIC に繋ぐ（host `192.168.1.5` / LiDAR `192.168.1.114`、`src/bringup/robot/config/livox/MID360S_jetson_config.json`）。miniPC から MID360S を起動する場合は `MID360S_minipc_config.json`（host `192.168.1.2`）を使用する。
 
+### Wi-Fi（管理・Internet用）
+
+Wi-FiのIPv4はDHCPで運用でき、固定IPは必須ではない。AGXのLiDAR用有線IP
+`192.168.1.5/24`とは区別する。AGX専用DDS設定`cyclonedds_agx.xml`は有線側の
+`192.168.1.0/24`を選ぶため、Wi-FiをDHCPにしてもDDSが自動的にWi-Fi経由になるわけではない。
+Wi-FiのIPを固定したい場合も、ルータ側でのDHCP予約を利用できる。
+
+SSHやFoxgloveを`.local`名で利用する場合、名前解決の成功と接続先IPへの到達性は別に確認する。
+複数NICを持つ機器では、SSHの`-vv`出力にある実際の接続先IPを確認し、同じIPを直接指定して
+比較する。Wi-Fi用IP、有線センサー用IP、Docker/USB用IPを混同しない。
+
 Wi-Fi を固定IPにしつつ Internet 接続を維持するには、DHCP 接続中の gateway/DNS を引き継ぐ。
 NetworkManager 環境では各機で次を実行する（接続中のSSID/認証情報は維持する）。
 
