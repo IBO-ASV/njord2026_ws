@@ -173,35 +173,35 @@ LampDisplay AlertLampManager::displayFor(AlertState state, const SystemStatus & 
       return status.mode == OperatingMode::MANUAL ?
              ground_link_lost_manual_display_ : ground_link_lost_auto_display_;
     case AlertState::CRITICAL_FAULT: {
-      auto display = critical_fault_display_;
-      std::ostringstream reasons;
-      auto add = [&reasons](const std::string & reason) {
-          if (reasons.tellp() > 0) {reasons << "; ";}
-          reasons << reason;
-        };
-      if (status.emergency_stop) {add("emergency stop active");}
-      if (!control_received_) {add("control state not received");}
-      if (!mission_received_) {add("mission status not received");}
-      if (!health_received_) {add("health state not received");}
-      if (health_received_) {
-        if (health_state_.summary_state == health_interfaces::msg::HealthState::ERROR) {
-          bool found = false;
-          for (const auto & signal : health_state_.signals) {
-            if (signal.state == health_interfaces::msg::HealthSignal::ERROR) {
-              add("health error: " + signal.name + " (" + signal.message + ")");
-              found = true;
+        auto display = critical_fault_display_;
+        std::ostringstream reasons;
+        auto add = [&reasons](const std::string & reason) {
+            if (reasons.tellp() > 0) {reasons << "; ";}
+            reasons << reason;
+          };
+        if (status.emergency_stop) {add("emergency stop active");}
+        if (!control_received_) {add("control state not received");}
+        if (!mission_received_) {add("mission status not received");}
+        if (!health_received_) {add("health state not received");}
+        if (health_received_) {
+          if (health_state_.summary_state == health_interfaces::msg::HealthState::ERROR) {
+            bool found = false;
+            for (const auto & signal : health_state_.signals) {
+              if (signal.state == health_interfaces::msg::HealthSignal::ERROR) {
+                add("health error: " + signal.name + " (" + signal.message + ")");
+                found = true;
+              }
             }
+            if (!found) {add("health state error: " + health_state_.message);}
+          } else if (health_state_.summary_state == health_interfaces::msg::HealthState::UNKNOWN ||
+            health_state_.summary_state == health_interfaces::msg::HealthState::STALE)
+          {
+            add("health state unknown or stale: " + health_state_.message);
           }
-          if (!found) {add("health state error: " + health_state_.message);}
-        } else if (health_state_.summary_state == health_interfaces::msg::HealthState::UNKNOWN ||
-          health_state_.summary_state == health_interfaces::msg::HealthState::STALE)
-        {
-          add("health state unknown or stale: " + health_state_.message);
         }
+        if (!reasons.str().empty()) {display.reason = reasons.str();}
+        return display;
       }
-      if (!reasons.str().empty()) {display.reason = reasons.str();}
-      return display;
-    }
   }
   return critical_fault_display_;
 }
