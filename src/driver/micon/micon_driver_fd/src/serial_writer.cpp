@@ -367,10 +367,10 @@ void SerialWriter::publish_safety_state()
     relay_active = relay_active_;
   }
   pub_relay_active_->publish(std_msgs::msg::Bool().set__data(relay_active));
-  // GPIO15 follows relay state; it is not an independent physical E-stop input.
-  // A commanded soft stop has priority, because it can itself change relay state.
+  // GPIO15 is relay telemetry, not an independent physical E-stop input.
+  // Do not use it to inhibit control until the hardware signal is verified.
   const auto state = soft_emg ? EmergencyStopState::SOFT_EMG :
-    relay_active ? EmergencyStopState::HARD_EMG : EmergencyStopState::RUNNING;
+    EmergencyStopState::RUNNING;
   pub_safety_emergency_->publish(
     std_msgs::msg::UInt8().set__data(
       static_cast<uint8_t>(state)));
