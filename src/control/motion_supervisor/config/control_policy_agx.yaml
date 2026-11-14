@@ -1,0 +1,55 @@
+# 1. ここが AUTO を許可するか否かを決める唯一の場所。true の項目が1つでも満たされなければ AUTO は出ない。
+# 2. false にしても監視は止まらない。信号の一覧と閾値は diagnostic_monitors/config/heartbeat/*.yaml が持つ。
+# 3. キーの過不足・型違い・重複キー・health_signals に無い信号の要求は、すべて起動時エラーで落ちる。
+#
+control_policy:
+  # このポリシーが参照してよい health signal 名。heartbeat inventory に実在する名前のみ。
+  health_signals:
+    - ground_station_heartbeat  # 地上局からの生存信号 (/heartbeat/ground_station)
+    - local_odometry            # ローカル自己位置 (/odometry/filtered/local)
+    - gnss                      # GNSS 測位 (/sensor/vehicle_gnss/fix/raw)
+
+  # 全タスク共通の要求。タスク側キーとマージされ、タスク側が優先される。
+  common:
+    require_emergency_stop_clear: true    # 非常停止が解除されていること
+    require_nav2_ready: false              # Nav2 のアクションサーバが利用可能であること
+    require_task_ready: false              # Mission Manager がタスク準備完了を報告していること
+    # Nav 指令の鮮度は Command Arbiter の出力ゲートで判定する。
+    nav_command_timeout_sec: 2.0          # 出力の鮮度判定閾値（秒、正数のみ）
+    require_ground_station: false         # ground_station_heartbeat が OK であること
+    require_driver_heartbeat: false       # driver_heartbeat が OK であること
+    require_localization_heartbeat: false # local_odometry が OK であること
+    require_rtk_fix: false                # gnss が OK であること
+    require_no_critical_health_fault: false  # 重大 health fault が出ていないこと
+
+  # タスク別の追加要求。ground station requirementと4つのタスク要件を
+  # 各ポリシーに明記する（省略不可）。
+  task1:
+    require_ground_station: false
+    require_waypoint_plan: true       # 有効なウェイポイント経路が読み込まれていること
+    require_collision_monitor: false  # Nav2 Collision Monitor が有効であること
+    require_buoy_perception: true    # ブイ認識が出力していること
+    require_dynamic_gate_tf: false    # 動的ゲート中点の TF が出ていること
+
+  task2:
+    require_ground_station: true
+    require_waypoint_plan: true
+    require_collision_monitor: false
+    require_buoy_perception: false
+    require_dynamic_gate_tf: false
+
+  task3:
+    require_ground_station: true
+    require_waypoint_plan: true
+    require_collision_monitor: true
+    require_buoy_perception: true
+    require_dynamic_gate_tf: false
+
+  # Ground link loss cannot permit normal AUTO continuation.  This dedicated
+  # policy is used only after the timed GNSS/compass return-home failsafe gate.
+  return_home:
+    require_ground_station: false
+    require_waypoint_plan: true
+    require_collision_monitor: false
+    require_buoy_perception: false
+    require_dynamic_gate_tf: false

@@ -1,0 +1,25 @@
+# Health signals observed by the Jetson role.
+role: jetson
+signals:
+  # front_camera:
+  #   topic: /zed2i/left/image_rect
+  #   type: sensor_msgs/msg/Image
+  #   timeout_sec: 1.0
+  #   expected_frequency_hz: 30.0
+  #   enabled: true
+
+  lidar_points:
+    topic: /livox/lidar
+    type: sensor_msgs/msg/PointCloud2
+    timeout_sec: 1.0
+    expected_frequency_hz: 10.0
+    minimum_frequency_hz: 8.0
+    enabled: true
+
+  lidar_imu:
+    topic: /livox/imu
+    type: sensor_msgs/msg/Imu
+    timeout_sec: 1.0
+    expected_frequency_hz: 200.0
+    minimum_frequency_hz: 150.0
+    enabled: true

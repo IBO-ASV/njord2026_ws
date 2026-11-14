@@ -746,7 +746,7 @@ def test_bringups_start_role_owned_health_monitors():
     assert '"role": LaunchConfiguration("heartbeat_role")' in minipc_source
     assert '"config",' in heartbeat_source
     assert '"heartbeat",' in heartbeat_source
-    assert 'f"{role}.yaml"' in heartbeat_source
+    assert 'f"{inventory_name or role}.yaml"' in heartbeat_source
     assert '"/health/signals/{role}"' in heartbeat_source
     assert '"/health/state" if role in ("minipc", "agx")' in heartbeat_source
     assert 'executable="heartbeat_aggregator_node"' in heartbeat_source
@@ -755,6 +755,16 @@ def test_bringups_start_role_owned_health_monitors():
     assert '"heartbeat_monitor_lidar"' in heartbeat_source
     assert "heartbeat_monitor_" not in minipc_source
     assert "enable_heartbeats" not in minipc_source
+
+
+def test_agx_uses_its_own_vessel_core_and_configs():
+    agx = _read_launch_source("agx_bringup.launch.py")
+    core = _read_launch_source("agx_core.launch.py")
+    assert "'agx_core.launch.py'" in agx
+    assert "'minipc_bringup.launch.py'" not in agx
+    for config in ("config_agx.yaml", "robot_agx.urdf_modified.urdf",
+                   "joy_converter_agx.yaml", "control_policy_agx.yaml", "status_lights_agx.yaml"):
+        assert config in core
 
 
 def test_back_camera_sender_defaults_match_front_ground_video_rate_and_size():

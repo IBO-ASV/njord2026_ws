@@ -19,12 +19,12 @@ from launch_ros.actions import Node
 _ROLES = ("minipc", "agx", "jetson", "groundpc")
 
 
-def _load_inventory(role):
+def _load_inventory(role, inventory_name=None):
     config_path = os.path.join(
         get_package_share_directory("diagnostic_monitors"),
         "config",
         "heartbeat",
-        f"{role}.yaml",
+        f"{inventory_name or role}.yaml",
     )
     try:
         with open(config_path, encoding="utf-8") as config_file:
@@ -154,7 +154,10 @@ def _launch_setup(context, *args, **kwargs):
     if role not in _ROLES:
         raise RuntimeError(f"Unknown heartbeat role: {role!r}")
 
-    signals, aggregates = _load_inventory(role)
+    inventory_name = LaunchConfiguration("inventory_name").perform(context).strip()
+    if inventory_name not in ("", "agx_sensors") or (inventory_name and role != "jetson"):
+        raise RuntimeError("Invalid heartbeat inventory override for role")
+    signals, aggregates = _load_inventory(role, inventory_name or None)
     # These arguments remain accepted for compatibility with existing Jetson
     # bringup files.  The inventory still records all signals; disabling a
     # legacy branch only suppresses its monitor process for that launch.
@@ -202,6 +205,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             DeclareLaunchArgument("role", choices=list(_ROLES), default_value="minipc"),
+            DeclareLaunchArgument("inventory_name", default_value=""),
             DeclareLaunchArgument("heartbeat_monitor_zed2i", default_value="true"),
             DeclareLaunchArgument("heartbeat_monitor_lidar", default_value="true"),
             OpaqueFunction(function=_launch_setup),

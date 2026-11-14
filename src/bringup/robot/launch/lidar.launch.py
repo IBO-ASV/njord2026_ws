@@ -27,6 +27,8 @@ LIDAR_MODEL_TO_CONFIG_FILE = {
 def launch_setup(context, *args, **kwargs):
     lidar_model = LaunchConfiguration("lidar_model").perform(context)
     config_file = LIDAR_MODEL_TO_CONFIG_FILE[lidar_model]
+    if LaunchConfiguration("lidar_config_role").perform(context) == "agx":
+        config_file = {"mid360": "MID360_agx_config.json", "mid360s": "MID360S_agx_config.json"}[lidar_model]
     enable_buoy_detection = (
         LaunchConfiguration("enable_buoy_detection").perform(context).lower()
         in ("true", "1", "yes", "on")
@@ -205,6 +207,7 @@ def generate_launch_description():
                 default_value="mid360s",
                 choices=["mid360", "mid360s"],
             ),
+            DeclareLaunchArgument("lidar_config_role", default_value="jetson", choices=["jetson", "agx"]),
             DeclareLaunchArgument(
                 "lidar_source",
                 default_value="driver",

@@ -1,5 +1,8 @@
 # AGX vessel + ground Jetson startup
 
+この構成は Ground PC（地上に置いた Jetson を含む）と船載 AGX の2端末であり、船載 miniPC は使用しません。
+船載 miniPC と Jetson Orin Nano を使う3端末構成は [別の手順](two_machine_split.md) です。
+
 2026-11-13: AGXのFoxglove bridgeは標準で8767に起動します。
 [現在のbridgeとserial watchdogの説明](foxglove_and_serial_watchdog.md)を参照。以下の記録は2026-10-13時点です。
 

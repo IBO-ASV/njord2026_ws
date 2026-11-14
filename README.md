@@ -9,7 +9,13 @@
 
 # 環境について
 
-## 端末構成（Jetson / miniPC 2台）
+## 端末構成
+
+実機運用には別々の構成がある。AGX構成は **Ground PC + 船載AGXの2端末**で、miniPCは使用しない。
+分割構成は **Ground PC + 船載miniPC + 船載Jetson Orin Nanoの3端末**である。
+以下の「Jetson / miniPC 2台」は分割構成の船載計算機2台を指し、Ground PCは含まない。
+
+### 船載分割構成（Jetson / miniPC）
 
 このワークスペースは **Jetson（ZED 2i + Livox MID360S の処理のみ）** と **miniPC（それ以外すべて）** の 2 台構成を前提にしている。同一ソースツリーが両方でビルドできるよう、CUDA / TensorRT / ZED SDK / ROS distro の有無をビルド時に自動検出して依存とリンク先を切り替える。
 

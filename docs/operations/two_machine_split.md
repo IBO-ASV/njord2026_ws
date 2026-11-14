@@ -1,5 +1,9 @@
 # Jetson / miniPC / Ground PC 構成
 
+この構成は Ground PC、船載 miniPC、船載 Jetson Orin Nano の3端末を使う。
+AGX構成は Ground PC と船載 AGX の2端末であり、miniPC と船載 Jetson は使用しない。
+本文の「2台」は船載 miniPC と Jetson の2台を指す。
+
 ## なぜ分割したか
 
 Jetson Orin Nano Super 1台で全ノードを動かしていた構成は、実測で GPU 95-99%、RAM 5.9/7.3 GiB まで飽和し、各ノードの更新周期が落ちていた（`README.md` の 2026-07-17 実機テスト記録を参照）。
