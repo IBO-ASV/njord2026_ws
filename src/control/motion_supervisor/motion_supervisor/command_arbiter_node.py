@@ -7,7 +7,7 @@ from geometry_msgs.msg import Twist
 from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
-from std_msgs.msg import String
+from std_msgs.msg import Bool, String
 from sensor_msgs.msg import Joy
 
 from control_interfaces.msg import ControlState
@@ -34,15 +34,20 @@ class CommandArbiter(Node):
         self._state: ControlState | None = None
         self._manual_command = Twist()
         self._nav_command = Twist()
+        self._tuning_command = Twist()
+        self._tuning_active = False
         self._sbus_command = Twist()
         self._manual_received_ns: int | None = None
         self._nav_received_ns: int | None = None
+        self._tuning_received_ns: int | None = None
         self._sbus_received_ns: int | None = None
         self._command_pub = self.create_publisher(Twist, "/cmd_vel", 10)
         self._control_status_pub = self.create_publisher(String, "/system/control_status", TRANSIENT_QOS)
         self.create_subscription(ControlState, "/control/state", self._on_state, TRANSIENT_QOS)
         self.create_subscription(Twist, "/cmd_vel_manual", self._on_manual, 10)
         self.create_subscription(Twist, "/cmd_vel_nav", self._on_nav, 10)
+        self.create_subscription(Twist, "/cmd_vel_tune", self._on_tune, 10)
+        self.create_subscription(Bool, "/control/tuning_active", self._on_tuning_active, 10)
         self.create_subscription(Twist, "/cmd_vel_sbus", self._on_sbus, 10)
         self.create_subscription(Joy, "/sbus/joy", self._on_sbus_joy, 10)
         self.create_timer(self._publish_period_sec, self._publish_command)
@@ -61,6 +66,13 @@ class CommandArbiter(Node):
     def _on_nav(self, message: Twist) -> None:
         self._nav_command = message
         self._nav_received_ns = self.get_clock().now().nanoseconds
+
+    def _on_tune(self, message: Twist) -> None:
+        self._tuning_command = message
+        self._tuning_received_ns = self.get_clock().now().nanoseconds
+
+    def _on_tuning_active(self, message: Bool) -> None:
+        self._tuning_active = bool(message.data)
 
     def _on_sbus(self, message: Twist) -> None:
         self._sbus_command = message
@@ -83,11 +95,15 @@ class CommandArbiter(Node):
             manual_command_fresh=self._fresh(self._manual_received_ns),
             nav_command_fresh=self._fresh(self._nav_received_ns),
             sbus_command_fresh=self._fresh(self._sbus_received_ns),
+            tuning_active=self._tuning_active,
+            tuning_command_fresh=self._fresh(self._tuning_received_ns),
         )
         if source == Source.MANUAL:
             self._command_pub.publish(self._manual_command)
         elif source == Source.AUTO:
             self._command_pub.publish(self._nav_command)
+        elif source == Source.TUNING:
+            self._command_pub.publish(self._tuning_command)
         elif source == Source.SBUS:
             age = (self.get_clock().now().nanoseconds - self._sbus_received_ns) / 1e9
             # Keep the existing ownership grace period, but never hold stale thrust.

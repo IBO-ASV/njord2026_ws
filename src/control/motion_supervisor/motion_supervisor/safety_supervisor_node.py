@@ -48,6 +48,8 @@ class SafetySupervisor(Node):
         self._health_summary_critical = False
         self._manual_received_ns: int | None = None
         self._nav_received_ns: int | None = None
+        self._tuning_active = False
+        self._tuning_received_ns: int | None = None
         self._sbus_received_ns: int | None = None
 
         self._requirements_pub = self.create_publisher(String, "/control/requirements", TRANSIENT_QOS)
@@ -63,6 +65,8 @@ class SafetySupervisor(Node):
         )
         self.create_subscription(Twist, "/cmd_vel_manual", self._on_manual_command, 10)
         self.create_subscription(Twist, "/cmd_vel_nav", self._on_nav_command, 10)
+        self.create_subscription(Twist, "/cmd_vel_tune", self._on_tune_command, 10)
+        self.create_subscription(Bool, "/control/tuning_active", self._on_tuning_active, 10)
         self.create_subscription(Twist, "/cmd_vel_sbus", self._on_sbus_command, 10)
         self.create_subscription(HealthState, "/health/state", self._on_health_state, TRANSIENT_QOS)
         self.create_timer(self._publish_period_sec, self._publish_state)
@@ -141,6 +145,9 @@ class SafetySupervisor(Node):
 
     def _publish_state(self) -> None:
         nav_fresh = self._fresh(self._nav_received_ns, self._policy.nav_command_timeout_sec)
+        tuning_fresh = self._tuning_active and self._fresh(
+            self._tuning_received_ns, self._policy.nav_command_timeout_sec)
+        nav_fresh = nav_fresh or tuning_fresh
         manual_fresh = self._fresh(self._manual_received_ns, self._policy.nav_command_timeout_sec)
         sbus_fresh = self._fresh(self._sbus_received_ns, self._policy.nav_command_timeout_sec)
         auto_permitted, reasons = self._decision()

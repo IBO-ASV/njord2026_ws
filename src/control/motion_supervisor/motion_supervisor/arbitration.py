@@ -9,6 +9,7 @@ class Source(IntEnum):
     ZERO = 0
     MANUAL = 1
     AUTO = 2
+    TUNING = 4
     SBUS = 3
 
 
@@ -34,6 +35,7 @@ def compatibility_control_status(*, emergency_stop: bool, requested_mode: int) -
 def derive_control_state(
     *, emergency_stop: bool, auto_requested: bool, auto_permitted: bool,
     manual_command_fresh: bool, nav_command_fresh: bool, sbus_command_fresh: bool = False,
+    tuning_active: bool = False, tuning_command_fresh: bool = False,
 ) -> tuple[State, Source]:
     """Derive canonical state; stale commands can never select a live source."""
     if emergency_stop:
@@ -52,6 +54,7 @@ def derive_control_state(
 def select_source(
     *, emergency_stop: bool, effective_source: int, auto_permitted: bool,
     manual_command_fresh: bool, nav_command_fresh: bool, sbus_command_fresh: bool = False,
+    tuning_active: bool = False, tuning_command_fresh: bool = False,
 ) -> Source:
     """Return the only source Command Arbiter is permitted to forward."""
     if emergency_stop:
@@ -60,6 +63,9 @@ def select_source(
         return Source.SBUS
     if effective_source == Source.MANUAL and manual_command_fresh:
         return Source.MANUAL
-    if effective_source == Source.AUTO and auto_permitted and nav_command_fresh:
-        return Source.AUTO
+    if effective_source == Source.AUTO and auto_permitted:
+        if tuning_active:
+            return Source.TUNING if tuning_command_fresh else Source.ZERO
+        if nav_command_fresh:
+            return Source.AUTO
     return Source.ZERO

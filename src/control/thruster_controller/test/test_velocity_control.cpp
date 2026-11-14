@@ -41,3 +41,30 @@ TEST(VelocityControl, ReferenceFilterLimitsInitialStepAndResets)
   c.reset();
   EXPECT_DOUBLE_EQ(c.step({0,0,0},{0,0,0},.02,{10,10,10},{0,0,0},{100,100,100},.15)[0],0.);
 }
+
+TEST(VelocityControl, FeedForwardMaintainsForceAtZeroVelocityError)
+{
+  VelocityControl c;
+  const auto output = c.step(
+    {1.0, 0.0, 0.0}, {1.0, 0.0, 0.0}, 0.02,
+    {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {20.0, 20.0, 20.0},
+    0.0, {7.5, 0.0, 0.0});
+  EXPECT_NEAR(output[0], 7.5, 1e-9);
+}
+
+TEST(VelocityControl, DerivativeOfMeasuredSpeedOpposesAcceleration)
+{
+  VelocityControl c;
+  c.step({0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, 0.02,
+    {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {20.0, 20.0, 20.0},
+    0.0, {}, {2.0, 0.0, 0.0});
+  const auto output = c.step({0.0, 0.0, 0.0}, {0.1, 0.0, 0.0}, 0.02,
+    {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {20.0, 20.0, 20.0},
+    0.0, {}, {2.0, 0.0, 0.0});
+  EXPECT_NEAR(output[0], -10.0, 1e-9);
+  c.reset();
+  const auto reset_output = c.step({0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, 0.02,
+    {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {20.0, 20.0, 20.0},
+    0.0, {}, {2.0, 0.0, 0.0});
+  EXPECT_NEAR(reset_output[0], 0.0, 1e-9);
+}

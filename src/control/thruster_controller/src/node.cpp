@@ -69,6 +69,16 @@ ThrusterControllerNode::ThrusterControllerNode(const rclcpp::NodeOptions & optio
   kp_surge_ = this->declare_parameter<double>("control.p.surge", 1.0);
   kp_sway_ = this->declare_parameter<double>("control.p.sway", 1.0);
   kp_yaw_ = this->declare_parameter<double>("control.p.yaw", 1.0);
+  kff_surge_ = this->declare_parameter<double>("control.ff.surge", 0.0);
+  kd_surge_ = this->declare_parameter<double>("control.d.surge", 0.0);
+  derivative_tau_ = this->declare_parameter<double>("control.d.filter_tau_sec", 0.15);
+  max_thruster_thrust_n_ = this->declare_parameter<double>(
+    "safety.max_thruster_thrust_n", 0.0);
+  if (!std::isfinite(derivative_tau_) || derivative_tau_ < 0.0 ||
+    !std::isfinite(max_thruster_thrust_n_) || max_thruster_thrust_n_ < 0.0)
+  {
+    throw std::runtime_error("invalid D filter or per-thruster force limit");
+  }
   reference_tau_ = this->declare_parameter<double>("control.reference_tau_sec", 0.0);
   if (!std::isfinite(reference_tau_) || reference_tau_ < 0) throw std::runtime_error("invalid reference filter");
   ki_ = {
@@ -251,6 +261,7 @@ void ThrusterControllerNode::controlTimerCallback()
   for (std::size_t i = 0; i < commands.size(); ++i) {
     commands[i] = applyStaticMap(commands[i], thrusters_[i]);
   }
+  limitThrusterCommands(commands);
 
   std::vector<ThrusterGeometry> geometry;
   for (const auto & t : thrusters_) geometry.push_back({t.x, t.y, t.angle_rad, t.max_thrust, t.reverse});
@@ -269,6 +280,7 @@ rcl_interfaces::msg::SetParametersResult ThrusterControllerNode::onSetParameters
   result.successful = false;
   const std::unordered_set<std::string> scalar_parameters = {
     "control.p.surge", "control.p.sway", "control.p.yaw",
+    "control.i.surge",
     "control.max_surge_wrench", "control.max_sway_wrench", "control.max_yaw_wrench",
     "input_scaling.max_linear_x", "input_scaling.max_linear_y",
     "input_scaling.max_angular_z", "static_map.deadzone_pos", "static_map.deadzone_neg"};
@@ -310,9 +322,23 @@ rcl_interfaces::msg::SetParametersResult ThrusterControllerNode::onSetParameters
       return result;
     }
     const bool deadzone = name.find("deadzone") != std::string::npos;
-    const bool is_gain = name.find("control.p.") == 0U;
+    const bool derivative_filter = name == "control.d.filter_tau_sec";
+    const bool thrust_limit = name == "safety.max_thruster_thrust_n";
+    if (thrust_limit) {
+      for (const auto & thruster : thrusters_) {
+        if (value > thruster.max_thrust) {
+          result.reason = "safety.max_thruster_thrust_n exceeds a configured thruster maximum";
+          return result;
+        }
+      }
+    }
+    const bool is_gain = name.find("control.p.") == 0U || name == "control.i.surge" ||
+      name.find("control.ff.") == 0U || name.find("control.d.") == 0U;
     if ((deadzone && (value < 0.0 || value >= 1.0)) ||
-      (!deadzone && (value <= 0.0 || value > (is_gain ? 1000.0 : 10000.0))))
+      (derivative_filter && (value < 0.0 || value > 10.0)) ||
+      (thrust_limit && (value < 0.0 || value > 1000.0)) ||
+      (!deadzone && !derivative_filter && !thrust_limit &&
+      (value < 0.0 || value > (is_gain ? 1000.0 : 10000.0))))
     {
       result.reason = name + " is outside its safe range";
       return result;
@@ -327,6 +353,11 @@ rcl_interfaces::msg::SetParametersResult ThrusterControllerNode::onSetParameters
     }
     const auto & name = parameter.get_name();
     if (name == "control.p.surge") kp_surge_ = parameter.as_double();
+    else if (name == "control.i.surge") ki_[0] = parameter.as_double();
+    else if (name == "control.ff.surge") kff_surge_ = parameter.as_double();
+    else if (name == "control.d.surge") kd_surge_ = parameter.as_double();
+    else if (name == "control.d.filter_tau_sec") derivative_tau_ = parameter.as_double();
+    else if (name == "safety.max_thruster_thrust_n") max_thruster_thrust_n_ = parameter.as_double();
     else if (name == "control.p.sway") kp_sway_ = parameter.as_double();
     else if (name == "control.p.yaw") kp_yaw_ = parameter.as_double();
     else if (name == "control.max_surge_wrench") max_surge_wrench_ = parameter.as_double();
@@ -469,7 +500,8 @@ std::vector<double> ThrusterControllerNode::computeWrench(double dt)
   const auto regulated = velocity_control_.step(
     {ref_surge, ref_sway, ref_yaw}, {meas_surge_, meas_sway_, meas_yaw_}, dt,
     {kp_surge_, kp_sway_, kp_yaw_}, ki_,
-    {max_surge_wrench_, max_sway_wrench_, max_yaw_wrench_}, reference_tau_);
+    {max_surge_wrench_, max_sway_wrench_, max_yaw_wrench_}, reference_tau_,
+    {kff_surge_, 0.0, 0.0}, {kd_surge_, 0.0, 0.0}, derivative_tau_);
   std::vector<double> wrench(regulated.begin(), regulated.end());
 
   if (dob_enable_ && have_prev_meas_) {
@@ -539,13 +571,31 @@ double ThrusterControllerNode::applyDeadzone(double value, double deadzone) cons
   return std::copysign(std::abs(value), value);
 }
 
+void ThrusterControllerNode::limitThrusterCommands(std::vector<double> & commands) const
+{
+  if (max_thruster_thrust_n_ <= 0.0) {
+    return;
+  }
+  for (std::size_t i = 0; i < commands.size() && i < thrusters_.size(); ++i) {
+    const double fraction = std::min(max_thruster_thrust_n_, thrusters_[i].max_thrust) /
+      thrusters_[i].max_thrust;
+    commands[i] = clamp(commands[i], -fraction, fraction);
+  }
+}
+
 void ThrusterControllerNode::publishCommands(const std::vector<double> & commands)
 {
   if (pub_thruster_command_) {
     std_msgs::msg::Float32MultiArray msg;
     msg.data.reserve(commands.size());
     for (std::size_t i = 0; i < commands.size(); ++i) {
-      const double newtons = clamp(commands[i], -1.0, 1.0) * thrusters_[i].max_thrust;
+      double command = clamp(commands[i], -1.0, 1.0);
+      if (max_thruster_thrust_n_ > 0.0) {
+        const double fraction = std::min(max_thruster_thrust_n_, thrusters_[i].max_thrust) /
+          thrusters_[i].max_thrust;
+        command = clamp(command, -fraction, fraction);
+      }
+      const double newtons = command * thrusters_[i].max_thrust;
       msg.data.push_back(static_cast<float>(newtons));
     }
     pub_thruster_command_->publish(msg);

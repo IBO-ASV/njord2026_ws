@@ -20,6 +20,12 @@ thruster_controller_node:
         surge: 28.29
         sway: 28.29
         yaw: 12.17
+      # Feed-forward and measured-velocity D terms default to zero (legacy P/I behavior).
+      ff:
+        surge: 0.0
+      d:
+        surge: 0.0
+        filter_tau_sec: 0.15
       # Wrench is clamped to +/-max_{surge,sway,yaw}_wrench instead of +/-1 so
       # stick/button-driven manual commands can reach a usable thrust; tuned so
       # manual_control.launch.py's default full-scale stick/button input
@@ -53,6 +59,9 @@ thruster_controller_node:
 
     safety:
       watchdog_timeout_sec: 0.5
+      # Zero disables this optional per-thruster force cap. Auto-tuning applies
+      # a lower temporary cap and restores this configured value at stop.
+      max_thruster_thrust_n: 0.0
 
     static_map:
       deadzone_pos: 0.0

@@ -56,6 +56,7 @@ private:
   double applyStaticMap(double value, const ThrusterConfig & thruster) const;
   double applyDeadzone(double value, double deadzone) const;
   void publishCommands(const std::vector<double> & commands);
+  void limitThrusterCommands(std::vector<double> & commands) const;
   double clamp(double value, double min_value, double max_value) const;
   std::vector<double> getDoubleVector(
     const std::string & name,
@@ -97,6 +98,10 @@ private:
   double kp_surge_{1.0};
   double kp_sway_{1.0};
   double kp_yaw_{1.0};
+  double kff_surge_{0.0};
+  double kd_surge_{0.0};
+  double derivative_tau_{0.15};
+  double max_thruster_thrust_n_{0.0};
   double max_surge_wrench_{1.0};
   double max_sway_wrench_{1.0};
   double max_yaw_wrench_{1.0};
