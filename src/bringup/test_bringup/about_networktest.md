@@ -50,13 +50,13 @@ ip route get <VESSEL_VPN_IP> from <GROUND_VPN_IP>
 `ground_sender.yaml`の各要素は次の形式である。
 
 ```text
-name|Ground側bind IPv4|miniPC側宛先IPv4|UDP port
+name|Ground側bind IPv4|miniPC側宛先ホスト名またはIPv4|UDP port
 ```
 
 `vessel_receiver.yaml`は次の形式で、送信側とportを一致させる。
 
 ```text
-name|miniPC側bind IPv4|UDP port
+name|miniPC側bind IPv4またはhostname|UDP port
 ```
 
 経路別の空テンプレートは`config/critical_link_test_config/`にある。

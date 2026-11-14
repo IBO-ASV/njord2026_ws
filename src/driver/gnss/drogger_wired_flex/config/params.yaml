@@ -8,7 +8,7 @@
     serial_baudrate: 115200
 
     # tcp mode (DG-PRO1RWS Ethernet)
-    tcp_host: "192.168.1.10"
+    tcp_host: "drogger.local"
     tcp_bind_host: "0.0.0.0"
     tcp_port: 5000
 

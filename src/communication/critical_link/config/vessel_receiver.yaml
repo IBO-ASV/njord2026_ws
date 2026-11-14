@@ -4,7 +4,7 @@ critical_link_receiver:
     heartbeat_output_topic: /heartbeat/ground_station
     operator_command_output_topic: /critical_link/operator_command
     diagnostic_stale_after_sec: 3.0
-    # Format: name|miniPC bind IPv4 or hostname|UDP port
+    # Format: name|miniPC bind IPv4 or hostname|UDP port. Use 0.0.0.0 to listen on every interface.
     udp_paths:
       - "wired_lan|192.168.1.2|45100"
       - "usb|192.168.1.2|45100"

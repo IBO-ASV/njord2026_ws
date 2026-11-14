@@ -256,6 +256,8 @@ SSHやFoxgloveを`.local`名で利用する場合、名前解決の成功と接�
 複数NICを持つ機器では、SSHの`-vv`出力にある実際の接続先IPを確認し、同じIPを直接指定して
 比較する。Wi-Fi用IP、有線センサー用IP、Docker/USB用IPを混同しない。
 
+LiDAR 以外のLAN内の接続先は設定でホスト名を使える。VPN越しの接続先にはVPN IP、またはVPN上で解決できるDNS名を使い、mDNSの`.local`名は使わない。`.local` 名は mDNS（Avahi）が有効な同一 LAN で解決するか、ローカル DNS に登録する。設定に出てくる `minipc.local`、`agx-wired.local`、`ibo-agx-orin.local`、`um982.local`、`drogger.local` は、実際の機器名または IP に合わせて送信側から解決できるよう設定する。確認例は `getent hosts <hostname>`。`agx-wired.local` は AGX の有線アドレスへ解決する別名として使う。ローカルで待ち受ける bind アドレスは宛先ホスト名とは別で、必要な NIC の IPv4 または全 NIC を表す `0.0.0.0` を指定する。
+
 Wi-Fi を固定IPにしつつ Internet 接続を維持するには、DHCP 接続中の gateway/DNS を引き継ぐ。
 NetworkManager 環境では各機で次を実行する（接続中のSSID/認証情報は維持する）。
 
@@ -329,3 +331,25 @@ chronyc tracking                               # 時刻差 1 ms 以下
 ```
 
 Jetson 側で `tegrastats` を流し、GPU 使用率と RAM が分割前（GPU 95-99% / RAM 5.9 GiB）より下がっていることを確認する。
+
+
+### Critical linkの経路とVPN設定
+
+`agx_bringup.launch.py`は既定で`critical_link_receiver`を起動し、
+`sensor_lan|192.168.1.5|45100`だけで受信する。内包するminiPC bringupの
+critical linkは無効化されるため、`critical_link/config/vessel_receiver.yaml`の
+VPN経路はこのAGX起動には適用されない。
+
+`ground_jetson.launch.py`は既定で`critical_link_sender`を起動し、
+`tailscale|100.115.34.103|100.73.137.72|45101`へ送信する。
+この送信経路を使うにはAGX側にもVPN IPのUDP 45101受信設定が必要であり、
+現在のAGX既定設定だけでは対にならない。`serial_device`は両方とも空で、
+ESP32シリアル経路は無効。
+
+`run_agx_pair.sh ground`はGround Jetson用launchではなく`ground_pc.launch.py`を使う。
+この場合は`critical_link/config/ground_sender.yaml`が選ばれ、既定の送信経路は
+`sensor_lan|0.0.0.0|ibo-agx-orin.local|45100`となる。
+
+`critical_link_test_config/v1_*.yaml`は通常起動からは選ばれない試験用テンプレート。
+VPN IPv4は実環境に置き換える。受信側は設定したVPN IPにだけbindする。
+設定上の有効化と実際の稼働・疎通は別なので、プロセス、UDP待受、診断を確認する。

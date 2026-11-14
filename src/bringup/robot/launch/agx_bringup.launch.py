@@ -36,7 +36,7 @@ def generate_launch_description():
         'enable_sbus': 'false',  # no SBUS XIAO is attached to this AGX
         'enable_back_cam': 'false', 'enable_nav2': 'false',
         'enable_critical_link': 'true',
-        'ground_video_host': '192.168.1.72',
+        'ground_video_host': 'osw-Stealth-14-AI-Studio-A1VGG.local',
         'camera_resolution':'VGA', 'camera_fps':'15',
         'enable_gpu_perception': PythonExpression(["'true' if '",cfg('task'),"' == 'task1' else 'false'"]),
     }

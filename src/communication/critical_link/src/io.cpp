@@ -55,6 +55,18 @@ bool fill_address(const std::string & address, uint16_t port, sockaddr_in & outp
   return true;
 }
 
+bool fill_bind_address(const std::string & address, uint16_t port, sockaddr_in & output)
+{
+  if (address == "0.0.0.0" || address == "*" || address.empty()) {
+    output = {};
+    output.sin_family = AF_INET;
+    output.sin_addr.s_addr = htonl(INADDR_ANY);
+    output.sin_port = htons(port);
+    return true;
+  }
+  return fill_address(address, port, output);
+}
+
 std::optional<speed_t> baud_flag(int baud)
 {
   switch (baud) {
@@ -103,7 +115,7 @@ std::optional<UdpReceiverSpec> parse_udp_receiver_spec(const std::string & text)
 int open_udp_sender(const UdpSenderSpec & spec)
 {
   sockaddr_in bind_address{};
-  if (!fill_address(spec.bind_address, 0, bind_address)) {
+  if (!fill_bind_address(spec.bind_address, 0, bind_address)) {
     errno = EINVAL;
     return -1;
   }
@@ -131,7 +143,7 @@ int open_udp_sender(const UdpSenderSpec & spec)
 int open_udp_receiver(const UdpReceiverSpec & spec)
 {
   sockaddr_in bind_address{};
-  if (!fill_address(spec.bind_address, spec.port, bind_address)) {
+  if (!fill_bind_address(spec.bind_address, spec.port, bind_address)) {
     errno = EINVAL;
     return -1;
   }

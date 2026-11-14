@@ -591,7 +591,7 @@ def generate_launch_description():
             DeclareLaunchArgument(
                 "enable_um982_rtk",
                 default_value="false",
-                description="Stream RTCM3 corrections from 192.168.1.72:2101 to UM982.",
+                description="Stream RTCM3 corrections from osw-Stealth-14-AI-Studio-A1VGG.local:2101 to UM982.",
             ),
             DeclareLaunchArgument(
                 "enable_spatial",
@@ -648,8 +648,8 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "zed2i_h264_ground_video_host",
-                default_value="192.168.180.107",
-                description="Ground-station IPv4 address for the CPU ZED 2i H.264 stream.",
+                default_value="osw-Stealth-14-AI-Studio-A1VGG.local",
+                description="Ground-station hostname or IPv4 address for the CPU ZED 2i H.264 stream.",
             ),
             DeclareLaunchArgument("zed2i_h264_ground_video_port", default_value="5600"),
             DeclareLaunchArgument("zed2i_h264_ground_video_fps", default_value="2.0"),
@@ -663,8 +663,8 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "back_cam_ground_video_host",
-                default_value="10.42.0.1",
-                description="Ground-station IPv4 address on the direct miniPC link.",
+                default_value="osw-Stealth-14-AI-Studio-A1VGG.local",
+                description="Ground-station hostname or IPv4 address on the direct miniPC link.",
             ),
             DeclareLaunchArgument("back_cam_ground_video_port", default_value="5601"),
             DeclareLaunchArgument(
@@ -681,7 +681,7 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument(
                 "back_cam_jpeg_ground_video_host",
-                default_value="10.42.0.1",
+                default_value="osw-Stealth-14-AI-Studio-A1VGG.local",
             ),
             DeclareLaunchArgument(
                 "back_cam_jpeg_ground_video_port", default_value="5602"

@@ -18,7 +18,7 @@ ip -4 -o addr show scope global | awk '{print $2, $4}'
 # 3. Jetson(送信)。ソースを更新したら必ず先に再ビルドすること
 colcon build --symlink-install --packages-select zed2i_driver && source install/setup.bash
 ros2 launch zed2i_driver zed2i.launch.py \
-  enable_ground_video:=true ground_video_host:=192.168.1.2 \
+  enable_ground_video:=true ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local \
   ground_video_port:=5600 ground_video_fps:=5.0
 ```
 

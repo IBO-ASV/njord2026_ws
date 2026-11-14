@@ -28,8 +28,8 @@ def generate_launch_description():
     # TCP接続設定
     arg_ip = DeclareLaunchArgument(
         'tcp_ip',
-        default_value='192.168.0.126',
-        description='IP address for TCP connection'
+        default_value='um982.local',
+        description='Hostname or IP address for TCP connection'
     )
     arg_tcp_port = DeclareLaunchArgument(
         'tcp_port',

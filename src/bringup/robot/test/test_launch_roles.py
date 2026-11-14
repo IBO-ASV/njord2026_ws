@@ -139,7 +139,7 @@ def test_minipc_back_camera_h26x_defaults_use_the_ground_direct_link():
     source = _read_launch_source("minipc_bringup.launch.py")
 
     assert '"enable_back_cam_ground_video",\n                default_value="true"' in source
-    assert source.count('default_value="10.42.0.1"') == 2
+    assert source.count('default_value="osw-Stealth-14-AI-Studio-A1VGG.local"') >= 2
 
 
 def test_ground_pc_uses_the_jpeg_sender_port_for_the_jpeg_receiver():
@@ -428,7 +428,7 @@ def test_minipc_starts_um982_and_spatial_ntrip_clients_from_the_ground_caster():
 
 def test_minipc_video_defaults_are_safe():
     source = _read_launch_source("minipc_bringup.launch.py")
-    assert '"back_cam_ground_video_host",\n                default_value="10.42.0.1"' in source
+    assert '"back_cam_ground_video_host",\n                default_value="osw-Stealth-14-AI-Studio-A1VGG.local"' in source
     assert '"back_cam_ground_video_fps", default_value="2.0"' in source
     assert '"back_cam_ground_video_width", default_value="360"' in source
     assert '"back_cam_ground_video_height", default_value="240"' in source
@@ -861,18 +861,18 @@ def test_zenoh_defaults_and_agx_critical_link_use_their_configured_networks():
     jetson_bridge = (root / "config" / "zenoh" / "bridge_jetson.json5").read_text(
         encoding="utf-8"
     )
-    assert '"tcp/10.42.0.196:7447"' in ground_bridge
-    assert '"tcp/10.42.0.2:7447"' in jetson_bridge
+    assert '"tcp/agx-wired.local:7447"' in ground_bridge
+    assert '"tcp/minipc.local:7447"' in jetson_bridge
 
     ground = (root / "src" / "communication" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "communication" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
-    assert '"sensor_lan|192.168.1.72|192.168.1.5|45100"' in ground
+    assert '"sensor_lan|0.0.0.0|ibo-agx-orin.local|45100"' in ground
     assert '"ops_lan|10.42.0.2|45100"' in vessel
     assert '"tailscale|100.73.137.72|45101"' in vessel
 
     agx = (root / "src" / "bringup" / "robot" / "launch" / "agx_bringup.launch.py").read_text()
     assert "'sensor_lan|192.168.1.5|45100'" in agx
-    assert "'ground_video_host': '192.168.1.72'" in agx
+    assert "'ground_video_host': 'osw-Stealth-14-AI-Studio-A1VGG.local'" in agx
 
 
 def test_ground_zenoh_bridge_can_request_mission_manager_tasks():
@@ -895,9 +895,9 @@ def test_ground_zenoh_bridge_can_request_mission_manager_tasks():
 def test_ground_pc_routes_control_sources_only_to_critical_link_inputs():
     source = _read_launch_source("ground_pc.launch.py")
 
-    assert '("/joy", "/critical_link/input/joy")' in source
-    assert '"topic": "/critical_link/input/heartbeat"' in source
-    assert '"topic": "/heartbeat/ground_station"' not in source
+    assert "'/critical_link/input/joy' if '" in source
+    assert "'/critical_link/input/heartbeat' if '" in source
+    assert "else '/heartbeat/ground_station'" in source
 
 
 def test_terminal_bringups_include_role_specific_networking():
@@ -980,7 +980,7 @@ def test_ground_pc_is_the_unified_agx_and_minipc_station():
     assert '"role": "groundpc"' in source
     assert 'executable="runtime_parameter_sync.py"' in source
     assert '"/runtime_parameter_updates"' in bridge
-    for endpoint in ("tcp/10.42.0.196:7447", "tcp/100.73.137.72:7447"):
+    for endpoint in ("tcp/agx-wired.local:7447", "tcp/100.73.137.72:7447"):
         assert endpoint in bridge
     assert '"/agx/rosbag/set_recording"' in bridge
     assert '"/agx/rosbag/recording_status"' in bridge

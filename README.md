@@ -187,14 +187,11 @@ ros2 launch zed2i_driver ground_video_receiver.launch.py port:=5601
 ss -lunp | grep -E '5600|5601'   # 各ポートに 1 行だけであること
 ```
 
-**2. 受信側の IP を確認する。`ground_video_host` はここで見えた実 IP を渡す**
+**2. 受信 PC のホスト名を確認する**
 
-```shell
-ip -4 -o addr show scope global | awk '{print $2, $4}'
-```
-
-Jetson と共有しているサブネット側の IP を選ぶ（有線 `192.168.1.x` 系が本線）。
-ホスト名や `localhost` は不可。空文字のままだと送信そのものが無効になる。
+`ground_video_host` には受信 PC の DNS 名または mDNS 名（例: `osw-Stealth-14-AI-Studio-A1VGG.local`）を指定できます。
+送信側 Jetson から名前が解決できることを `getent hosts osw-Stealth-14-AI-Studio-A1VGG.local` で確認してください。
+空文字のままだと送信は無効です。
 
 **3. 送信側（Jetson）を起動する**
 
@@ -204,7 +201,7 @@ Jetson と共有しているサブネット側の IP を選ぶ（有線 `192.168
 # Jetson 上で
 ros2 launch zed2i_driver zed2i.launch.py \
   enable_ground_video:=true \
-  ground_video_host:=192.168.1.2 \
+  ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local \
   ground_video_port:=5600 \
   ground_video_fps:=5.0
 ```
@@ -214,7 +211,7 @@ ros2 launch zed2i_driver zed2i.launch.py \
 ```shell
 ros2 launch robot jetson_bringup.launch.py \
   enable_ground_video:=true \
-  ground_video_host:=192.168.1.2 \
+  ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local \
   ground_video_port:=5600
 ```
 

@@ -151,7 +151,7 @@ void UM982Driver::init_parameters()
     // Declare parameters with defaults
     this->declare_parameter("GNSS_SerialPort", "/dev/ttyUSB0");
     this->declare_parameter("GNSS_Baudrate", 115200);
-    this->declare_parameter("tcp_ip", "192.168.0.126");
+    this->declare_parameter("tcp_ip", "um982.local");
     this->declare_parameter("tcp_port", 23);
     this->declare_parameter("uart_or_tcp", "tcp");
     this->declare_parameter("FIX_FREQ", 20);
@@ -233,9 +233,9 @@ void UM982Driver::init_gnss_connection()
         RCLCPP_INFO(this->get_logger(), "Opened Serial: %s", params_.gnss_port.c_str());
     } else {
         tcp_socket_ = std::make_unique<boost::asio::ip::tcp::socket>(io_context_);
-        boost::asio::ip::tcp::endpoint endpoint(
-            boost::asio::ip::address::from_string(params_.tcp_ip), params_.tcp_port);
-        tcp_socket_->connect(endpoint);
+        const auto endpoints = boost::asio::ip::tcp::resolver(io_context_).resolve(
+            params_.tcp_ip, std::to_string(params_.tcp_port));
+        boost::asio::connect(*tcp_socket_, endpoints);
         RCLCPP_INFO(this->get_logger(), "Connected TCP: %s:%d", params_.tcp_ip.c_str(), params_.tcp_port);
     }
 

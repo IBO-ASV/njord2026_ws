@@ -28,11 +28,11 @@
   // Explicit unicast connect endpoint(s) for the router started via
   // router_config.json5. Do not hardcode a real IP address in version
   // control -- replace the placeholder host with the miniPC's actual
-  // wired-NIC address (or a resolvable hostname) at deploy time, on both
+  // resolvable hostname at deploy time, on both
   // the Jetson and the miniPC.
   connect: {
     endpoints: [
-      "tcp/REPLACE_WITH_MINIPC_WIRED_NIC_ADDRESS:7447",
+      "tcp/minipc.local:7447",
     ],
   },
 

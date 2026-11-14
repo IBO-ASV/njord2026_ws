@@ -108,27 +108,24 @@ ros2 launch zed2i_driver ground_video_receiver.launch.py port:=5601   # back cam
 ss -lunp | grep -E '5600|5601'   # 各ポート 1 行だけであること
 ```
 
-### 2. 受信側の実 IP を確認して `ground_video_host` に渡す
+### 2. 受信側のホスト名を確認して `ground_video_host` に渡す
 
-```shell
-ip -4 -o addr show scope global | awk '{print $2, $4}'
-```
-
-Jetson と共有しているサブネットの IP を選ぶ(有線 `192.168.1.x` 系が本線)。
-ホスト名や `localhost` は不可。既定の空文字のままでは送信が有効にならない。
+DNS 名または mDNS 名（例: `osw-Stealth-14-AI-Studio-A1VGG.local`）を指定できます。
+Jetson から `getent hosts osw-Stealth-14-AI-Studio-A1VGG.local` で解決できることを確認してください。
+既定の空文字のままでは送信が有効になりません。
 
 ### 3. 送信側(Jetson)を起動する
 
 ```shell
 ros2 launch zed2i_driver zed2i.launch.py \
   enable_ground_video:=true \
-  ground_video_host:=192.168.1.2 \
+  ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local \
   ground_video_port:=5600 \
   ground_video_fps:=3.0
 ```
 
 bringup 経由の場合は `ros2 launch robot jetson_bringup.launch.py enable_ground_video:=true
-ground_video_host:=<陸上 PC の IP> ground_video_port:=5600`。fps と解像度も
+ground_video_host:=<陸上 PC のホスト名> ground_video_port:=5600`。fps と解像度も
 `ground_video_width` / `ground_video_height` / `ground_video_fps` で上書きできる。
 JPEG 品質は `config/zed2i_jetson_orin_nano.yaml` を編集する。
 
@@ -211,7 +208,7 @@ miniPC (UM870 Slim) の背面カメラは VA-API ハードウェアエンコー�
 ```shell
 # miniPC (送信)
 ros2 launch robot minipc_bringup.launch.py \
-  back_cam_ground_video_host:=192.168.1.2
+  back_cam_ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local
 
 # 陸上 PC (受信)
 ros2 launch zed2i_driver ground_h26x_receiver.launch.py port:=5601 codec:=h264

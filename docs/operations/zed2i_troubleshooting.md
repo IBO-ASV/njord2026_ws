@@ -10,10 +10,9 @@
    health が異常になる。heartbeat を実測に合う値へ下げるか、ZED の実効周波数を
    30 Hz に揃えること。
 
-2. **陸上映像の既定送信先が運用手順と矛盾**
-   `jetson_bringup.launch.py` は `.local` ホスト名を既定値にする一方、README は
-   `ground_video_host` に実 IP が必要としている。実機では受信側の有線 IP を明示して
-   起動すること。既定値を残すなら README の制約も一致させること。
+2. **陸上映像の送信先はホスト名に対応**
+   `ground_video_host` はホスト名または IPv4 アドレスを受け付ける。
+   送信側から `getent hosts <受信PC名>` で解決できることを確認する。
 
 3. **自己キャリブレーションの切替を launch から指定できない**
    `zed2i.launch.py` は `disable_self_calibration` を宣言・転送していない。既定 YAML を
@@ -29,7 +28,7 @@
 
 ```shell
 ros2 launch robot jetson_bringup.launch.py \
-  ground_video_host:=<ground-pcの有線IPv4>
+  ground_video_host:=<ground-pcのホスト名>
 ros2 param get /zed2i/zed2i disable_self_calibration
 ros2 topic hz /zed2i/left/image_rect
 ros2 topic hz /zed2i/depth/image

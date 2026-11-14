@@ -42,7 +42,7 @@ void DroggerWiredFlexNode::declare_and_get_parameters()
   this->declare_parameter("transport", "serial");
   this->declare_parameter("serial_port", "/dev/ttyUSB0");
   this->declare_parameter("serial_baudrate", 115200);
-  this->declare_parameter("tcp_host", "192.168.1.10");
+  this->declare_parameter("tcp_host", "drogger.local");
   this->declare_parameter("tcp_bind_host", "0.0.0.0");
   this->declare_parameter("tcp_port", 5000);
   this->declare_parameter("udp_bind_host", "0.0.0.0");

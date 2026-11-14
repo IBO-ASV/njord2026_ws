@@ -78,7 +78,7 @@ Ground PCでは`critical_link_sender`、miniPCでは`critical_link_receiver`も�
 `standalone_bringup.launch.py`は1台で両ロールを含む回帰用のため、両方とも既定で無効である。
 
 miniPCは既定でUM982とAdvanced Navigation Spatialの両方をGround PCのNTRIP caster
-（`192.168.1.72:2101`、mountpoint `RTCM3`）へ接続する。
+（`osw-Stealth-14-AI-Studio-A1VGG.local:2101`、mountpoint `RTCM3`）へ接続する。
 casterの既定クライアント資格情報は `test:test` である。UM982 RTKは
 `enable_um982_rtk:=false`、Spatialは `enable_spatial:=false` を指定すれば
 個別に無効化できる。Spatialの起動引数の既定値は安全のため `false`。
@@ -119,7 +119,7 @@ health signalとして個別に監視する。現在の構成ではGNSSとMicon�
 `/heartbeat/driver`集約は生成しない。
 
 Ground PCではNTRIP casterも既定起動する。Drogger RWS/ETHMの接続設定は
-`192.168.1.72:2101`、mountpoint `RTCM3`、SOURCE password `osw` の
+`osw-Stealth-14-AI-Studio-A1VGG.local:2101`、mountpoint `RTCM3`、SOURCE password `osw` の
 NTRIP v1 SOURCE方式とする。
 Casterは `src/driver/gnss/ntripcaster` のsubmoduleをcolconでビルドし、
 workspaceのinstall spaceから起動する。既定のSOURCE/client資格情報は公開済みの
@@ -213,13 +213,13 @@ ip -4 -o addr show scope global | awk '{print $2, $4}'
 colcon build --symlink-install --packages-select zed2i_driver && source install/setup.bash
 ros2 launch robot jetson_bringup.launch.py \
   enable_ground_video:=true \
-  ground_video_host:=192.168.1.2 \
+  ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local \
   ground_video_port:=5600
 
 
   ros2 launch robot jetson_bringup.launch.py \
   enable_ground_video:=true \
-  ground_video_host:=100.82.157.125 \
+  ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local \
   ground_video_port:=5600
 ```
 
@@ -231,7 +231,7 @@ miniPCのback_camはH.264・VA-API送信と、UDP 5602 の JPEG互換送信が�
 送信先を指定して有効化する:
 
 ```shell
-ros2 launch robot minipc_bringup.launch.py back_cam_ground_video_host:=192.168.1.2
+ros2 launch robot minipc_bringup.launch.py back_cam_ground_video_host:=osw-Stealth-14-AI-Studio-A1VGG.local
 ```
 
 `back_cam_ground_video_codec:=h265` でH.265を選択できる。陸上PCはH.264/H.265をUDP 5601、

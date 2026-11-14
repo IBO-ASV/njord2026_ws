@@ -230,7 +230,7 @@ def generate_launch_description():
             'uart_or_tcp': 'uart',
             'GNSS_SerialPort': LaunchConfiguration('um982_port'),
             'GNSS_Baudrate': 115200,
-            'tcp_ip': '192.168.0.126',
+            'tcp_ip': 'um982.local',
             'tcp_port': 23,
             'FIX_FREQ': 20,
             'HEADING_FREQ': 20,

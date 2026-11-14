@@ -208,7 +208,7 @@ class UM982Driver(Node):
         )
         self.get_logger().info(f"Baudrate: {self._baudrate}")
 
-        self.declare_parameter("tcp_ip", "192.168.0.126")
+        self.declare_parameter("tcp_ip", "um982.local")
         self._tcp_addr = self.get_parameter("tcp_ip").get_parameter_value().string_value
         self.get_logger().info(f"TCP IP address: {self._tcp_addr}")
 

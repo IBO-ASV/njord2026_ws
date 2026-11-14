@@ -43,5 +43,13 @@ TEST(IoConfig, ResolvesHostnameForUdp)
   close(fd);
 }
 
+TEST(IoConfig, AcceptsWildcardBindForUdp)
+{
+  const UdpSenderSpec spec{"loopback", "0.0.0.0", "localhost", 45100};
+  const int fd = open_udp_sender(spec);
+  ASSERT_GE(fd, 0);
+  close(fd);
+}
+
 }  // namespace
 }  // namespace critical_link
