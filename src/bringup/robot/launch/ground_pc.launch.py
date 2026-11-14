@@ -6,7 +6,7 @@ from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchD
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackagePrefix, FindPackageShare
 
@@ -99,8 +99,12 @@ def generate_launch_description():
         name="joy_node",
         output="screen",
         emulate_tty=True,
-        # The canonical /joy is vessel-owned; critical_link_receiver publishes it.
-        remappings=[("/joy", "/critical_link/input/joy")],
+        # Direct DDS and critical link must not publish duplicate canonical input.
+        remappings=[("/joy", PythonExpression([
+            "'/critical_link/input/joy' if '", LaunchConfiguration("enable_critical_link"),
+            "'.lower() in ('true', '1') else '/joy'",
+        ]))],
+        parameters=[{"autorepeat_rate": 20.0}],
     )
 
     ground_station_heartbeat = Node(
@@ -108,9 +112,12 @@ def generate_launch_description():
         executable="ground_station_heartbeat_node",
         name="ground_station_heartbeat",
         output="screen",
-        # Only critical_link_receiver publishes the canonical vessel heartbeat.
+        # Send canonical heartbeat over DDS when critical link is disabled.
         parameters=[
-            {"topic": "/critical_link/input/heartbeat", "period_sec": 1.0}
+            {"topic": PythonExpression([
+                "'/critical_link/input/heartbeat' if '", LaunchConfiguration("enable_critical_link"),
+                "'.lower() in ('true', '1') else '/heartbeat/ground_station'",
+            ]), "period_sec": 1.0}
         ],
     )
 
@@ -175,9 +182,9 @@ def generate_launch_description():
             SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
             SetEnvironmentVariable(
                 "CYCLONEDDS_URI",
-                PathJoinSubstitution([
+                EnvironmentVariable("CYCLONEDDS_URI", default_value=PathJoinSubstitution([
                     FindPackageShare("robot"), "config", "cyclonedds_agx.xml"
-                ]),
+                ])),
             ),
             SetEnvironmentVariable("ROS_DOMAIN_ID", "126"),
             SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
