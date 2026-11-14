@@ -7,8 +7,10 @@ This ROS 2 node tunes surge feed-forward, P, then D gains with bounded trials. I
 Build `velocity_autotuner`, `thruster_controller`, and `motion_supervisor`, then launch the node with explicit values. There are intentionally no motion or thrust defaults:
 
 ```sh
-ros2 launch velocity_autotuner velocity_autotuner.launch.py
+scripts/operations/run_agx_velocity_tuner.sh
 ```
+
+This helper selects the AGX ROS domain and network configuration before launching the idle tuner. The equivalent direct launch is `ros2 launch velocity_autotuner velocity_autotuner.launch.py` after sourcing the same AGX environment.
 
 This starts the tuner idle. Set target speed, speed limit, and thrust limit in the Mission Control panel, then press start. For command-line use, the `ros2 run` entry point also accepts these values as parameters.
 
