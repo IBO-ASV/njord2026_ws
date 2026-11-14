@@ -16,7 +16,7 @@ if [[ "$launch_file" == ground_pc.launch.py ]]; then
   if [[ -n "${NJORD_GROUND_CYCLONEDDS_URI:-}" ]]; then
     export CYCLONEDDS_URI="$NJORD_GROUND_CYCLONEDDS_URI"
   else
-    agx_address="${NJORD_AGX_ADDRESS:-192.168.1.5}"
+    agx_address="${NJORD_AGX_ADDRESS:-192.168.0.71}"
     ground_address=$(ip -4 route get "$agx_address" | awk '{for (i=1;i<NF;i++) if ($i=="src") {print $(i+1); exit}}')
     if [[ ! "$ground_address" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
       echo "Cannot select DDS interface for $agx_address; set NJORD_GROUND_CYCLONEDDS_URI explicitly." >&2

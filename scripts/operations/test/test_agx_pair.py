@@ -23,13 +23,14 @@ def test_helper_selects_interface_and_disables_critical_link(tmp_path, role, ove
     (tmp_path / 'install/setup.bash').write_text('export PATH="' + str(tmp_path / 'bin') + ':$PATH"\n')
     (tmp_path / 'bin').mkdir()
     ip = tmp_path / 'bin/ip'
-    ip.write_text('#!/bin/sh\necho "192.168.1.5 dev eth0 src 192.168.1.72 uid 1000"\n')
+    ip.write_text('#!/bin/sh\n[ "$4" = "192.168.0.71" ] || exit 1\necho "192.168.0.71 dev wlan0 src 192.168.0.72 uid 1000"\n')
     ip.chmod(0o755)
     ros2 = tmp_path / 'bin/ros2'
     ros2.write_text('#!/usr/bin/python3\nimport os,sys,json\nprint(json.dumps({"args":sys.argv[1:],"dds":os.environ["CYCLONEDDS_URI"],"domain":os.environ["ROS_DOMAIN_ID"]}))\n')
     ros2.chmod(0o755)
     env = dict(os.environ)
     env.pop('NJORD_GROUND_CYCLONEDDS_URI', None)
+    env.pop('NJORD_AGX_ADDRESS', None)
     env['CYCLONEDDS_URI'] = '/old/incorrect/interface.xml'
     if override:
         env['NJORD_GROUND_CYCLONEDDS_URI'] = '<CycloneDDS/>'
@@ -42,7 +43,7 @@ def test_helper_selects_interface_and_disables_critical_link(tmp_path, role, ove
         if override:
             assert data['dds'] == '<CycloneDDS/>'
         else:
-            assert 'address="192.168.1.72"' in data['dds']
+            assert 'address="192.168.0.72"' in data['dds']
     else:
         assert data['dds'] == str(tmp_path / 'src/bringup/robot/config/cyclonedds_agx.xml')
 
