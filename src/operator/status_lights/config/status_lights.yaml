@@ -25,6 +25,12 @@ alert_lamp_manager_node:
     # A state selects one named pattern below.  Pattern values are consumed by
     # alert_lamp_manager_node, so colours/timing can be changed without code.
     patterns:
+      return_home:
+        color: all
+        mode: blink
+        period_sec: 1.0
+        duty_ratio: 0.5
+        reason: "automatic return home"
       initializing:
         color: red
         mode: blink

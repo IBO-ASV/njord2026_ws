@@ -8,6 +8,7 @@ from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import String
+from sensor_msgs.msg import Joy
 
 from control_interfaces.msg import ControlState
 
@@ -26,6 +27,10 @@ class CommandArbiter(Node):
         self._publish_period_sec = float(self.declare_parameter("publish_period_sec", 0.05).value)
         if self._command_timeout_sec <= 0 or self._publish_period_sec <= 0:
             raise ValueError("command_timeout_sec and publish_period_sec must be positive")
+        self._sbus_input_timeout_sec = float(self.declare_parameter("sbus_input_timeout_sec", 0.5).value)
+        if not 0 < self._sbus_input_timeout_sec <= self._command_timeout_sec:
+            raise ValueError("sbus_input_timeout_sec must be positive and <= command_timeout_sec")
+        self._sbus_input_valid = False
         self._state: ControlState | None = None
         self._manual_command = Twist()
         self._nav_command = Twist()
@@ -39,6 +44,7 @@ class CommandArbiter(Node):
         self.create_subscription(Twist, "/cmd_vel_manual", self._on_manual, 10)
         self.create_subscription(Twist, "/cmd_vel_nav", self._on_nav, 10)
         self.create_subscription(Twist, "/cmd_vel_sbus", self._on_sbus, 10)
+        self.create_subscription(Joy, "/sbus/joy", self._on_sbus_joy, 10)
         self.create_timer(self._publish_period_sec, self._publish_command)
 
     def _on_state(self, message: ControlState) -> None:
@@ -60,6 +66,9 @@ class CommandArbiter(Node):
         self._sbus_command = message
         self._sbus_received_ns = self.get_clock().now().nanoseconds
 
+    def _on_sbus_joy(self, message: Joy) -> None:
+        self._sbus_input_valid = bool(message.buttons) and message.buttons[0] == 0
+
     def _fresh(self, received_ns: int | None) -> bool:
         return received_ns is not None and (self.get_clock().now().nanoseconds - received_ns) <= int(self._command_timeout_sec * 1e9)
 
@@ -80,7 +89,11 @@ class CommandArbiter(Node):
         elif source == Source.AUTO:
             self._command_pub.publish(self._nav_command)
         elif source == Source.SBUS:
-            self._command_pub.publish(self._sbus_command)
+            age = (self.get_clock().now().nanoseconds - self._sbus_received_ns) / 1e9
+            # Keep the existing ownership grace period, but never hold stale thrust.
+            self._command_pub.publish(
+                self._sbus_command if self._sbus_input_valid and
+                age <= self._sbus_input_timeout_sec else Twist())
         else:
             self._command_pub.publish(Twist())
 

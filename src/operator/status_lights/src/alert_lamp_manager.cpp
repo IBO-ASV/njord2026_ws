@@ -43,6 +43,7 @@ bool hasInhibit(const control_interfaces::msg::ControlState & state, uint16_t co
 
 LampColor parseColor(const std::string & color)
 {
+  if (color == "all") {return LampColor::ALL;}
   if (color == "off") {return LampColor::OFF;}
   if (color == "green") {return LampColor::GREEN;}
   if (color == "yellow") {return LampColor::YELLOW;}
@@ -104,6 +105,9 @@ AlertLampManager::AlertLampManager(const rclcpp::NodeOptions & options)
   ground_link_lost_manual_display_ = loadDisplay(
     "ground_link_lost_manual", {LampColor::YELLOW_RED, LampPattern::SOLID, 0.0F, 0.5F,
       "ground station communication lost in manual mode"});
+  return_home_display_ = loadDisplay(
+    "return_home", {LampColor::ALL, LampPattern::BLINK, 1.0F, 0.5F,
+      "automatic return home"});
   critical_fault_display_ = loadDisplay(
     "critical_fault", {LampColor::RED, LampPattern::BLINK, 0.5F, 0.5F,
       "critical fault or unknown state"});
@@ -124,6 +128,7 @@ LampDisplay AlertLampManager::loadDisplay(const std::string & name, const LampDi
     declare_parameter<std::string>(
       prefix + "color", [&defaults]() {
         switch (defaults.color) {
+          case LampColor::ALL: return std::string("all");
           case LampColor::OFF: return std::string("off");
           case LampColor::GREEN: return std::string("green");
           case LampColor::YELLOW: return std::string("yellow");
@@ -152,6 +157,13 @@ LampDisplay AlertLampManager::loadDisplay(const std::string & name, const LampDi
 
 LampDisplay AlertLampManager::displayFor(AlertState state, const SystemStatus & status) const
 {
+  if (state != AlertState::CRITICAL_FAULT && state != AlertState::INITIALIZING &&
+    mission_received_ && mission_status_.task_id == "return_home" &&
+    mission_status_.state == mission_interfaces::msg::MissionStatus::STATE_RUNNING &&
+    control_state_.effective_source == control_interfaces::msg::ControlState::SOURCE_AUTO)
+  {
+    return return_home_display_;
+  }
   switch (state) {
     case AlertState::INITIALIZING: return initializing_display_;
     case AlertState::MANUAL_NORMAL: return manual_normal_display_;

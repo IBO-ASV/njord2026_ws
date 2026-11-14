@@ -51,6 +51,7 @@ private:
   LampDisplay ground_link_lost_auto_display_;
   LampDisplay ground_link_lost_manual_display_;
   LampDisplay critical_fault_display_;
+  LampDisplay return_home_display_;
 };
 
 }  // namespace status_lights

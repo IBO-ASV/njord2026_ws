@@ -69,3 +69,7 @@ ros2 topic echo /alert_lamp/command
 colcon test --packages-select status_lights
 colcon test-result --verbose
 ```
+
+Active `return_home` navigation (AUTO source) blinks all three lamps together
+at a 1 s period. Emergency stop and critical/unknown state retain priority.
+SBUS takeover and mission completion restore the ordinary indication.

@@ -16,7 +16,8 @@ enum class LampColor : uint8_t
   RED = 4,
   GREEN_YELLOW = 3,
   GREEN_RED = 5,
-  YELLOW_RED = 6
+  YELLOW_RED = 6,
+  ALL = 7
 };
 enum class LampPattern {OFF, SOLID, BLINK};
 enum class AlertState

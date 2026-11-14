@@ -24,3 +24,8 @@ ros2 topic info -v /control/state
 ```
 
 AUTO の許可条件は [config/control_policy.yaml](config/control_policy.yaml) にあります。非常停止、Nav2・タスク準備、Health Signal、およびタスク固有の readiness を評価します。
+
+SBUS ownership retains its 2 s freshness window. Within that window the
+arbiter outputs zero after 0.5 s without a SBUS command, or immediately on
+an invalid/failsafe `/sbus/joy` (button 0). Normal source selection after
+2 s is unchanged. `sbus_input_timeout_sec` configures the shorter zero gate.
