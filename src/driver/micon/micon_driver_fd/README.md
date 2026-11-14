@@ -12,7 +12,8 @@ be added alongside it without changing the manual-control package.
 - subscribes `command_topic` (`std_msgs/msg/Float32MultiArray`), first 4 thrust commands in N
 - subscribes `/soft_emg`, `/red`, `/yellow`, `/green` (`std_msgs/msg/Bool`)
 - publishes `/micon/relay_active` (`std_msgs/msg/Bool`) from the firmware's relay-state byte
-  and `/safety/emergency_stop` (`std_msgs/msg/UInt8`): `RUNNING=0`, `SOFT_EMG=1`.
+  and `/safety/emergency_stop` (`std_msgs/msg/UInt8`): `RUNNING=0`, `SOFT_EMG=1`,
+  `HARD_EMG=2`
 - parameters: `serial_port` (default `/dev/ttyUSB0`), `baud` (default `115200`),
   `command_topic` (default `/thruster_command` from `thruster_controller`). Set
   `ground_station_heartbeat_timeout_sec` to a
@@ -34,10 +35,9 @@ values followed by `control_flags`: `bit3=emg`, `bit2=green`, `bit1=yellow`,
 
 The relay-state byte is telemetry only: GPIO15 follows the relay and can become
 active during a software stop, so it is not an independent physical-E-stop signal.
-`SOFT_EMG` is emitted when `/soft_emg` is true, the enabled ground-station
-heartbeat watchdog times out, or the thrust command watchdog trips. Relay
-telemetry does not affect `/safety/emergency_stop` or inhibit control; the
-physical switch state cannot be inferred from this signal.
+`SOFT_EMG` is emitted whenever `/soft_emg` is true or the enabled ground-station
+heartbeat watchdog has timed out; otherwise an active relay is reported as
+`HARD_EMG` for operational status.
 
 ## `bms_serial` (BMS serial)
 
