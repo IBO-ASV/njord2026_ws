@@ -6,6 +6,8 @@
 role: minipc
 signals:
   gnss:
+    # Temporarily disabled for indoor operation; restore for outdoor use.
+    enabled: false
     topic: /sensor/vehicle_gnss/fix/raw
     type: sensor_msgs/msg/NavSatFix
     timeout_sec: 1.0
@@ -26,6 +28,8 @@ signals:
     minimum_frequency_hz: 0.8
 
   local_odometry:
+    # Temporarily disabled for indoor operation; restore for outdoor use.
+    enabled: false
     topic: /odometry/filtered/local
     type: nav_msgs/msg/Odometry
     timeout_sec: 1.0
