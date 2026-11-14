@@ -7,10 +7,10 @@ This ROS 2 node tunes surge feed-forward, P, then D gains with bounded trials. I
 Build `velocity_autotuner`, `thruster_controller`, and `motion_supervisor`, then launch the node with explicit values. There are intentionally no motion or thrust defaults:
 
 ```sh
-ros2 run velocity_autotuner velocity_autotuner --ros-args \
-  -p target_speed_mps:=0.2 -p max_test_speed_mps:=0.4 \
-  -p test_max_thruster_thrust_n:=10.0
+ros2 launch velocity_autotuner velocity_autotuner.launch.py
 ```
+
+This starts the tuner idle. Set target speed, speed limit, and thrust limit in the Mission Control panel, then press start. For command-line use, the `ros2 run` entry point also accepts these values as parameters.
 
 The example values are placeholders; choose test limits for the specific vessel and site. The tuner temporarily caps each controller thruster output at the smaller of the requested cap and configured thruster maximum, and sets surge I gain to zero. It restores the saved cap and I gain when stopped. A completed run keeps the selected FF/P/D gains; an incomplete run restores the previous gains.
 
@@ -27,4 +27,4 @@ Results are written under `output_dir` (default `~/njord_tuning`): a CSV of tria
 
 This version tunes surge velocity gains only. Matching the individual thruster output ratios (FR/FL/RR/RL) remains a separate, manually measured calibration; the tuner does not issue direct per-thruster movement commands.
 
-The Mission Control Foxglove panel can set the three test limits before starting through the tuner node's standard `/velocity_autotuner/set_parameters_atomically` service, so the operator does not need to restart the node to change them. Parameters are locked while a session is reserved.
+The Mission Control Foxglove panel sets the three test limits before starting through `/velocity_autotuner/set_parameters_atomically`; the operator does not need to restart the tuner to change them. Parameters are locked while a session is reserved.
