@@ -1,0 +1,67 @@
+# Health signals observed by the AGX role.
+#
+# This file is an inventory only.  Whether a signal inhibits AUTO belongs in the
+# control policy, not here.  Keep every signal present so display/diagnostic
+# consumers still see it when its policy requirement is disabled.
+role: agx
+signals:
+  gnss:
+    # Temporarily disabled for indoor operation; restore for outdoor use.
+    enabled: false
+    topic: /sensor/vehicle_gnss/fix/raw
+    type: sensor_msgs/msg/NavSatFix
+    timeout_sec: 1.0
+    expected_frequency_hz: 20.0
+    minimum_frequency_hz: 15.0
+
+  # back_camera:
+  #   topic: /back_cam/image_raw
+  #   type: sensor_msgs/msg/Image
+  #   timeout_sec: 1.0
+  #   expected_frequency_hz: 30.0
+
+  micon:
+    topic: /micon/bms_cells
+    type: std_msgs/msg/Float32MultiArray
+    timeout_sec: 3.0
+    expected_frequency_hz: 1.0
+    minimum_frequency_hz: 0.8
+
+  local_odometry:
+    # Temporarily disabled for indoor operation; restore for outdoor use.
+    enabled: false
+    topic: /odometry/filtered/local
+    type: nav_msgs/msg/Odometry
+    timeout_sec: 1.0
+    expected_frequency_hz: 20.0
+    minimum_frequency_hz: 15.0
+
+  # global_odometry:
+  #   topic: /odometry/filtered/global
+  #   type: nav_msgs/msg/Odometry
+  #   timeout_sec: 1.0
+  #   expected_frequency_hz: 30.0
+
+  ground_station_heartbeat:
+    topic: /heartbeat/ground_station
+    type: std_msgs/msg/Empty
+    # Ground link has unavoidable radio/bridge jitter.  Keep the nominal
+    # 1 Hz sender rate, but regard a message every two seconds as healthy and
+    # wait through short transmission gaps before declaring the link unhealthy.
+    timeout_sec: 5.0
+    expected_frequency_hz: 0.5
+    minimum_frequency_hz: 0.25
+
+  manual_control_heartbeat:
+    topic: /heartbeat/manual_control
+    type: std_msgs/msg/Empty
+    timeout_sec: 2.0
+    expected_frequency_hz: 1.0
+    minimum_frequency_hz: 0.5
+  autonomy_heartbeat:
+    topic: /heartbeat/autonomy
+    type: std_msgs/msg/Empty
+    timeout_sec: 2.0
+    expected_frequency_hz: 1.0
+    minimum_frequency_hz: 0.5
+# Signals are monitored individually; no aggregate driver heartbeat is emitted.

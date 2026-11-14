@@ -4,7 +4,7 @@ from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, GroupAction, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution, PythonExpression
+from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
 
@@ -43,7 +43,7 @@ def generate_launch_description():
     core_args = {key: cfg(key) for key in (
         'enable_um982', 'um982_port', 'bms_serial_port', 'enable_thruster', 'enable_bms',
         'enable_alert_lamp', 'enable_sbus', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
-    core_args.update({'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
+    core_args.update({'heartbeat_role': 'agx', 'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
                       'enable_back_cam_ground_video': 'false',
                       'enable_back_cam_jpeg_ground_video': 'false',
                       'enable_autonomy_supervisor': 'true', 'active_nav2_profile': cfg('task'),
@@ -51,7 +51,7 @@ def generate_launch_description():
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
     return LaunchDescription([
         SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
-        SetEnvironmentVariable("CYCLONEDDS_URI", PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"])),
+        SetEnvironmentVariable("CYCLONEDDS_URI", EnvironmentVariable("CYCLONEDDS_URI", default_value=PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"]))),
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '126'),
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],

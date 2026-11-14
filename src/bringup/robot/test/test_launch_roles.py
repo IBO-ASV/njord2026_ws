@@ -743,12 +743,12 @@ def test_bringups_start_role_owned_health_monitors():
     minipc_source = _read_launch_source("minipc_bringup.launch.py")
     heartbeat_source = _read_launch_source("heartbeat.launch.py")
     assert '"role": "jetson"' in jetson_source
-    assert '"role": "minipc"' in minipc_source
+    assert '"role": LaunchConfiguration("heartbeat_role")' in minipc_source
     assert '"config",' in heartbeat_source
     assert '"heartbeat",' in heartbeat_source
     assert 'f"{role}.yaml"' in heartbeat_source
     assert '"/health/signals/{role}"' in heartbeat_source
-    assert '"/health/state" if role == "minipc"' in heartbeat_source
+    assert '"/health/state" if role in ("minipc", "agx")' in heartbeat_source
     assert 'executable="heartbeat_aggregator_node"' in heartbeat_source
     assert '"aggregates"' in heartbeat_source
     assert '"heartbeat_monitor_zed2i"' in heartbeat_source

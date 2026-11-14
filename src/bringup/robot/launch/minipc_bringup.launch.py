@@ -531,7 +531,7 @@ def generate_launch_description():
         "robot",
         ["launch", "heartbeat.launch.py"],
         None,
-        {"role": "minipc"},
+        {"role": LaunchConfiguration("heartbeat_role")},
     )
 
     networking_launch = include_launch(
@@ -751,6 +751,7 @@ def generate_launch_description():
                     "GPS5->GPS6 geometry."
                 ),
             ),
+            DeclareLaunchArgument("heartbeat_role", default_value="minipc", choices=["minipc", "agx"]),
             DeclareLaunchArgument("thruster_config_file", default_value=default_thruster_config),
             DeclareLaunchArgument(
                 "thruster_robot_description_file", default_value=default_thruster_urdf

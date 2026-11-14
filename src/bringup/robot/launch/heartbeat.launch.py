@@ -16,7 +16,7 @@ from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
 
-_ROLES = ("minipc", "jetson", "groundpc")
+_ROLES = ("minipc", "agx", "jetson", "groundpc")
 
 
 def _load_inventory(role):
@@ -178,7 +178,7 @@ def _launch_setup(context, *args, **kwargs):
     # miniPC is the canonical vessel health owner.  Role-local summaries on
     # Jetson and ground-PC remain observable without creating competing
     # publishers of /health/state.
-    health_topic = "/health/state" if role == "minipc" else f"/health/state/{role}"
+    health_topic = "/health/state" if role in ("minipc", "agx") else f"/health/state/{role}"
     nodes.append(
         Node(
             package="diagnostic_monitors",

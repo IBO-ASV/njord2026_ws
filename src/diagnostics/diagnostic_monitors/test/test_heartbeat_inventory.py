@@ -17,7 +17,7 @@ sys.modules[_SPEC.name] = inventory
 _SPEC.loader.exec_module(inventory)
 
 
-@pytest.mark.parametrize("role", ("minipc", "jetson", "groundpc"))
+@pytest.mark.parametrize("role", ("minipc", "agx", "jetson", "groundpc"))
 def test_role_inventory_is_unambiguous_and_validated(role):
     parsed = inventory.load_inventory(_ROOT / "config" / "heartbeat" / f"{role}.yaml")
     assert parsed.role == role
@@ -48,6 +48,14 @@ def test_inventory_parameters_omit_disabled_signals():
         }
     )
     assert [item["monitor_name"] for item in inventory.inventory_parameters(parsed)] == ["enabled"]
+
+
+def test_indoor_monitoring_is_specific_to_agx():
+    agx = yaml.safe_load((_ROOT / "config/heartbeat/agx.yaml").read_text())
+    minipc = yaml.safe_load((_ROOT / "config/heartbeat/minipc.yaml").read_text())
+    for signal in ("gnss", "local_odometry"):
+        assert agx["signals"][signal]["enabled"] is False
+        assert minipc["signals"][signal].get("enabled", True) is True
 
 
 def test_inventory_parameters_use_configured_minimum_frequency():
