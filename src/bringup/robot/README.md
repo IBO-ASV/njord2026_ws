@@ -197,6 +197,20 @@ ros2 launch robot real_bringup.launch.py enable_mid360:=false enable_zed2i:=fals
 
 注意: `zed2i` を含める場合、SDKモードの GPU 前提が満たされている必要がある(詳細は `src/driver/camera/zed2i_driver/README.md` を参照)。
 
+## AGXでの映像とMID360無印
+
+`./scripts/operations/run_agx_pair.sh vessel lidar_model:=mid360` は、ZEDをUDP 5600、
+接続済みAdesso背面カメラをJPEG/RTP UDP 5602で `ground_video_host` に送信する。
+地上側の `ground_pc.launch.py` はそれぞれ `/ground_video/image/compressed` と
+`/ground_video/back_cam_jpeg/compressed` で受信する。背面JPEGは
+`enable_back_cam_jpeg_ground_video:=false` で無効化できる。背面カメラは既定で
+接続時のみ起動する。背面のVA-API H.264送信はminiPC向けであり、AGXでは使用しない。
+送信先が異なる場合は `ground_video_host:=<地上PCのホスト名またはIP>` を指定する。
+launch変更後は `colcon build --packages-select robot` と再起動が必要。
+
+2026-11-15にAGX実機でMID360無印の点群約10 Hz（1フレーム20,256点）、
+地上受信トピックでZED約2.7 Hz、背面JPEG約2.0 Hzを確認した。
+
 ## ZED 2i 陸上映像伝送(ground video)の起動手順
 
 bringup 経由で有効化する場合の手順。**受信側(陸上 PC)を先に起動し、次に Jetson**の順。

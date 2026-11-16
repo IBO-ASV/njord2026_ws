@@ -733,7 +733,11 @@ def test_ground_pc_keeps_front_and_back_video_receivers_separate():
 def test_ground_pc_starts_workspace_ntrip_caster_by_default():
     source = _read_launch_source("ground_pc.launch.py")
     assert '"enable_ntrip_caster", default_value="true"' in source
-    assert 'FindPackagePrefix("ntripcaster")' in source
+    assert '"ntrip_corrections.launch.py"' in source
+    corrections = _read_launch_source("ntrip_corrections.launch.py")
+    assert "FindPackagePrefix('ntripcaster')" in corrections
+    assert "'enable_ntrip_relay': 'true'" in corrections
+    assert "'ntrip_upstream_mountpoint': 'tamtam'" in corrections
     assert 'FindPackageShare("ntripcaster")' in source
     assert '"ntripcaster.json"' in source
 
@@ -867,7 +871,7 @@ def test_zenoh_defaults_and_agx_critical_link_use_their_configured_networks():
     ground = (root / "src" / "communication" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "communication" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
     assert '"sensor_lan|0.0.0.0|ibo-agx-orin.local|45100"' in ground
-    assert '"ops_lan|10.42.0.2|45100"' in vessel
+    assert '"ops_lan|10.42.0.233|45100"' in vessel
     assert '"tailscale|100.73.137.72|45101"' in vessel
 
     agx = (root / "src" / "bringup" / "robot" / "launch" / "agx_bringup.launch.py").read_text()

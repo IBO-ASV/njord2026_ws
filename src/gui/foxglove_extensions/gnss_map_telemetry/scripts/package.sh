@@ -17,4 +17,5 @@ generated_file="$(mktemp)"
 
 mv "${generated_file}" "${package_dir}/dist/extension.js"
 cd "${package_dir}"
-zip -r -FS gnss-map-telemetry-0.4.0.foxe package.json dist
+version="$(python3 -c 'import json; print(json.load(open("package.json"))["version"])')"
+zip -r -FS "gnss-map-telemetry-${version}.foxe" package.json dist

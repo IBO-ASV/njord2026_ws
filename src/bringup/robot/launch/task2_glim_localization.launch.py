@@ -22,6 +22,8 @@ def setup(context):
  ros=data['glim_ros'];ros['imu_topic']=LaunchConfiguration('glim_imu_topic').perform(context)
  ros['points_topic']=LaunchConfiguration('glim_points_topic').perform(context)
  ros['acc_scale']=float(LaunchConfiguration('glim_acc_scale').perform(context))
+ # The adapter below owns sensor-to-base conversion; request raw sensor pose.
+ ros['base_frame_id']=''
  ros['map_frame_id']='map';ros['enable_local_mapping']=False;ros['enable_global_mapping']=False
  p.write_text(json.dumps(data,indent=2))
  sim=LaunchConfiguration('use_sim_time')

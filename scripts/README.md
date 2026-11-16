@@ -73,11 +73,11 @@ ROS_DOMAIN_ID=126、CycloneDDSで起動し、既定でcritical linkを無効に�
 Ground側は`/joy`と`/heartbeat/ground_station`をDDSで直接送信します。
 critical linkを明示的に有効化した場合は専用入力トピックへ切り替わります。
 
-Ground側のDDS NICは`ip -4 route get 192.168.1.5`の送信元IPv4から選択します。
+Ground側のDDS NICは`ip -4 route get 10.42.0.233`の送信元IPv4から選択します。
 AGXの接続先が異なる場合は`NJORD_AGX_ADDRESS=<AGXのLAN IP>`を指定してください。
 この変数はNIC選択に使います。DDSの固定peer設定やVPN経由の探索は追加しません。
 独自DDS設定を使う場合は`NJORD_GROUND_CYCLONEDDS_URI=/absolute/path/config.xml`を指定できます。
-AGX側は従来の`cyclonedds_agx.xml`を使います。
+AGX側は`10.42.0.0/24`を選ぶ`cyclonedds_agx.xml`を使います。
 
 ```bash
 # launch変更後はrobotパッケージを再ビルドする

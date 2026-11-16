@@ -279,9 +279,11 @@ rcl_interfaces::msg::SetParametersResult ThrusterControllerNode::onSetParameters
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = false;
   const std::unordered_set<std::string> scalar_parameters = {
+    "control.ff.surge", "control.d.surge", "control.d.filter_tau_sec",
     "control.p.surge", "control.p.sway", "control.p.yaw",
     "control.i.surge",
     "control.max_surge_wrench", "control.max_sway_wrench", "control.max_yaw_wrench",
+    "safety.max_thruster_thrust_n",
     "input_scaling.max_linear_x", "input_scaling.max_linear_y",
     "input_scaling.max_angular_z", "static_map.deadzone_pos", "static_map.deadzone_neg"};
   std::unordered_set<std::string> seen;

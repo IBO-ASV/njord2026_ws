@@ -5,8 +5,12 @@
 4. もし回転速度が早すぎたら、```src/control/thruster_controller/config/config.yaml```のmax_thrustを下げる
 
 thruster_id_check手順
-1. jetsonで ```ros2 launch manual_bringup thruster_id_test.launch.py```
+1. jetsonで ```scripts/operations/run_thruster_id_check.sh```
 2. 10secおきに、RR, RL, FR, FLの順で正転するか確認
+
+`serial_port:=/dev/ttyUSB0` などの launch 引数は、そのまま起動スクリプトに渡せる。
+通常起動と異なる DDS 設定を使う場合は、起動前に `NJORD_RMW` と
+`ROS_DOMAIN_ID` を両端で同じ値に設定する。
 
 できなかったときの確認
 - [ ] コントローラーをBluetoothでつないでいるか

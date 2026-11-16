@@ -34,7 +34,8 @@ def generate_launch_description():
         'enable_thruster': 'true',
         'enable_bms': 'true', 'enable_alert_lamp': 'true',
         'enable_sbus': 'false',  # no SBUS XIAO is attached to this AGX
-        'enable_back_cam': 'false', 'enable_nav2': 'false',
+        'enable_back_cam': str(Path('/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._Adesso_CyberTrack_H7_SN0001-video-index0').exists()).lower(),
+        'enable_back_cam_jpeg_ground_video': 'true', 'enable_nav2': 'false',
         'enable_critical_link': 'true',
         'ground_video_host': 'osw-Stealth-14-AI-Studio-A1VGG.local',
         'camera_resolution':'VGA', 'camera_fps':'15',
@@ -45,7 +46,8 @@ def generate_launch_description():
         'enable_alert_lamp', 'enable_sbus', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
     core_args.update({'heartbeat_role': 'agx', 'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
                       'enable_back_cam_ground_video': 'false',
-                      'enable_back_cam_jpeg_ground_video': 'false',
+                      'enable_back_cam_jpeg_ground_video': cfg('enable_back_cam_jpeg_ground_video'),
+                      'back_cam_jpeg_ground_video_host': cfg('ground_video_host'),
                       'enable_autonomy_supervisor': 'true', 'active_nav2_profile': cfg('task'),
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})

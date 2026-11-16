@@ -1,6 +1,7 @@
 #ifndef UM982_DRIVER_UTILS_HPP_
 #define UM982_DRIVER_UTILS_HPP_
 
+#include <sensor_msgs/msg/nav_sat_status.hpp>
 #include <string>
 #include <vector>
 #include <cmath>
@@ -60,9 +61,18 @@ bool parse_gst_standard_deviations(
  */
 std::string base64_encode(const std::string & input);
 
-/**
- * @brief 度数法から弧度法への変換
- */
+// NMEA quality 1/3: standalone/PPS; 2/4/5: differential/RTK.
+// Estimated, manual, simulated and unknown qualities are not satellite fixes.
+inline int8_t navsat_status_from_gga_quality(int quality) noexcept
+{
+    using Status = sensor_msgs::msg::NavSatStatus;
+    switch (quality) {
+        case 1: case 3: return Status::STATUS_FIX;
+        case 2: case 4: case 5: return Status::STATUS_GBAS_FIX;
+        default: return Status::STATUS_NO_FIX;
+    }
+}
+
 inline double deg2rad(double deg) { return deg * M_PI / 180.0; }
 
 /**

@@ -56,12 +56,12 @@ TEST(NumericParsing, AcceptsOnlyCompleteFiniteValues)
 
 TEST(HeadingMounting, ConvertsPrimaryToSecondaryBaselineToVesselYaw)
 {
-    constexpr double kBaselineYawRad = -2.819842099193151;
+    const double kBaselineYawRad = std::atan2(-0.3 - 0.3, 0.7 - (-0.3));
     const double reported_baseline_yaw = um982_driver::utils::deg2rad(20.0);
     const double vessel_yaw = um982_driver::utils::normalize_angle_rad(
         reported_baseline_yaw - kBaselineYawRad);
 
-    EXPECT_NEAR(vessel_yaw, um982_driver::utils::deg2rad(-178.4349488229), 1e-10);
+    EXPECT_NEAR(vessel_yaw, um982_driver::utils::deg2rad(50.96375653207352), 1e-10);
     EXPECT_NEAR(
         um982_driver::utils::normalize_angle_rad(4.0 * M_PI), 0.0, 1e-12);
 }
@@ -110,3 +110,15 @@ TEST(NmeaParsing, ParsesUtcTimeForGgaGstMatching)
 }
 
 }  // namespace
+
+TEST(GgaQuality, ReportsSingleFixAndRejectsNonSatelliteSolutions)
+{
+    using Status = sensor_msgs::msg::NavSatStatus;
+    EXPECT_EQ(um982_driver::utils::navsat_status_from_gga_quality(1), Status::STATUS_FIX);
+    for (int quality : {2, 4, 5}) {
+        EXPECT_EQ(um982_driver::utils::navsat_status_from_gga_quality(quality), Status::STATUS_GBAS_FIX);
+    }
+    for (int quality : {-1, 0, 6, 7, 8, 99}) {
+        EXPECT_EQ(um982_driver::utils::navsat_status_from_gga_quality(quality), Status::STATUS_NO_FIX);
+    }
+}

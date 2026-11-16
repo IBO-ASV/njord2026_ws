@@ -4,6 +4,7 @@ ekf_onboard_map:
     sensor_timeout: 0.5
     two_d_mode: true
     publish_tf: true
+    print_diagnostics: true
     map_frame: map
     odom_frame: odom
     base_link_frame: base_link

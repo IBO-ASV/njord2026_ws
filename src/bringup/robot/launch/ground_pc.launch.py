@@ -2,13 +2,13 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, ExecuteProcess, IncludeLaunchDescription, SetEnvironmentVariable
+from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription, SetEnvironmentVariable
 from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 from launch.substitutions import EnvironmentVariable, LaunchConfiguration, PathJoinSubstitution, PythonExpression
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackagePrefix, FindPackageShare
+from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description():
@@ -153,14 +153,18 @@ def generate_launch_description():
         output="screen",
     )
 
-    ntrip_caster = ExecuteProcess(
-        cmd=[
-            PathJoinSubstitution(
-                [FindPackagePrefix("ntripcaster"), "lib", "ntripcaster", "ntripcaster"]
-            ),
-            ntrip_caster_config,
-        ],
-        output="screen",
+    ntrip_caster = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(PathJoinSubstitution([
+            FindPackageShare("robot"), "launch", "ntrip_corrections.launch.py"
+        ])),
+        launch_arguments={
+            "enable_ntrip_caster": enable_ntrip_caster,
+            "enable_ntrip_relay": LaunchConfiguration("enable_ntrip_relay"),
+            "ntrip_caster_config": ntrip_caster_config,
+            "ntrip_upstream_host": LaunchConfiguration("ntrip_upstream_host"),
+            "ntrip_upstream_port": LaunchConfiguration("ntrip_upstream_port"),
+            "ntrip_upstream_mountpoint": LaunchConfiguration("ntrip_upstream_mountpoint"),
+        }.items(),
         condition=IfCondition(enable_ntrip_caster),
     )
 
@@ -209,6 +213,11 @@ def generate_launch_description():
                 "Use 0 only for controlled low-latency tests.",
             ),
             DeclareLaunchArgument("enable_ntrip_caster", default_value="true"),
+            DeclareLaunchArgument("enable_ntrip_relay", default_value="true",
+                                  description="Relay a fixed public base into local RTCM3; disable when using your own base."),
+            DeclareLaunchArgument("ntrip_upstream_host", default_value="geortk.jp"),
+            DeclareLaunchArgument("ntrip_upstream_port", default_value="2101"),
+            DeclareLaunchArgument("ntrip_upstream_mountpoint", default_value="tamtam"),
             DeclareLaunchArgument(
                 "enable_foxglove_bridge",
                 default_value="true",

@@ -95,7 +95,8 @@ void UM982Driver::parse_gga(const std::string& line)
 
     sensor_msgs::msg::NavSatFix msg;
     msg.header.stamp = this->now();
-    msg.header.frame_id = "base_link";
+    // GGA position is the primary antenna, not the vessel origin.
+    msg.header.frame_id = "gnss_link";
     msg.status.service = 15;
     if (!utils::convert_nmea_to_latlon(parts[2], parts[3], msg.latitude) ||
         !utils::convert_nmea_to_latlon(parts[4], parts[5], msg.longitude))
@@ -116,7 +117,8 @@ void UM982Driver::parse_gga(const std::string& line)
     if (!parts[6].empty() && !utils::parse_int(parts[6], quality)) {
         return;
     }
-    if (quality < 1) {
+    msg.status.status = utils::navsat_status_from_gga_quality(quality);
+    if (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX) {
         msg.position_covariance[0] = -1;
     } else {
         constexpr double kGstMaxAgeSec = 0.25;
@@ -133,7 +135,7 @@ void UM982Driver::parse_gga(const std::string& line)
         msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
     }
     if (!stop_publish_) fix_pub_->publish(msg);
-    if (quality >= 1) {
+    if (msg.status.status >= sensor_msgs::msg::NavSatStatus::STATUS_FIX) {
         publish_feedback_odometry(
             msg.latitude, msg.longitude, msg.header.stamp, msg.position_covariance);
     }
