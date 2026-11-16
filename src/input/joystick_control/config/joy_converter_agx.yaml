@@ -14,6 +14,6 @@ joy_converter:
       manual_mode: 4
       auto_mode: 5
     scale:
-      linear_x: 1.0
+      linear_x: 3.0
       linear_y: 1.0
       angular_z: 1.0
