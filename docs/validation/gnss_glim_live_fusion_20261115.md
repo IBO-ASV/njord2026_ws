@@ -127,3 +127,14 @@ GNSS Map Telemetryの地図マーカーは引き続き生GNSS位置・GNSS方位
 
 GNSSの生ログは/home/ibo/rosbags/gnss_heading_check_20261115/gnss_glim_fusion.raw。
 位置情報を含むbag・図・時系列はGitに追加していない。
+
+## ユーザー依頼による停止（23:53〜23:54 EST）
+
+アンテナ入れ替えのため、ユーザーから試験系を停止してよいとの指示を受けた。
+ゼロ推力とSoft EMG=trueを送信し、/safety/emergency_stop=1を確認した。
+その後、global/local EKF・GLIM・LiDAR・GNSSドライバ・NTRIP caster/relay・Foxglove Bridge・
+試験用publisher・serial_writerを終了した。上記の稼働状態はこの停止前の状態である。
+LiDARコンテナはSIGINTで終了せずlaunchによるSIGKILLで終了した。
+23:54 EST時点で2101/8765番の待受なし、UM982/CP2102Nのシリアルポート使用プロセスなしを確認。
+記録済みbag・生ログ・解析結果は保持している。
+ユーザーの既存のスラスター設定とサブモジュール変更はcommit対象外。
