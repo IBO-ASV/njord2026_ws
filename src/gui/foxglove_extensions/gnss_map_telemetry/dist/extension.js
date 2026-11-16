@@ -142,6 +142,7 @@ function createCourseEditor(context,L,map,root,onCourse) {
   return {receive,hasCourse:()=>Boolean(course),stats:()=>({task:course?.task_id,count:draft?.waypoints.length||0}),destroy:()=>{clearInterval(timer);courseLayers.forEach(layer=>map.removeLayer(layer));if(route)map.removeLayer(route);box.remove();}};
 }
 if(typeof module!=='undefined')module.exports={createCourseEditor,COURSE_LINE_STYLE,escapeMapText};
+const HEADING_TOPIC = "/sensor/vehicle_gnss/compass/raw";
 const FIX_TOPIC = "/sensor/vehicle_gnss/fix/raw";
 const SPEED_TOPIC = "/gui/ground_speed_mps";
 const BATTERY_PERCENT_TOPIC = "/gui/battery_percent";
@@ -270,6 +271,21 @@ function quaternionToBearingDegrees(rotation) {
   const north = 2 * (rotation.x * rotation.y + rotation.w * rotation.z);
   if (!Number.isFinite(east) || !Number.isFinite(north) || Math.hypot(east, north) < 1e-9) return undefined;
   return (Math.atan2(east, north) * 180 / Math.PI + 360) % 360;
+}
+
+// GNSS yaw is absolute ENU and already includes the antenna mounting correction.
+// Once GNSS has been seen, hide stale heading rather than substituting local odom yaw.
+function selectMapOrientation(gnss, transforms, nowSeconds) {
+  if (gnss) {
+    const age = nowSeconds - gnss.timeSeconds;
+    return age >= 0 && age <= 2 ? normalizeQuaternion(gnss.orientation) : undefined;
+  }
+  return resolveOrientation(transforms, WORLD_FRAME, VESSEL_FRAME);
+}
+
+function timeSeconds(time) {
+  return time && Number.isFinite(time.sec) && Number.isFinite(time.nsec)
+    ? time.sec + time.nsec / 1e9 : undefined;
 }
 
 function vesselIcon() {
@@ -415,7 +431,7 @@ function initGnssMapTelemetry(context) {
     waypointSignature = nextWaypointSignature;
   }
 
-  function updateMarker() {
+  function updateMarker(nowSeconds) {
     if (!Number.isFinite(state.latitude) || !Number.isFinite(state.longitude)) return;
     const position = [state.latitude, state.longitude];
     if (!marker) marker = L.marker(position, {icon: vesselIcon(), interactive: false}).addTo(map);
@@ -425,7 +441,7 @@ function initGnssMapTelemetry(context) {
       centered = true;
     }
 
-    const orientation = resolveOrientation(transforms, WORLD_FRAME, VESSEL_FRAME);
+    const orientation = selectMapOrientation(state.gnssHeading, transforms, nowSeconds);
     state.headingDegrees = quaternionToBearingDegrees(orientation);
     const element = marker.getElement()?.querySelector(".vessel-icon");
     const arrow = element?.querySelector(".vessel-arrow");
@@ -453,10 +469,11 @@ function initGnssMapTelemetry(context) {
   }
 
   context.subscribe([
-    {topic: FIX_TOPIC}, {topic: SPEED_TOPIC}, {topic: BATTERY_PERCENT_TOPIC},
+    {topic: FIX_TOPIC}, {topic: HEADING_TOPIC}, {topic: SPEED_TOPIC}, {topic: BATTERY_PERCENT_TOPIC},
     {topic: TF_TOPIC}, {topic: TF_STATIC_TOPIC}, {topic: GROUND_WAYPOINT_MARKERS_TOPIC}, {topic: COURSE_EDITOR_TOPIC},
   ]);
   context.watch("currentFrame");
+  context.watch("currentTime");
   context.onRender = (renderState, done) => {
     try {
       for (const event of renderState.currentFrame || []) {
@@ -466,6 +483,11 @@ function initGnssMapTelemetry(context) {
         } else if (event.topic === FIX_TOPIC) {
           if (typeof message.latitude === "number") state.latitude = message.latitude;
           if (typeof message.longitude === "number") state.longitude = message.longitude;
+        } else if (event.topic === HEADING_TOPIC) {
+          state.gnssHeading = {
+            orientation: message.pose?.pose?.orientation,
+            timeSeconds: timeSeconds(event.receiveTime) ?? Date.now() / 1000,
+          };
         } else if (event.topic === SPEED_TOPIC && typeof message.data === "number") {
           state.speedMps = message.data;
         } else if (event.topic === BATTERY_PERCENT_TOPIC && typeof message.data === "number") {
@@ -476,7 +498,7 @@ function initGnssMapTelemetry(context) {
           updateWaypointMarkers(message);
         }
       }
-      updateMarker();
+      updateMarker(timeSeconds(renderState.currentTime) ?? Date.now() / 1000);
       // MarkerArray is transient-local, but re-applying it also handles a
       // GNSS fix arriving after the ground-side waypoint list.
       for (const event of renderState.currentFrame || []) {
@@ -608,4 +630,5 @@ module.exports = {
   normalizeQuaternion,
   quaternionToBearingDegrees,
   resolveOrientation,
+  selectMapOrientation,
 };

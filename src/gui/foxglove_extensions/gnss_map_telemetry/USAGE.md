@@ -12,7 +12,8 @@
 | --- | --- | --- |
 | 緯度・経度 | `/sensor/vehicle_gnss/fix/raw` | `sensor_msgs/msg/NavSatFix` |
 | 対地速度 | `/gui/ground_speed_mps` | `std_msgs/msg/Float32` |
-| 船体の向き | `/tf`, `/tf_static` | `tf2_msgs/msg/TFMessage` |
+| 船体の絶対方位（優先） | `/sensor/vehicle_gnss/compass/raw` | `geometry_msgs/msg/PoseWithCovarianceStamped` |
+| GNSS方位を一度も受信していない場合の向き | `/tf`, `/tf_static` | `tf2_msgs/msg/TFMessage` |
 
 `/gui/ground_speed_mps` は、このワークスペースの
 `ground_speed_publisher` が `/odometry/feedback` の東西・南北速度から算出します。
@@ -28,7 +29,7 @@ ros2 run tf2_ros tf2_echo odom base_link
 Foxglove Desktopを開き、次のファイルを画面へドラッグ＆ドロップします。
 
 ```text
-src/gui/foxglove_extensions/gnss_map_telemetry/gnss-map-telemetry-0.4.0.foxe
+src/gui/foxglove_extensions/gnss_map_telemetry/gnss-map-telemetry-0.4.1.foxe
 ```
 
 Foxgloveの Settings > Extensions に **GNSS Map Telemetry** が表示され、有効になっていることを確認してください。
@@ -66,3 +67,12 @@ zoomします。左上の ⚙ Topics から全入力topic名を変更でき、�
 - 位置が円で表示され、`HDG --` になる: `odom` から `base_link` までのTF chainを確認してください。
 - 地図が表示されない: OpenStreetMapのタイルを使うため、表示PCからインターネットへ接続できるか確認してください。
 - パネルが見つからない: `.foxe` を先に導入してからレイアウトをimportし、Foxgloveを再起動してください。
+
+## GNSS単体試験で地図と方位を表示
+
+AGXのFoxglove Bridgeへ `ws://10.42.0.233:8765` で接続（今回のLAN IP）。
+拡張0.4.1以降をインストールし、GNSS Map Telemetryパネルを開く。
+GNSSの位置と、アンテナ取付け角補正済みの絶対ENU方位を地図へ重ねる。
+GNSS方位は2秒を超えて古ければ矢印を非表示にする。GNSS方位を受信した後は、
+欠測時にGLIMのローカル方位へ切り替えない。GLIMのTFを書き換える必要はない。
+地図マーカーの緯度経度は生GNSS位置であり、レバーアーム補正後の船体原点位置ではない。
