@@ -56,12 +56,12 @@ TEST(NumericParsing, AcceptsOnlyCompleteFiniteValues)
 
 TEST(HeadingMounting, ConvertsPrimaryToSecondaryBaselineToVesselYaw)
 {
-    const double kBaselineYawRad = std::atan2(-0.3 - 0.3, 0.7 - (-0.3));
+    const double kBaselineYawRad = std::atan2(0.3 - (-0.3), -0.3 - 0.7);
     const double reported_baseline_yaw = um982_driver::utils::deg2rad(20.0);
     const double vessel_yaw = um982_driver::utils::normalize_angle_rad(
         reported_baseline_yaw - kBaselineYawRad);
 
-    EXPECT_NEAR(vessel_yaw, um982_driver::utils::deg2rad(50.96375653207352), 1e-10);
+    EXPECT_NEAR(vessel_yaw, um982_driver::utils::deg2rad(-129.03624346792648), 1e-10);
     EXPECT_NEAR(
         um982_driver::utils::normalize_angle_rad(4.0 * M_PI), 0.0, 1e-12);
 }
@@ -121,4 +121,14 @@ TEST(GgaQuality, ReportsSingleFixAndRejectsNonSatelliteSolutions)
     for (int quality : {-1, 0, 6, 7, 8, 99}) {
         EXPECT_EQ(um982_driver::utils::navsat_status_from_gga_quality(quality), Status::STATUS_NO_FIX);
     }
+}
+
+TEST(HeadingMounting, SwappingMainAndSubPreservesCorrectedVesselYaw)
+{
+    const double old_baseline = std::atan2(-0.6, 1.0);
+    const double new_baseline = std::atan2(0.6, -1.0);
+    const double old_reported_yaw = um982_driver::utils::deg2rad(90.0 - 280.0);
+    const double new_reported_yaw = um982_driver::utils::deg2rad(90.0 - 100.0);
+    EXPECT_NEAR(um982_driver::utils::normalize_angle_rad(old_reported_yaw - old_baseline),
+                um982_driver::utils::normalize_angle_rad(new_reported_yaw - new_baseline), 1e-12);
 }

@@ -104,6 +104,7 @@ if(BUILD_TESTING)
   ament_add_pytest_test(test_launch_roles test/test_launch_roles.py)
   ament_add_pytest_test(test_ntrip_relay test/test_ntrip_relay.py)
   ament_add_pytest_test(test_glim_sensor_pose_contract test/test_glim_sensor_pose_contract.py)
+  ament_add_pytest_test(test_gnss_antenna_geometry test/test_gnss_antenna_geometry.py)
   ament_add_pytest_test(test_platform_manifest test/test_platform_manifest.py)
 endif()
 
