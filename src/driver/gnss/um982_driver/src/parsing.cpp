@@ -95,7 +95,8 @@ void UM982Driver::parse_gga(const std::string& line)
 
     sensor_msgs::msg::NavSatFix msg;
     msg.header.stamp = this->now();
-    msg.header.frame_id = "base_link";
+    // GGA position is the primary antenna, not the vessel origin.
+    msg.header.frame_id = "gnss_link";
     msg.status.service = 15;
     if (!utils::convert_nmea_to_latlon(parts[2], parts[3], msg.latitude) ||
         !utils::convert_nmea_to_latlon(parts[4], parts[5], msg.longitude))
