@@ -733,7 +733,11 @@ def test_ground_pc_keeps_front_and_back_video_receivers_separate():
 def test_ground_pc_starts_workspace_ntrip_caster_by_default():
     source = _read_launch_source("ground_pc.launch.py")
     assert '"enable_ntrip_caster", default_value="true"' in source
-    assert 'FindPackagePrefix("ntripcaster")' in source
+    assert '"ntrip_corrections.launch.py"' in source
+    corrections = _read_launch_source("ntrip_corrections.launch.py")
+    assert "FindPackagePrefix('ntripcaster')" in corrections
+    assert "'enable_ntrip_relay': 'true'" in corrections
+    assert "'ntrip_upstream_mountpoint': 'tamtam'" in corrections
     assert 'FindPackageShare("ntripcaster")' in source
     assert '"ntripcaster.json"' in source
 

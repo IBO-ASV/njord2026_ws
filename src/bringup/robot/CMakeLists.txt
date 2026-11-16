@@ -102,6 +102,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_pytest REQUIRED)
   ament_add_pytest_test(test_livox_config test/test_livox_config.py)
   ament_add_pytest_test(test_launch_roles test/test_launch_roles.py)
+  ament_add_pytest_test(test_ntrip_relay test/test_ntrip_relay.py)
   ament_add_pytest_test(test_platform_manifest test/test_platform_manifest.py)
 endif()
 
@@ -109,5 +110,7 @@ install(PROGRAMS scripts/gnss_heading_imu.py DESTINATION lib/${PROJECT_NAME} REN
 
 install(PROGRAMS scripts/runtime_parameter_sync.py DESTINATION lib/robot)
 install(PROGRAMS scripts/agx_rosbag_record_manager.py DESTINATION lib/robot RENAME agx_rosbag_record_manager)
+
+install(PROGRAMS scripts/ntrip_relay.py DESTINATION lib/${PROJECT_NAME})
 
 ament_package()
