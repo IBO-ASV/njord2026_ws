@@ -83,6 +83,10 @@ vendored submodule を**一切改変せず**、robot パッケージ側で完結
 
 ## 8. 運用手順（艇上・ドキュメント化）
 
+- **LiDARの給電とSoft EMGを先に確認する。** 2026-11-15の現地情報では、LiDARの給電はSoft EMG側の電源状態に依存する。NICがリンクアップしていても、リレー遮断中は実データを受信できない可能性がある。無点群を直ちに機種/IP設定の不良と判断しない。
+- 「Soft EMGをON」という現場での表現とROSのBool値を区別する。現行`serial_writer`と`firmware/firm1`では`/soft_emg=true`は非常停止要求で、firmwareが推力を中立にしてFETをLOWにする。電源投入を目的とする非常停止解除は`false`側であり、同時に有効な推力指令を継続送信しないとcommand watchdogが非常停止に戻す。センサ単体試験では専用の指令入力に4要素のゼロ推力だけを送信し、通常の制御・自律航行ノードは起動しない。
+- `/micon/relay_active`はリレー状態の応答であり、LiDARの給電や正常起動を単独では証明しない。電源状態の確認後、pingと点群・IMUの実メッセージ受信を確認する。シリアルドライバは既存プロセスとの二重起動を避け、UM982のポートを開かない。
+- 2026-11-15実機では、ゼロ推力を継続送信して`/soft_emg=false`にすると`192.168.1.151`の応答が復帰し、`lidar_model:=mid360 lidar_config_role:=agx`で点群約10 Hz・SI単位IMU約200 Hzを受信した。`/soft_emg=true`時には無応答だった。IPと機種は搭載個体に合わせること。試験終了時は非常停止に戻す。
 - 起動後 `ros2 topic hz /livox/lidar` で点群配信を確認（機種選択ミスはサイレント無点群のため）。
 - driver ログの検出 dev_type と選択 `lidar_model` を突合。
 - Mid360s 実機の IP を SN から確認し `MID360S_config.json` の `lidar_configs.ip` を更新。
