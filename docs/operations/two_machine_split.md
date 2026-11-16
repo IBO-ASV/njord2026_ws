@@ -247,9 +247,10 @@ Jetson と miniPC は有線で直結（またはスイッチ経由）する。Li
 ### Wi-Fi（管理・Internet用）
 
 Wi-FiのIPv4はDHCPで運用でき、固定IPは必須ではない。AGXのLiDAR用有線IP
-`192.168.1.5/24`とは区別する。AGX専用DDS設定`cyclonedds_agx.xml`はWi-Fi側の
-`192.168.0.0/24`を選ぶ。`run_agx_pair.sh ground`は既定でAGXの`192.168.0.71`への
-経路を使う。AGXのWi-Fiアドレスが変わる場合はGround側で`NJORD_AGX_ADDRESS`を指定する。
+`192.168.1.5/24`とは区別する。AGX/Ground の直結網は`10.42.0.0/24`で、Ground PCは
+`10.42.0.1`、AGXは`10.42.0.233`を使用する。AGX専用DDS設定`cyclonedds_agx.xml`は
+この直結網だけを選ぶ。`run_agx_pair.sh ground`は既定でAGXの`10.42.0.233`への経路を使う。
+AGXの接続先が変わる場合はGround側で`NJORD_AGX_ADDRESS`を指定する。
 Wi-FiのIPを固定したい場合も、ルータ側でのDHCP予約を利用できる。
 
 SSHやFoxgloveを`.local`名で利用する場合、名前解決の成功と接続先IPへの到達性は別に確認する。

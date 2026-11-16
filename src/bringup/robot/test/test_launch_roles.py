@@ -867,7 +867,7 @@ def test_zenoh_defaults_and_agx_critical_link_use_their_configured_networks():
     ground = (root / "src" / "communication" / "critical_link" / "config" / "ground_sender.yaml").read_text()
     vessel = (root / "src" / "communication" / "critical_link" / "config" / "vessel_receiver.yaml").read_text()
     assert '"sensor_lan|0.0.0.0|ibo-agx-orin.local|45100"' in ground
-    assert '"ops_lan|10.42.0.2|45100"' in vessel
+    assert '"ops_lan|10.42.0.233|45100"' in vessel
     assert '"tailscale|100.73.137.72|45101"' in vessel
 
     agx = (root / "src" / "bringup" / "robot" / "launch" / "agx_bringup.launch.py").read_text()

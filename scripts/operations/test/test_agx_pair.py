@@ -23,7 +23,7 @@ def test_helper_selects_interface_and_disables_critical_link(tmp_path, role, ove
     (tmp_path / 'install/setup.bash').write_text('export PATH="' + str(tmp_path / 'bin') + ':$PATH"\n')
     (tmp_path / 'bin').mkdir()
     ip = tmp_path / 'bin/ip'
-    ip.write_text('#!/bin/sh\n[ "$4" = "192.168.0.71" ] || exit 1\necho "192.168.0.71 dev wlan0 src 192.168.0.72 uid 1000"\n')
+    ip.write_text('#!/bin/sh\n[ "$4" = "10.42.0.233" ] || exit 1\necho "10.42.0.233 dev ops_lan src 10.42.0.1 uid 1000"\n')
     ip.chmod(0o755)
     ros2 = tmp_path / 'bin/ros2'
     ros2.write_text('#!/usr/bin/python3\nimport os,sys,json\nprint(json.dumps({"args":sys.argv[1:],"dds":os.environ["CYCLONEDDS_URI"],"domain":os.environ["ROS_DOMAIN_ID"]}))\n')
@@ -43,9 +43,14 @@ def test_helper_selects_interface_and_disables_critical_link(tmp_path, role, ove
         if override:
             assert data['dds'] == '<CycloneDDS/>'
         else:
-            assert 'address="192.168.0.72"' in data['dds']
+            assert 'address="10.42.0.1"' in data['dds']
     else:
         assert data['dds'] == str(tmp_path / 'src/bringup/robot/config/cyclonedds_agx.xml')
+
+
+def test_vessel_cyclonedds_profile_uses_direct_agx_ground_network():
+    profile = (ROOT / 'src/bringup/robot/config/cyclonedds_agx.xml').read_text()
+    assert 'address="10.42.0.0"' in profile
 
 
 @pytest.mark.parametrize('enabled', ['true', 'false'])
