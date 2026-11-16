@@ -27,12 +27,17 @@ export NJORD_ROLE="${NJORD_ROLE:-jetson}"
 export ROS_DOMAIN_ID="${ROS_DOMAIN_ID:-6}"
 export ROS_LOCALHOST_ONLY=0
 
+# ROS Jazzy's setup script reads AMENT_TRACE_SETUP_FILES before it initializes
+# it, so it is not compatible with nounset.  Keep nounset for this wrapper
+# while temporarily disabling it around the ROS-provided setup scripts.
+set +u
 # shellcheck disable=SC1091
 source "${ROS_SETUP}"
 # shellcheck disable=SC1091
 source "${SCRIPT_DIR}/../setup/njord_env.sh"
 # shellcheck disable=SC1091
 source "${WORKSPACE_SETUP}"
+set -u
 
 cd "${WORKSPACE_DIR}"
 exec ros2 launch thruster_tools thruster_id_test.launch.py "$@"
