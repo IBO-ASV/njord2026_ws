@@ -40,3 +40,9 @@ ros2 launch um982_driver um982.launch.py rtk_enable:=false \
 - /home/ibo/rosbags/gnss_heading_check_20261115/gnss_heading_check_20261115_observer.json
 
 既存のthruster設定変更とntripcasterサブモジュール変更は本作業に含めていない。
+
+## 続報: UNKNOWNの原因
+
+後続調査で、node.cppの当該実装は `#if 0` 内にあり、実際にはparsing.cppが使われていることを確認。
+parsing.cppのparse_ggaがstatusを設定していなかったことが原因であり、上記のinstall成果物不一致という疑いは取り下げる。
+後続の静止ばらつき測定で修正と実機検証を実施する。

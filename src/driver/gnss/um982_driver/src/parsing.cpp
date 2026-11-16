@@ -116,7 +116,8 @@ void UM982Driver::parse_gga(const std::string& line)
     if (!parts[6].empty() && !utils::parse_int(parts[6], quality)) {
         return;
     }
-    if (quality < 1) {
+    msg.status.status = utils::navsat_status_from_gga_quality(quality);
+    if (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX) {
         msg.position_covariance[0] = -1;
     } else {
         constexpr double kGstMaxAgeSec = 0.25;
@@ -133,7 +134,7 @@ void UM982Driver::parse_gga(const std::string& line)
         msg.position_covariance_type = sensor_msgs::msg::NavSatFix::COVARIANCE_TYPE_DIAGONAL_KNOWN;
     }
     if (!stop_publish_) fix_pub_->publish(msg);
-    if (quality >= 1) {
+    if (msg.status.status >= sensor_msgs::msg::NavSatStatus::STATUS_FIX) {
         publish_feedback_odometry(
             msg.latitude, msg.longitude, msg.header.stamp, msg.position_covariance);
     }
