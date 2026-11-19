@@ -1,0 +1,24 @@
+/velocity_autotuner:
+  ros__parameters:
+    target_speed_mps: 0.0
+    max_test_speed_mps: 0.0
+    test_max_thruster_thrust_n: 0.0
+
+    feedforward_bounds: [0.0, 80.0]
+    p_bounds: [0.0, 80.0]
+    d_bounds: [0.0, 80.0]
+    search_rounds: 4
+
+    settle_time_sec: 5.0
+    steady_window_sec: 5.0
+    step_duration_sec: 5.0
+    pre_step_stop_sec: 3.0
+
+    derivative_filter_tau_sec: 0.15
+    overshoot_weight: 4.0
+    thrust_slew_weight: 0.01
+
+    output_dir: ~/njord_tuning
+    controller_node: /thruster_controller_node
+    odom_topic: /odometry/filtered/local
+    force_topic: /debug/current_force
