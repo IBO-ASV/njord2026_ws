@@ -60,8 +60,8 @@ Mission Controlは3つの試験上限を`/velocity_autotuner/set_parameters_atom
 
 | サービス | 操作 |
 |---|---|
-| `/velocity_tuning/start` | 新鮮なオドメトリとAUTO許可を確認して開始 |
-| `/velocity_tuning/pause` | 一時停止。手動操作には別途MANUALへの切替が必要 |
+| `/velocity_tuning/start` | 初回は設定確認後に開始。`WAITING_NEXT`では次の候補を1試行だけ開始 |
+| `/velocity_tuning/pause` | 試行中は中断してPAUSED。試行間待機中はゼロ指令のまま手動操作へ移行 |
 | `/velocity_tuning/resume` | AUTO許可を確認し、現在の候補を最初から再試行 |
 | `/velocity_tuning/stop` | MANUALで終了・設定復元を要求 |
 
@@ -80,7 +80,7 @@ FFは定常速度誤差、P/Dは速度誤差の積分・オーバーシュート
 試験中は前後速度のIゲインを0にし、既存の上限を超えないよう試験推力上限を設定します。
 選定したFF/P/Dの反映成功とYAML保存を確認してから`COMPLETE`になります。
 
-- `velocity_tuning_<UTC時刻>.csv`：候補ごとの評価結果
+- `velocity_tuning_<UTC時刻>.csv`：候補ごとの評価結果（1試行ごとに`WAITING_NEXT`で停止し、GUIの「次の試行を実行」を押すまで次へ進まない）
 - `velocity_gains_<UTC時刻>.yaml`：選定したFF/P/D
 
 終了時に推力上限とIゲインを復元します。完了済みなら選定FF/P/Dを残し、途中終了なら元のFF/P/Dも復元します。
