@@ -132,7 +132,7 @@ function initPanel(context) {
     const task = tasks.find(t=>t.task_id===select.value);
     const blockers = startBlockers();
     const tuningPhase=fresh(lastTuning)?tuningMessage.split(/\s+/,1)[0]:'STALE';
-    const tunerActive=['PREPARING','RUNNING','WAITING_NEXT','PAUSED','RESTORING','COMPLETE'].includes(tuningPhase);
+    const tunerActive=['PREPARING','RUNNING','WAITING_NEXT','PAUSED','FINALIZING','RESTORING','COMPLETE'].includes(tuningPhase);
     const targetValue=Number(targetInput.value),maxSpeedValue=Number(maxSpeedInput.value),capValue=Number(thrustCapInput.value);
     const tuningConfigValid=Number.isFinite(targetValue)&&targetValue>0&&Number.isFinite(maxSpeedValue)&&maxSpeedValue>=targetValue&&Number.isFinite(capValue)&&capValue>0;
     const waitingForNext=tuningPhase==='WAITING_NEXT';
