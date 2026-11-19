@@ -129,16 +129,24 @@ class VelocityAutotuner(Node):
     def _start(self,q,r):
         try: self._validate()
         except ValueError as e: r.success=False; r.message=str(e); return r
-        if self.reserved or self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted or self.speed is None or time.monotonic()-self.odom_at>1:
-            r.success=False; r.message='Need fresh odometry and ready AUTO, with no active session'; return r
+        if self.reserved:
+            if self.status!='WAITING_NEXT' or self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted or self.speed is None or time.monotonic()-self.odom_at>1:
+                r.success=False; r.message='A completed trial and fresh, ready AUTO state are required'; return r
+            if not self.set_client.service_is_ready(): r.success=False; r.message='Controller parameter service unavailable'; return r
+            self.status='RUNNING'; self.failure=''; self._next_candidate()
+            r.success=True; r.message='Next trial accepted'; return r
+        if self.state is None or self.state.requested_mode!=ControlState.MODE_AUTO or not self.state.auto_permitted or self.speed is None or time.monotonic()-self.odom_at>1:
+            r.success=False; r.message='Need fresh odometry and ready AUTO'; return r
         if not self.get_client.service_is_ready() or not self.set_client.service_is_ready(): r.success=False; r.message='Controller parameter services unavailable'; return r
         self.old={}; self.stage=''; self.completed=False; self.chosen={'ff':0.0,'p':0.0,'d':0.0}
         self.reserved=True; self.status='PREPARING'; self.operation='start'
         q=GetParameters.Request(); q.names=['safety.max_thruster_thrust_n','control.i.surge','control.ff.surge','control.p.surge','control.d.surge','input_scaling.max_linear_x']
         self.future=self.get_client.call_async(q); r.success=True; r.message='Preparing'; return r
     def _pause(self,q,r):
-        if not self.reserved or self.status not in ('PREPARING','RUNNING','PAUSED'):
+        if not self.reserved or self.status not in ('PREPARING','RUNNING','PAUSED','WAITING_NEXT'):
             r.success=False; r.message='No pausable session'; return r
+        if self.status=='WAITING_NEXT':
+            r.success=True; r.message='Trial complete; output is zero and manual mode can take control'; return r
         self._pause_now('Paused by operator'); r.success=True; r.message='Zero command; manual mode can take control'; return r
     def _pause_now(self,why):
         if self.stage and self.trial_at: self._write_row('INTERRUPTED',None,None,'INTERRUPTED')
@@ -224,7 +232,7 @@ class VelocityAutotuner(Node):
         if len(vals)<3: self._fault('Not enough fresh odometry data'); return
         if self.stage=='ff': mean=sum(vals)/len(vals); signed=mean-self.target; score=abs(signed)
         else: signed=0.; score=self.iae+self.over_weight*self.overshoot+self.slew_weight*math.sqrt(self.slew/max(1,self.slew_n))
-        self._write_row(self.stage,score,signed,'OK'); self.search.record(self.candidate,score,signed); self.trial_at=0.; self._next_candidate()
+        self._write_row(self.stage,score,signed,'OK'); self.search.record(self.candidate,score,signed); self.trial_at=0.; self.status='WAITING_NEXT'; self.failure='Trial complete; operator confirmation required for next trial'
     def _write_row(self,stage,score,signed,result):
         if self.writer:
             self.writer.writerow([stage,self.candidate,'' if score is None else score,'' if signed is None else signed,self.overshoot,self.iae,self.slew,result]); self.csv_stream.flush()
