@@ -132,11 +132,14 @@ function initPanel(context) {
     const task = tasks.find(t=>t.task_id===select.value);
     const blockers = startBlockers();
     const tuningPhase=fresh(lastTuning)?tuningMessage.split(/\s+/,1)[0]:'STALE';
-    const tunerActive=['PREPARING','RUNNING','PAUSED','RESTORING','COMPLETE'].includes(tuningPhase);
+    const tunerActive=['PREPARING','RUNNING','WAITING_NEXT','PAUSED','RESTORING','COMPLETE'].includes(tuningPhase);
     const targetValue=Number(targetInput.value),maxSpeedValue=Number(maxSpeedInput.value),capValue=Number(thrustCapInput.value);
     const tuningConfigValid=Number.isFinite(targetValue)&&targetValue>0&&Number.isFinite(maxSpeedValue)&&maxSpeedValue>=targetValue&&Number.isFinite(capValue)&&capValue>0;
-    tuneStart.disabled=busy||tunerActive||!tuningConfigValid||!fresh(lastControl)||control.requested_mode!==1||control.auto_permitted!==true||control.emergency_stop===true;
-    tunePause.disabled=busy||tuningPhase!=='RUNNING';
+    const waitingForNext=tuningPhase==='WAITING_NEXT';
+    tuneStart.textContent=waitingForNext?'次の試行を実行':'自動調整を開始';
+    tuneStart.disabled=busy||(waitingForNext?(!fresh(lastControl)||control.emergency_stop===true):(tunerActive||!tuningConfigValid||!fresh(lastControl)||control.requested_mode!==1||control.auto_permitted!==true||control.emergency_stop===true));
+    tunePause.textContent=waitingForNext?'MANUALへ切替':'一時停止して手動へ';
+    tunePause.disabled=busy||!['RUNNING','WAITING_NEXT'].includes(tuningPhase);
     tuneResume.disabled=busy||tuningPhase!=='PAUSED'||!fresh(lastControl)||control.emergency_stop===true;
     tuneStop.disabled=busy||!tunerActive||!fresh(lastControl);
     for(const input of [targetInput,maxSpeedInput,thrustCapInput]) input.disabled=busy||tunerActive;
@@ -224,6 +227,12 @@ function initPanel(context) {
   const modeRequest=requested_mode=>call('/control/set_mode',{requested_mode,request_id:`foxglove-tuning-${Date.now()}`});
   tuneStart.onclick=async()=>{
     render(); if(tuneStart.disabled)return;
+    if(fresh(lastTuning)&&tuningMessage.split(/\s+/,1)[0]==='WAITING_NEXT'){
+      const mode=await modeRequest(1); if(!mode?.accepted)return;
+      if(!await waitForControl(state=>state.requested_mode===1&&state.auto_permitted&&!state.emergency_stop)){feedback.textContent='AUTO許可を確認できません。次の試行は開始していません。';return;}
+      const result=await call('/velocity_tuning/start',{}); if(!result?.success)feedback.textContent=result?.message||'次の試行を開始できませんでした';
+      return;
+    }
     const parameters=[['target_speed_mps',Number(targetInput.value)],['max_test_speed_mps',Number(maxSpeedInput.value)],['test_max_thruster_thrust_n',Number(thrustCapInput.value)]].map(([name,value])=>({name,value:{type:3,double_value:value}}));
     const configured=await call('/velocity_autotuner/set_parameters_atomically',{parameters});
     if(!configured?.result?.successful){feedback.textContent=configured?.result?.reason||'調整条件を設定できませんでした';return;}
