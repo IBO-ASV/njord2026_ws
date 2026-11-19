@@ -42,8 +42,8 @@ AUTO要求・AUTO許可を確認して開始します。3値の既定値は0な�
 | `test_max_thruster_thrust_n` | `0.0` | 1基あたりの試験推力上限。正の値が必要 |
 | `feedforward_bounds` / `p_bounds` / `d_bounds` | `[0.0, 80.0]` | FF/P/Dそれぞれの探索範囲 |
 | `search_rounds` | `4` | 探索の絞り込み回数 |
-| `settle_time_sec` / `steady_window_sec` | `25.0` / `8.0` | FFの整定待ちと定常評価時間 |
-| `step_duration_sec` / `pre_step_stop_sec` | `18.0` / `3.0` | P/Dの評価時間と試行前のゼロ指令時間 |
+| `settle_time_sec` / `steady_window_sec` | `5.0` / `5.0` | FFの整定待ちと定常評価時間 |
+| `step_duration_sec` / `pre_step_stop_sec` | `5.0` / `3.0` | P/Dの応答評価時間と試行前のゼロ指令時間 |
 | `odom_topic` | `/odometry/filtered/local` | 前後速度の入力。`child_frame_id`が`base_link`のOdometry |
 | `force_topic` | `/debug/current_force` | 推力入力。Float32MultiArrayの4要素 |
 | `controller_node` | `/thruster_controller_node` | パラメータ操作先 |
@@ -53,7 +53,7 @@ Mission Controlは3つの試験上限を`/velocity_autotuner/set_parameters_atom
 有効なセッション中は設定変更を拒否します。探索範囲などは起動時のROSパラメータで指定してください。
 目標速度はコントローラの`input_scaling.max_linear_x`も超えられません。
 
-## ROSインターフェース
+調整時間を変える場合は、`src/control/velocity_autotuner/velocity_autotuner/node.py`の`settle_time_sec`、`steady_window_sec`、`step_duration_sec`の既定値を編集します。現在のlaunchには専用の設定YAMLがないため、変更後はパッケージを再ビルドして起動し直してください。FFの評価窓は安定待ち終了後の`steady_window_sec`秒を集計します。\n\n既定時間では、FFは試行前3秒停止＋安定待ち5秒＋評価5秒で計13秒、P/Dは試行前3秒停止＋応答計測5秒で計8秒です。探索候補数により全体時間は変わります。\n\n## ROSインターフェース
 
 以下はすべて`std_srvs/srv/Trigger`サービスです。応答の成功は要求の受理を示し、
 非同期処理の完了は`/velocity_tuning/status`（String）で確認します。
