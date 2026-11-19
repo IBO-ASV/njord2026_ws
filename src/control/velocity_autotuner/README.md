@@ -53,7 +53,7 @@ Mission Controlは3つの試験上限を`/velocity_autotuner/set_parameters_atom
 有効なセッション中は設定変更を拒否します。探索範囲などは起動時のROSパラメータで指定してください。
 目標速度はコントローラの`input_scaling.max_linear_x`も超えられません。
 
-調整時間を変える場合は、`src/control/velocity_autotuner/velocity_autotuner/node.py`の`settle_time_sec`、`steady_window_sec`、`step_duration_sec`の既定値を編集します。現在のlaunchには専用の設定YAMLがないため、変更後はパッケージを再ビルドして起動し直してください。FFの評価窓は安定待ち終了後の`steady_window_sec`秒を集計します。\n\n既定時間では、FFは試行前3秒停止＋安定待ち5秒＋評価5秒で計13秒、P/Dは試行前3秒停止＋応答計測5秒で計8秒です。探索候補数により全体時間は変わります。\n\n## ROSインターフェース
+時間・探索範囲などの設定は`src/control/velocity_autotuner/config/velocity_autotuner.yaml`で編集します。launchはインストール済みの同YAMLを明示的に読み込みます。編集後は再ビルドして起動し直してください。FFの評価窓は安定待ち終了後の`steady_window_sec`秒を集計します。\n\n既定時間では、FFは試行前3秒停止＋安定待ち5秒＋評価5秒で計13秒、P/Dは試行前3秒停止＋応答計測5秒で計8秒です。探索候補数により全体時間は変わります。\n\n## ROSインターフェース
 
 以下はすべて`std_srvs/srv/Trigger`サービスです。応答の成功は要求の受理を示し、
 非同期処理の完了は`/velocity_tuning/status`（String）で確認します。
