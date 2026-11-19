@@ -232,7 +232,13 @@ class VelocityAutotuner(Node):
         if len(vals)<3: self._fault('Not enough fresh odometry data'); return
         if self.stage=='ff': mean=sum(vals)/len(vals); signed=mean-self.target; score=abs(signed)
         else: signed=0.; score=self.iae+self.over_weight*self.overshoot+self.slew_weight*math.sqrt(self.slew/max(1,self.slew_n))
-        self._write_row(self.stage,score,signed,'OK'); self.search.record(self.candidate,score,signed); self.trial_at=0.; self.status='WAITING_NEXT'; self.failure='Trial complete; operator confirmation required for next trial'
+        self._write_row(self.stage,score,signed,'OK'); self.search.record(self.candidate,score,signed); self.trial_at=0.
+        if self.search.done:
+            self.chosen[self.stage]=self.search.best_candidate()
+            if self.stage=='d':
+                self._complete()
+                return
+        self.status='WAITING_NEXT'; self.failure='Trial complete; operator confirmation required for next trial'
     def _write_row(self,stage,score,signed,result):
         if self.writer:
             self.writer.writerow([stage,self.candidate,'' if score is None else score,'' if signed is None else signed,self.overshoot,self.iae,self.slew,result]); self.csv_stream.flush()
