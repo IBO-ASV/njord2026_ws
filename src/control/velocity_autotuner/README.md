@@ -53,7 +53,9 @@ Mission Controlは3つの試験上限を`/velocity_autotuner/set_parameters_atom
 有効なセッション中は設定変更を拒否します。探索範囲などは起動時のROSパラメータで指定してください。
 目標速度はコントローラの`input_scaling.max_linear_x`も超えられません。
 
-時間・探索範囲などの設定は`src/control/velocity_autotuner/config/velocity_autotuner.yaml`で編集します。launchはインストール済みの同YAMLを明示的に読み込みます。編集後は再ビルドして起動し直してください。FFの評価窓は安定待ち終了後の`steady_window_sec`秒を集計します。\n\n既定時間では、FFは試行前3秒停止＋安定待ち5秒＋評価5秒で計13秒、P/Dは試行前3秒停止＋応答計測5秒で計8秒です。探索候補数により全体時間は変わります。\n\n## ROSインターフェース
+時間・探索範囲などの設定は`src/control/velocity_autotuner/config/velocity_autotuner.yaml`で編集します。launchはインストール済みの同YAMLを明示的に読み込みます。編集後は再ビルドして起動し直してください。FFの評価窓は安定待ち終了後の`steady_window_sec`秒を集計します。\n\n既定時間では、FFは試行前3秒停止＋安定待ち5秒＋評価5秒で計13秒、P/Dは試行前3秒停止＋応答計測5秒で計8秒です。探索候補数により全体時間は変わります。
+
+`feedforward_bounds`、`p_bounds`、`d_bounds`でゲインごとの探索下限・上限を個別に設定できます。書式は`[下限, 上限]`で、既定値は各`[0.0, 80.0]`です。たとえばFFを10〜50にする場合は`feedforward_bounds: [10.0, 50.0]`とします。`search_rounds`は中間候補を追加して範囲を絞る回数で、既定値は4です。FFは端点で目標速度を挟めない場合、中間候補を追加しません。P/Dは評価スコアに応じて範囲を絞ります。\n\n## ROSインターフェース
 
 以下はすべて`std_srvs/srv/Trigger`サービスです。応答の成功は要求の受理を示し、
 非同期処理の完了は`/velocity_tuning/status`（String）で確認します。
