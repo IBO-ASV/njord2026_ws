@@ -79,6 +79,21 @@ AGXの接続先が異なる場合は`NJORD_AGX_ADDRESS=<AGXのLAN IP>`を指定�
 独自DDS設定を使う場合は`NJORD_GROUND_CYCLONEDDS_URI=/absolute/path/config.xml`を指定できます。
 AGX側は`10.42.0.0/24`を選ぶ`cyclonedds_agx.xml`を使います。
 
+AGXの別端末から `ros2 topic list` を使う場合も、起動側と同じ設定が必要です。
+通常の端末の `~/.bashrc` に次の設定を入れ、既存の端末では再読み込みしてください。
+
+```bash
+export ROS_DOMAIN_ID=126
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+export CYCLONEDDS_URI=/home/ibo/njord2026_ws/src/bringup/robot/config/cyclonedds_agx.xml
+unset ROS_LOCALHOST_ONLY
+```
+
+設定変更前から端末を開いている場合は `source ~/.bashrc` を実行します。
+古い設定のROS daemonが残っている場合は `ros2 daemon stop` の後に再実行するか、
+`ros2 topic list --no-daemon` で確認します。
+
 ```bash
 # launch変更後はrobotパッケージを再ビルドする
 source /opt/ros/jazzy/setup.bash
