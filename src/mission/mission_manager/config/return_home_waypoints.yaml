@@ -3,9 +3,9 @@ return_home_config:
   frame_id: map
   waypoints:
     - id: home
-      latitude: 35.58489245725889
-      longitude: 139.6686519082559
-      yaw: 1.98993892
+      latitude: 35.63469935771002
+      longitude: 139.8328640046391
+      yaw: 1.5707963267948966
       type: home
       name: Home
   stages:
