@@ -354,9 +354,7 @@ def test_operator_nodes_have_single_machine_owners():
     assert 'executable="foxglove_logger_node"' in minipc_source
 
     assert 'executable="joy_node"' in ground_source
-    assert 'package="foxglove_bridge"' in ground_source
-    assert 'executable="foxglove_bridge"' in ground_source
-    assert '"services"' in ground_source
+    assert 'foxglove_bridge' not in ground_source
 
 
 def test_ground_pc_publishes_the_actual_route_marker_from_shared_tf():
@@ -380,12 +378,6 @@ def test_ground_pc_renders_the_task2_planned_route_from_the_shared_path():
     assert '"path_topic": "/planned_path_pruned"' in source
     assert '"marker_topic": "/planned_path_marker"' in source
     assert '"/planned_path_pruned"' in bridge
-
-
-def test_ground_pc_enables_foxglove_by_default_for_waypoint_visualization():
-    source = _read_launch_source("ground_pc.launch.py")
-
-    assert '"enable_foxglove_bridge",\n                default_value="true"' in source
 
 
 def test_ground_pc_reads_the_active_mission_waypoint_yaml_locally():

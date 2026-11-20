@@ -38,9 +38,9 @@ collision-monitorの実機sourceとdynamic gate TFを検証するまでregistry�
 
 ### Ground PC（`ground_pc.launch.py`）
 
-`joy_node` / ground-station heartbeat / 前方JPEG-RTP受信 / 後方H.264/H.265-RTP受信 / `foxglove_bridge` / `full_path_publisher`
+`joy_node` / ground-station heartbeat / 前方JPEG-RTP受信 / 後方H.264/H.265-RTP受信 / `full_path_publisher`
 
-`foxglove_logger`は船体側のBMS・GNSS・EKF・制御状態をローカルに集約するためminiPCに置き、FoxgloveクライアントへのWebSocket bridgeだけをGround PCで起動する。
+`foxglove_logger`は船体側のBMS・GNSS・EKF・制御状態をローカルに集約するためminiPCに置く。Foxglove用のWebSocket bridgeは別途起動する。
 `full_path_publisher`は共有された`odom -> base_link` TFから`/actual_path_marker`を発行する。
 
 ## トピックの流れ
@@ -147,7 +147,7 @@ ros2 launch robot minipc_bringup.launch.py active_nav2_profile:=task1
 
 Ground PC:
 ```bash
-ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
+ros2 launch robot ground_pc.launch.py
 ```
 
 タスクは常駐する Mission Manager の typed API から開始する。起動時は MANUAL / IDLE
@@ -315,7 +315,7 @@ colcon build --symlink-install
 colcon test --packages-select robot && colcon test-result --verbose
 ```
 
-`src/bringup/robot/test/test_launch_roles.py` が分割の回帰テスト。GPUセンサ処理がminiPCへ戻らないこと、Jetsonに制御ノードが入らないこと、joy/Foxglove bridgeの所有、映像既定値、GLIM/TF、ZenohのLivox raw許可範囲を確認する。
+`src/bringup/robot/test/test_launch_roles.py` が分割の回帰テスト。GPUセンサ処理がminiPCへ戻らないこと、Jetsonに制御ノードが入らないこと、joyの所有、映像既定値、GLIM/TF、ZenohのLivox raw許可範囲を確認する。
 
 `src/bringup/robot/test/test_platform_manifest.py` は `platform.yaml` の妥当性を検証する。
 

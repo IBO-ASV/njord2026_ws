@@ -31,7 +31,7 @@ Zenoh 設定はワークスペースの `config/zenoh/` を正本とし、ビル
 
 | launch | 動かす端末 | 内容 |
 |---|---|---|
-| `ground_pc.launch.py` | Ground PC | joy、前後映像受信、Foxglove bridge、ground-station heartbeat、実軌跡マーカー、CycloneDDS、critical-link sender |
+| `ground_pc.launch.py` | Ground PC | joy、前後映像受信、ground-station heartbeat、実軌跡マーカー、CycloneDDS、critical-link sender |
 | `jetson_bringup.launch.py` | Jetson | MID360S + ZED 2i + GPU camera/LiDAR buoy detection、Zenoh bridge。GLIMと単体PCL検出は既定OFF |
 | `minipc_bringup.launch.py` | miniPC | micon、UM982、localization、スラスタ、back camera、Foxglove logger、Zenoh bridge、critical-link receiver。Drogger/WIT IMUノードは起動対象外 |
 | `standalone_bringup.launch.py` | Jetson 1台 | Jetson用とminiPC用bringupを両方includeする回帰用 |
@@ -43,8 +43,8 @@ ros2 launch robot jetson_bringup.launch.py
 # miniPC
 ros2 launch robot minipc_bringup.launch.py
 
-# Ground PC (Foxglove is opt-in)
-ros2 launch robot ground_pc.launch.py enable_foxglove_bridge:=true
+# Ground PC
+ros2 launch robot ground_pc.launch.py
 
 # AGX vessel + Ground PC direct CycloneDDS pair (domain 126, ops-LAN multicast)
 ./scripts/operations/run_agx_pair.sh vessel

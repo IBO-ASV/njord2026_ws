@@ -17,8 +17,7 @@ def generate_launch_description():
         DeclareLaunchArgument('enable_critical_link',default_value='true'),
         GroupAction(scoped=True,actions=[IncludeLaunchDescription(
             PythonLaunchDescriptionSource(PathJoinSubstitution([FindPackageShare('robot'),'launch','ground_pc.launch.py'])),
-            launch_arguments={'enable_zenoh_bridge':'false','enable_critical_link':'false',
-                              'enable_foxglove_bridge':'false'}.items())]),
+            launch_arguments={'enable_zenoh_bridge':'false','enable_critical_link':'false'}.items())]),
         Node(package='foxglove_bridge', executable='foxglove_bridge', name='foxglove_bridge',
              parameters=[{'port':8765}], output='screen'),
         ExecuteProcess(cmd=['env','-u','ROS_DOMAIN_ID','zenoh-bridge-ros2dds','-c',

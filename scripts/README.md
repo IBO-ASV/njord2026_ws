@@ -124,12 +124,12 @@ scripts/operations/run_agx_pair.sh ground
 ```
 
 `ground`は従来の全部入りGround PC launchであり、joyとheartbeat以外に映像受信、
-地図・経路表示用ノード、NTRIP caster、Ground側Foxglove bridgeなども起動します。
+地図・経路表示用ノード、NTRIP casterなども起動します。
 Foxglove自体はAGXの`ws://192.168.1.5:8767`へ直接接続できます。
-Ground側のbridgeとNTRIP casterが不要なら、次のように無効化できます。
+NTRIP casterが不要なら、次のように無効化できます。
 
 ```bash
-scripts/operations/run_agx_pair.sh ground enable_foxglove_bridge:=false enable_ntrip_caster:=false
+scripts/operations/run_agx_pair.sh ground enable_ntrip_caster:=false
 ```
 
 Ground PCに`192.168.1.0/24`のNICがない状態でAGX固定のDDS XMLを使うと、

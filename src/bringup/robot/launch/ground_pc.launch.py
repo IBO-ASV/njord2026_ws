@@ -23,7 +23,6 @@ def generate_launch_description():
     )
     back_cam_jpeg_video_port = LaunchConfiguration("back_cam_jpeg_video_port")
     enable_ntrip_caster = LaunchConfiguration("enable_ntrip_caster")
-    enable_foxglove_bridge = LaunchConfiguration("enable_foxglove_bridge")
     enable_livox_gui_telemetry = LaunchConfiguration("enable_livox_gui_telemetry")
 
     livox_splat_mapper = Node(
@@ -62,21 +61,6 @@ def generate_launch_description():
             "topic": back_video_topic,
             "jitter_latency_ms": back_video_jitter_latency_ms,
         }.items(),
-    )
-
-    foxglove_bridge_launch = Node(
-        package="foxglove_bridge",
-        executable="foxglove_bridge",
-        name="foxglove_bridge",
-        parameters=[{
-            "port": 8765,
-            "capabilities": [
-                "clientPublish", "parameters", "parametersSubscribe",
-                "services", "connectionGraph", "assets",
-            ],
-        }],
-        output="screen",
-        condition=IfCondition(enable_foxglove_bridge),
     )
 
     runtime_parameter_sync = Node(
@@ -218,11 +202,6 @@ def generate_launch_description():
             DeclareLaunchArgument("ntrip_upstream_host", default_value="geortk.jp"),
             DeclareLaunchArgument("ntrip_upstream_port", default_value="2101"),
             DeclareLaunchArgument("ntrip_upstream_mountpoint", default_value="tamtam"),
-            DeclareLaunchArgument(
-                "enable_foxglove_bridge",
-                default_value="true",
-                description="Expose vessel telemetry and waypoint markers to the Ground PC Foxglove GUI.",
-            ),
             DeclareLaunchArgument("enable_livox_gui_telemetry", default_value="true", description="Integrate bounded Livox GUI clouds into an odom map."),
             livox_splat_mapper,
             runtime_parameter_sync,
@@ -251,7 +230,6 @@ def generate_launch_description():
             ground_video_receiver_launch,
             back_cam_h26x_receiver_launch,
             back_cam_jpeg_receiver_launch,
-            foxglove_bridge_launch,
             ntrip_caster,
             networking_launch,
         ]
