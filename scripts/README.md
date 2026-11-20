@@ -94,6 +94,28 @@ unset ROS_LOCALHOST_ONLY
 古い設定のROS daemonが残っている場合は `ros2 daemon stop` の後に再実行するか、
 `ros2 topic list --no-daemon` で確認します。
 
+Ground PCの別端末では、AGX用の固定NIC設定ではなく、起動スクリプトと同じ
+経路選択を使います。以下を `~/.bashrc` に追加してください。
+
+```bash
+export ROS_DOMAIN_ID=126
+export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
+unset ROS_LOCALHOST_ONLY
+if [ -n "${NJORD_GROUND_CYCLONEDDS_URI:-}" ]; then
+  export CYCLONEDDS_URI="$NJORD_GROUND_CYCLONEDDS_URI"
+else
+  njord_ground_address=$(ip -4 route get "${NJORD_AGX_ADDRESS:-10.42.0.233}" 2>/dev/null | awk '{for (i=1;i<NF;i++) if ($i=="src") {print $(i+1); exit}}')
+  if [[ "$njord_ground_address" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    export CYCLONEDDS_URI="<CycloneDDS><Domain Id=\"any\"><General><Interfaces><NetworkInterface address=\"${njord_ground_address}\" /></Interfaces><AllowMulticast>true</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>"
+  else
+    unset CYCLONEDDS_URI
+    echo "AGXへの経路が見つかりません。接続後に source ~/.bashrc を実行してください。" >&2
+  fi
+  unset njord_ground_address
+fi
+```
+
 ```bash
 # launch変更後はrobotパッケージを再ビルドする
 source /opt/ros/jazzy/setup.bash
