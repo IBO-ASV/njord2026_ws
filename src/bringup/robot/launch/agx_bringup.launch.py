@@ -27,6 +27,9 @@ def generate_launch_description():
         'lidar_model': 'mid360s',
         'enable_zed2i': str(Path(camera).exists()).lower(),
         'enable_um982': str(Path(um982).exists()).lower(),
+        'enable_um982_rtk': 'true',
+        'ntrip_upstream_host': 'geortk.jp', 'ntrip_upstream_port': '2101',
+        'ntrip_upstream_mountpoint': 'tamtam',
         'um982_port': um982,
         'bms_serial_port': ('/dev/serial/by-id/'
                             'usb-Espressif_USB_JTAG_serial_debug_unit_'
@@ -42,9 +45,10 @@ def generate_launch_description():
         'enable_gpu_perception': PythonExpression(["'true' if '",cfg('task'),"' == 'task1' else 'false'"]),
     }
     core_args = {key: cfg(key) for key in (
-        'enable_um982', 'um982_port', 'bms_serial_port', 'enable_thruster', 'enable_bms',
+        'enable_um982', 'enable_um982_rtk', 'um982_port', 'bms_serial_port', 'enable_thruster', 'enable_bms',
         'enable_alert_lamp', 'enable_sbus', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
     core_args.update({'heartbeat_role': 'agx', 'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
+                      'ntrip_server': '127.0.0.1',
                       'enable_back_cam_ground_video': 'false',
                       'enable_back_cam_jpeg_ground_video': cfg('enable_back_cam_jpeg_ground_video'),
                       'back_cam_jpeg_ground_video_host': cfg('ground_video_host'),
@@ -57,6 +61,11 @@ def generate_launch_description():
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '126'),
         *[DeclareLaunchArgument(key, default_value=value) for key,value in defaults.items()],
+        include('robot', 'ntrip_corrections.launch.py', {
+            'ntrip_upstream_host': cfg('ntrip_upstream_host'),
+            'ntrip_upstream_port': cfg('ntrip_upstream_port'),
+            'ntrip_upstream_mountpoint': cfg('ntrip_upstream_mountpoint'),
+        }, IfCondition(PythonExpression(["'", cfg('enable_um982'), "' == 'true' and '", cfg('enable_um982_rtk'), "' == 'true'"]))),
         include('robot', 'agx_core.launch.py', core_args),
         include('robot', 'foxglove_bridge.launch.py', {
             'foxglove_address': cfg('foxglove_address'), 'foxglove_port': cfg('foxglove_port'),

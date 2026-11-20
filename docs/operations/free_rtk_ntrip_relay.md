@@ -1,7 +1,10 @@
 # 無料RTK補正を既存NTRIP経路で受ける
 
-地上PCで固定基準局のRTCMを受け、既存キャスターの `RTCM3` へ中継する。
-AGXの既存NTRIP設定（地上PC:2101、RTCM3、test/test）をそのまま利用できる。
+通常の `scripts/operations/run_agx_pair.sh vessel` は、AGX上で固定基準局のRTCMを受け、
+ローカルキャスターの `RTCM3` 経由でUM982へ送る。`robot` と `ntripcaster` のビルドが必要。
+無効化するには `enable_um982_rtk:=false` を指定する。接続先は `ntrip_upstream_host`、
+`ntrip_upstream_port`、`ntrip_upstream_mountpoint` で変更できる。AGXにインターネット接続が必要。
+地上PCで中継する従来の構成も以下の手順で利用できる。
 補正配信元は既定で `geortk.jp:2101/tamtam`（横浜）。今回の試験場所の約9 km先であり、
 他地域でも適した基準局とは限らない。現地の近い稼働局を指定すること。
 
