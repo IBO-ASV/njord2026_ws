@@ -32,7 +32,8 @@ Ground Foxglove listens on TCP 8765; front JPEG-RTP uses UDP 5600.
 
 The AGX launch combines the CPU vessel/control graph and SDK-backed ZED driver.
 The configured LiDAR is enabled by default (`enable_lidar:=true`,
-`lidar_model:=mid360s`). Back camera and Nav2 are OFF by default. UM982 and ZED
+`lidar_model:=mid360`, sensor IP `192.168.1.151`). Use
+`lidar_model:=mid360s` for the MID360S at `192.168.1.114`. Back camera and Nav2 are OFF by default. UM982 and ZED
 are enabled only if their known by-id paths exist. No mission is automatically
 started. These are startup-check defaults, not an assertion that the vessel is
 ready to navigate.
