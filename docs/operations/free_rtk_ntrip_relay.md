@@ -42,7 +42,8 @@ ros2 launch robot ground_pc.launch.py \
 
 この中継は固定局用であり、GGAを要求するVRS/NEAR局には非対応。
 上流NTRIP認証はスクリプト引数で利用可能だが、launchが公開する引数は無料固定局用。
-HTTPS・HTTP chunked転送は非対応。HTTPエラーや局一覧を補正データとして転送しない。
+HTTPSは非対応。NTRIPの非チャンク形式とHTTP chunked転送を応答から自動判別する。
+HTTPエラーや局一覧を補正データとして転送しない。
 CRC24Qが正常なRTCM3フレームのみ転送し、30秒ごとにメッセージ別件数を出す。
 接続切断または15秒間有効フレームがない場合は、両側を閉じ5秒後に再接続する。
 ローカルSOURCE認証は既存のcaster JSONから読むため、サブモジュール内の設定変更は不要。

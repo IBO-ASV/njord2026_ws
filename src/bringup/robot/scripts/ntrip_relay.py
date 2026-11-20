@@ -36,8 +36,70 @@ def read_response(sock):
     ):
         raise ConnectionError('caster rejected stream: '+first.decode(errors='replace'))
     lower = bytes(header).lower()
-    if b'transfer-encoding:' in lower or b'gnss/sourcetable' in lower or b'text/plain' in lower:
+    if b'gnss/sourcetable' in lower or b'text/plain' in lower:
         raise ConnectionError('expected unencoded RTCM stream, received HTTP content')
+    encodings = [line.split(b':', 1)[1].strip() for line in lower.split(b'\r\n')
+                 if line.startswith(b'transfer-encoding:')]
+    if encodings and encodings != [b'chunked']:
+        raise ConnectionError('unsupported HTTP transfer encoding')
+    return bool(encodings)
+
+
+class ChunkDecoder:
+    """Decode HTTP chunk framing incrementally without forwarding framing bytes."""
+    def __init__(self):
+        self.buffer = bytearray()
+        self.remaining = None
+        self.done = False
+        self.trailers = False
+
+    def feed(self, data):
+        if self.done:
+            raise ConnectionError('data after final HTTP chunk')
+        self.buffer.extend(data)
+        output = bytearray()
+        while True:
+            if self.trailers:
+                end = self.buffer.find(b'\r\n')
+                if end < 0:
+                    if len(self.buffer) > 16384:
+                        raise ConnectionError('HTTP chunk trailer too long')
+                    break
+                line = bytes(self.buffer[:end])
+                del self.buffer[:end+2]
+                if not line:
+                    self.done = True
+                    if self.buffer:
+                        raise ConnectionError('data after final HTTP chunk')
+                    break
+                continue
+            if self.remaining is None:
+                end = self.buffer.find(b'\r\n')
+                if end < 0:
+                    if len(self.buffer) > 128:
+                        raise ConnectionError('HTTP chunk header too long')
+                    break
+                if end > 128:
+                    raise ConnectionError('HTTP chunk header too long')
+                size = bytes(self.buffer[:end]).split(b';', 1)[0]
+                if not size or any(c not in b'0123456789abcdefABCDEF' for c in size):
+                    raise ConnectionError('invalid HTTP chunk size')
+                self.remaining = int(size, 16)
+                if self.remaining > 16 * 1024 * 1024:
+                    raise ConnectionError('HTTP chunk too large')
+                del self.buffer[:end+2]
+                if self.remaining == 0:
+                    self.remaining = None
+                    self.trailers = True
+                    continue
+            if len(self.buffer) < self.remaining + 2:
+                break
+            if self.buffer[self.remaining:self.remaining+2] != b'\r\n':
+                raise ConnectionError('invalid HTTP chunk terminator')
+            output.extend(self.buffer[:self.remaining])
+            del self.buffer[:self.remaining+2]
+            self.remaining = None
+        return output
 
 
 def crc24q(data):
@@ -98,7 +160,8 @@ def relay(args, stop):
                     auth = base64.b64encode(f'{args.upstream_user}:{args.upstream_password}'.encode()).decode()
                     request += f'Authorization: Basic {auth}\r\n'
                 upstream.sendall((request+'\r\n').encode())
-                read_response(upstream)
+                chunked = read_response(upstream)
+                decoder = ChunkDecoder() if chunked else None
                 with socket.create_connection((args.local_host, port), timeout=5) as downstream:
                     downstream.settimeout(5)
                     downstream.sendall((f'SOURCE {password} /{args.local_mountpoint}\r\n'
@@ -121,12 +184,16 @@ def relay(args, stop):
                             continue
                         if not chunk:
                             raise ConnectionError('upstream closed stream')
+                        if decoder:
+                            chunk = decoder.feed(chunk)
                         buffer.extend(chunk)
                         for frame in extract_frames(buffer):
                             downstream.sendall(frame)
                             if len(frame) >= 8:
                                 counts[(frame[3] << 4) | (frame[4] >> 4)] += 1
                             last_frame = time.monotonic()
+                        if decoder and decoder.done:
+                            raise ConnectionError('upstream finished chunked stream')
                         if time.monotonic()-last_frame > 15:
                             raise ConnectionError('no CRC-valid RTCM frame for 15 seconds')
                         if time.monotonic()-last_report >= 30:
