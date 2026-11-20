@@ -32,11 +32,15 @@ def main(args=None):
     from rclpy.node import Node
     from rclpy.qos import qos_profile_sensor_data
     from nav_msgs.msg import Odometry
+    from geometry_msgs.msg import TransformStamped
+    from tf2_ros import TransformBroadcaster
 
     class Adapter(Node):
         def __init__(self):
             super().__init__('glim_base_odom_adapter')
             self.last = None
+            self.declare_parameter('publish_tf', False)
+            self.tf_broadcaster = TransformBroadcaster(self) if self.get_parameter('publish_tf').value else None
             self.pub = self.create_publisher(Odometry, '/glim_base/odom', 20)
             self.sub = self.create_subscription(Odometry, '/glim_ros/odom', self.callback, qos_profile_sensor_data)
 
@@ -72,6 +76,14 @@ def main(args=None):
             for i, variance in [(0,0.01),(7,0.01),(14,1e3),(21,1e3),(28,1e3),(35,0.01)]:
                 out.twist.covariance[i] = variance
             self.pub.publish(out)
+            if self.tf_broadcaster is not None:
+                transform = TransformStamped()
+                transform.header = out.header
+                transform.child_frame_id = out.child_frame_id
+                transform.transform.translation.x = out.pose.pose.position.x
+                transform.transform.translation.y = out.pose.pose.position.y
+                transform.transform.rotation = out.pose.pose.orientation
+                self.tf_broadcaster.sendTransform(transform)
 
     rclpy.init(args=args)
     node = Adapter()
