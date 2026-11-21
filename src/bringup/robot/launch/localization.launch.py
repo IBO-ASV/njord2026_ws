@@ -76,6 +76,8 @@ def generate_launch_description():
             FindExecutable(name="xacro"),
             " ",
             PathJoinSubstitution([robot_share, "urdf", "robot.urdf.xacro"]),
+            " lidar_mount_roll:=",
+            LaunchConfiguration("lidar_mount_roll"),
         ]
     )
 
@@ -249,6 +251,7 @@ def generate_launch_description():
             enable_spatial_navsat_arg,
             use_glim_fb_arg,
             use_sim_time_arg,
+            DeclareLaunchArgument("lidar_mount_roll", default_value="3.141592653589793"),
             robot_state_publisher,
             glim_node,
             spatial_navsat_transform_node,
