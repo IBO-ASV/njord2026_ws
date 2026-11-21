@@ -5,6 +5,7 @@
   <xacro:property name="base_length" value="1.5" />
   <xacro:property name="base_height" value="0.5" />
 
+  <xacro:arg name="lidar_mount_roll" default="3.141592653589793" />
   <xacro:property name="lidar_x" value="0.5" />
   <xacro:property name="lidar_y" value="0.0" />
   <xacro:property name="lidar_z" value="0.8" />
@@ -102,9 +103,7 @@
   <joint name="lidar_joint" type="fixed">
     <parent link="base_link"/>
     <child link="livox_frame"/>
-    <!-- The MID-360 is mounted upside down: preserve its origin while
-         rotating its frame 180 degrees around the vehicle X axis. -->
-    <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="3.141592653589793 0 0"/>
+    <origin xyz="${lidar_x} ${lidar_y} ${lidar_z}" rpy="$(arg lidar_mount_roll) 0 0"/>
   </joint>
 
   <link name="imu_link">
