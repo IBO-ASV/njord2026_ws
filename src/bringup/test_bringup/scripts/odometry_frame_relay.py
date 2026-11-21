@@ -11,6 +11,7 @@ two origins are initially coincident for this replay experiment.
 from copy import deepcopy
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 
@@ -41,9 +42,11 @@ def main():
     node = OdometryFrameRelay()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

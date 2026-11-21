@@ -5,6 +5,7 @@ import math
 
 import numpy as np
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import TwistStamped
 from nav_msgs.msg import OccupancyGrid, Odometry
 from rclpy.duration import Duration
@@ -98,7 +99,7 @@ class CrmCostmapNode(Node):
 def main(args=None):
     rclpy.init(args=args); node = CrmCostmapNode()
     try: rclpy.spin(node)
-    except KeyboardInterrupt: pass
+    except (KeyboardInterrupt, ExternalShutdownException): pass
     finally:
         node.destroy_node()
-        if rclpy.ok(): rclpy.shutdown()
+        rclpy.try_shutdown()

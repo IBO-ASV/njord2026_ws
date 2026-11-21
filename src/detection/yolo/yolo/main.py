@@ -1,6 +1,7 @@
 import os
 import threading
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import HistoryPolicy, QoSProfile, ReliabilityPolicy
 from sensor_msgs.msg import Image, PointCloud2, PointField
@@ -479,9 +480,13 @@ class YoloDetectorNode(Node):
 def run_node(args=None, node_name='yolo_detector', device_default='cpu'):
     rclpy.init(args=args)
     node = YoloDetectorNode(node_name=node_name, device_default=device_default)
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    try:
+        rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()
 
 
 def main(args=None):

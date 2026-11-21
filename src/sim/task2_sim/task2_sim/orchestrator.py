@@ -1,6 +1,7 @@
 import math
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import Point32, PolygonStamped, PoseStamped
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
@@ -95,12 +96,12 @@ def main(args=None):
     node = Task2Orchestrator()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
         if rclpy.ok():
-            rclpy.shutdown()
+            rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

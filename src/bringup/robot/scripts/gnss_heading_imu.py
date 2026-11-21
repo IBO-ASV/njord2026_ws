@@ -2,6 +2,7 @@
 """Valid UM982 ENU body heading for navsat_transform, orientation only."""
 import math
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import Imu, NavSatFix
@@ -49,8 +50,8 @@ class HeadingImu(Node):
 def main():
     rclpy.init(); node = HeadingImu()
     try: rclpy.spin(node)
-    except KeyboardInterrupt: pass
+    except (KeyboardInterrupt, ExternalShutdownException): pass
     finally:
         node.destroy_node()
-        if rclpy.ok(): rclpy.shutdown()
+        rclpy.try_shutdown()
 if __name__ == '__main__': main()

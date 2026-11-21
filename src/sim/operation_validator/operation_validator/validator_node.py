@@ -3,6 +3,7 @@ import math
 from pathlib import Path
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from nav_msgs.msg import Odometry, Path as PathMsg
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
@@ -163,11 +164,11 @@ def main(args=None):
     node = OperationValidatorNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

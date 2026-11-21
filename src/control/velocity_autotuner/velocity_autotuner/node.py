@@ -4,6 +4,7 @@ import csv, math, time
 from datetime import datetime, timezone
 from pathlib import Path
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from rcl_interfaces.srv import GetParameters, SetParameters
@@ -245,5 +246,10 @@ class VelocityAutotuner(Node):
 
 def main(args=None):
     rclpy.init(args=args); n=VelocityAutotuner()
-    try: rclpy.spin(n)
-    finally: n.destroy_node(); rclpy.shutdown()
+    try:
+        rclpy.spin(n)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
+    finally:
+        n.destroy_node()
+        rclpy.try_shutdown()

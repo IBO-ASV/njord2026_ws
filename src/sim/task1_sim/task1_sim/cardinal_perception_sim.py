@@ -38,6 +38,7 @@ import math
 from perception_interfaces.msg import BuoyDetection, BuoyDetectionArray
 from nav_msgs.msg import Odometry
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from std_msgs.msg import String
 from std_srvs.srv import Trigger
@@ -290,7 +291,7 @@ def main(args=None):
     node = CardinalPerceptionSim()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         try:
@@ -298,7 +299,7 @@ def main(args=None):
         except Exception:
             pass
         try:
-            rclpy.shutdown()
+            rclpy.try_shutdown()
         except Exception:
             pass
 

@@ -6,6 +6,7 @@ import re
 from ament_index_python.packages import get_package_share_directory
 from mission_interfaces.msg import MissionStatus
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from visualization_msgs.msg import Marker, MarkerArray
@@ -136,12 +137,12 @@ def main():
     node = GroundWaypointGeoPublisher()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         try:
             node.destroy_node()
             if rclpy.ok():
-                rclpy.shutdown()
+                rclpy.try_shutdown()
         except KeyboardInterrupt:
             pass

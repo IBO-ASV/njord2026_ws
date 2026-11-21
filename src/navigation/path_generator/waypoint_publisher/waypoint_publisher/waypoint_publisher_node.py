@@ -12,6 +12,7 @@ Supports:
 """
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.action import ActionClient
 from action_msgs.msg import GoalStatus
@@ -712,7 +713,7 @@ def main(args=None):
     
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         node.get_logger().info("Shutting down...")
     finally:
         try:
@@ -720,7 +721,7 @@ def main(args=None):
         except Exception:
             pass
         try:
-            rclpy.shutdown()
+            rclpy.try_shutdown()
         except Exception:
             pass
 

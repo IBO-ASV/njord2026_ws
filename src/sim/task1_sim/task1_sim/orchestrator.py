@@ -5,6 +5,7 @@ import struct
 
 from geometry_msgs.msg import Point, PointStamped
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from nav_msgs.msg import Odometry
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
@@ -706,7 +707,7 @@ def main(args=None):
     node = Task1Orchestrator()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         try:
@@ -714,7 +715,7 @@ def main(args=None):
         except Exception:
             pass
         try:
-            rclpy.shutdown()
+            rclpy.try_shutdown()
         except Exception:
             pass
 

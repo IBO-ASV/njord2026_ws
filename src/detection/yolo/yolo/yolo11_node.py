@@ -22,6 +22,7 @@ import sys
 import time
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import qos_profile_sensor_data
 from rcl_interfaces.msg import ParameterDescriptor, ParameterType
@@ -588,7 +589,7 @@ def main(args=None):
     try:
         node = Yolo11DetectorNode()
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     except (FileNotFoundError, RuntimeError) as exc:
         # Fatal startup error (missing model file / missing runtime deps):
@@ -598,7 +599,7 @@ def main(args=None):
     finally:
         if node is not None:
             node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
     return exit_code
 
 

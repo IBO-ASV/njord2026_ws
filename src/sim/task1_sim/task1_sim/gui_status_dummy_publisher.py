@@ -1,6 +1,7 @@
 """Publish Task1 simulation values used by the Foxglove overview layout."""
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import Float32, Float32MultiArray, String
@@ -61,6 +62,8 @@ def main(args=None):
     node = GuiStatusDummyPublisher()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
         node.destroy_node()
         rclpy.try_shutdown()

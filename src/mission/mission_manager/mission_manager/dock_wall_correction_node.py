@@ -8,6 +8,7 @@ import struct
 
 from geometry_msgs.msg import PoseStamped
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.duration import Duration
 from rclpy.node import Node
 from sensor_msgs.msg import PointCloud2, PointField
@@ -156,9 +157,9 @@ def main(args=None):
     node = DockWallCorrection()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
         if rclpy.ok():
-            rclpy.shutdown()
+            rclpy.try_shutdown()

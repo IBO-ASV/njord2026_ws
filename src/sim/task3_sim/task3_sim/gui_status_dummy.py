@@ -1,6 +1,7 @@
 """Publish stable simulated vessel status for the Foxglove overview panels."""
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 from rclpy.qos import DurabilityPolicy, QoSProfile
 from std_msgs.msg import Float32, Float32MultiArray, String
@@ -53,7 +54,7 @@ def main(args=None):
     node = GuiStatusDummy()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()

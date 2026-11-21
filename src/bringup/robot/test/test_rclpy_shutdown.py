@@ -53,3 +53,45 @@ def test_minipc_rclpy_mains_handle_sigint_and_cleanup():
         }
         assert {"KeyboardInterrupt", "ExternalShutdownException"} <= exception_names, relative_path
         assert {"node.destroy_node", "rclpy.try_shutdown"} <= cleanup_calls, relative_path
+
+
+def test_shutdown_paths_execute_cleanup_and_preserve_unexpected_errors():
+    import types
+
+    class ExternalShutdownException(Exception):
+        pass
+
+    paths = (
+        "src/mission/mission_manager/mission_manager/course_editor_node.py",
+        "src/bringup/robot/scripts/runtime_parameter_sync.py",
+        "src/detection/task2_perception/task2_perception/buoy_selector_node.py",
+    )
+    for relative_path in paths:
+        module = ast.parse((_ROOT / relative_path).read_text(encoding="utf-8"))
+        main = next(n for n in module.body if isinstance(n, ast.FunctionDef) and n.name == "main")
+        constructor = next(
+            n.value.func.id for n in main.body
+            if isinstance(n, ast.Assign) and isinstance(n.value, ast.Call)
+            and isinstance(n.value.func, ast.Name)
+        )
+        for error in (KeyboardInterrupt, ExternalShutdownException, ValueError):
+            calls = []
+            node = types.SimpleNamespace(destroy_node=lambda: calls.append("destroy"))
+            def spin(_node):
+                raise error()
+            rclpy = types.SimpleNamespace(
+                init=lambda **kwargs: None, spin=spin,
+                try_shutdown=lambda: calls.append("shutdown"),
+                ok=lambda: True,
+                executors=types.SimpleNamespace(ExternalShutdownException=ExternalShutdownException),
+            )
+            namespace = {"rclpy": rclpy, constructor: lambda: node,
+                         "ExternalShutdownException": ExternalShutdownException}
+            exec(compile(ast.Module(body=[main], type_ignores=[]), relative_path, "exec"), namespace)
+            try:
+                namespace["main"]()
+            except ValueError:
+                assert error is ValueError
+            else:
+                assert error is not ValueError
+            assert calls == ["destroy", "shutdown"], relative_path

@@ -1,6 +1,7 @@
 import math
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import Point, Point32, PolygonStamped, TransformStamped
 from rclpy.duration import Duration
 from rclpy.node import Node
@@ -230,9 +231,9 @@ def main(args=None):
     node = OpponentVesselNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
         if rclpy.ok():
-            rclpy.shutdown()
+            rclpy.try_shutdown()

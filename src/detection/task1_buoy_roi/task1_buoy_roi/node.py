@@ -3,6 +3,7 @@
 from nav_msgs.msg import Odometry
 from perception_interfaces.msg import BuoyRoi
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from rclpy.node import Node
 
 from task1_buoy_roi.geometry import nearest_roi, parse_positions, yaw_from_quaternion
@@ -58,6 +59,8 @@ def main():
     node = Task1BuoyRoi()
     try:
         rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()

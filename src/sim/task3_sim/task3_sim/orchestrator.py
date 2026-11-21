@@ -2,6 +2,7 @@ import math
 import struct
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import Point, Point32, PolygonStamped, TransformStamped
 from sensor_msgs.msg import PointCloud2, PointField
 from nav_msgs.msg import Odometry
@@ -554,7 +555,7 @@ def main(args=None):
     node = Task3Orchestrator()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         try:

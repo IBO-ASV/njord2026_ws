@@ -2,6 +2,7 @@
 """Relay Task 2 waypoints into map without changing the navigation topics."""
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import PoseStamped
 from rclpy.duration import Duration
 from rclpy.node import Node
@@ -72,11 +73,11 @@ def main(args=None):
     node = Task2WaypointMapFrameRelay()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        rclpy.try_shutdown()
 
 
 if __name__ == "__main__":

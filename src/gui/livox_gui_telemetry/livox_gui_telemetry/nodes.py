@@ -3,6 +3,7 @@ import struct
 from collections import deque
 
 import rclpy
+from rclpy.executors import ExternalShutdownException
 from geometry_msgs.msg import TransformStamped
 from mission_interfaces.msg import MissionStatus
 from rclpy.duration import Duration
@@ -118,5 +119,21 @@ class Mapper(Node):
     def publish(self): self.pub.publish(make_cloud(self.get_clock().now().to_msg(), "odom", list(self.map.values())))
 
 
-def downsampler_main(): rclpy.init(); node = Downsampler(); rclpy.spin(node); node.destroy_node(); rclpy.shutdown()
-def mapper_main(): rclpy.init(); node = Mapper(); rclpy.spin(node); node.destroy_node(); rclpy.shutdown()
+def _run_node(node_type):
+    rclpy.init()
+    node = node_type()
+    try:
+        rclpy.spin(node)
+    except (KeyboardInterrupt, ExternalShutdownException):
+        pass
+    finally:
+        node.destroy_node()
+        rclpy.try_shutdown()
+
+
+def downsampler_main():
+    _run_node(Downsampler)
+
+
+def mapper_main():
+    _run_node(Mapper)

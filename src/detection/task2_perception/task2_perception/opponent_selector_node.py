@@ -25,6 +25,7 @@ import math
 
 import numpy as np
 import rclpy
+from rclpy.executors import ExternalShutdownException
 import rclpy.logging
 from rclpy.node import Node
 from rclpy.time import Time
@@ -552,12 +553,12 @@ def main(args=None):
     node = OpponentSelectorNode()
     try:
         rclpy.spin(node)
-    except KeyboardInterrupt:
+    except (KeyboardInterrupt, ExternalShutdownException):
         pass
     finally:
         node.destroy_node()
         if rclpy.ok():
-            rclpy.shutdown()
+            rclpy.try_shutdown()
 
 
 if __name__ == "__main__":
