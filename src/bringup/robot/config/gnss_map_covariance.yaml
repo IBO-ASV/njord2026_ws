@@ -1,0 +1,7 @@
+# Five-minute stationary UM982 sample, 2026-11-21 (ENU m, yaw rad).
+# Values are variances, not standard deviations. Use as lower bounds: preserve
+# larger receiver GST uncertainty and never treat missing pitch as measured.
+gnss_heading_imu:
+  ros__parameters:
+    position_variances: [0.042409636, 0.029169907, 0.014825011]
+    yaw_variance: 0.072683434
