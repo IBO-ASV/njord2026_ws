@@ -25,7 +25,7 @@ def generate_launch_description():
   DeclareLaunchArgument('enable_gnss_map',default_value='true'),
   DeclareLaunchArgument('glim_acc_scale',default_value='1.0'),
   include('localization.launch.py',{'use_sim_time':sim,'enable_glim':'false','enable_local_ekf':'false','enable_global_ekf':'false','enable_navsat_transform':'false','enable_diagnostics':'false'}),
-  include('task2_glim_localization.launch.py',{'use_sim_time':sim,'glim_acc_scale':C('glim_acc_scale'),'local_odom_topic':'/odometry/filtered/local'}),
+  include('task2_glim_localization.launch.py',{'use_sim_time':sim,'glim_acc_scale':C('glim_acc_scale'),'local_odom_topic':'/odometry/filtered/local','glim_output_topic':'/odometry/filtered/local','direct_glim':'true','enable_local_ekf':'false'}),
   GroupAction(condition=IfCondition(C('enable_gnss_map')),actions=[
    Node(package='robot',executable='gnss_heading_imu',parameters=[{'use_sim_time':sim}]),
    Node(package='robot_localization',executable='ekf_node',name='ekf_onboard_map',parameters=[P([FindPackageShare('robot'),'config','ekf_onboard_map.yaml']),{'use_sim_time':sim}],remappings=[('odometry/filtered','/odometry/filtered/global')]),

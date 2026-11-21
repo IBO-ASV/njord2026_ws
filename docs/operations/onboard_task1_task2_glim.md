@@ -11,7 +11,7 @@ AGX: choose one task, never both concurrently:
     ros2 launch robot agx_task2.launch.py
 
 AGX bringup starts the configured LiDAR by default (`enable_lidar:=true`);
-`lidar_model` defaults to `mid360s`. Disable it explicitly with
+`lidar_model` defaults to `mid360` for the AGX vessel. Disable it explicitly with
 `enable_lidar:=false` when the sensor/network is unavailable.
 
 Ground PC, common to both:
@@ -24,16 +24,18 @@ Propulsion is disabled by default. Do not also run legacy compute jetson_bringup
 
 ## Ownership and frames
 
-AGX owns sensors, GLIM GPU, base/lever-arm correction, local EKF, optional GNSS
+AGX owns sensors, GLIM GPU, base/lever-arm correction, optional GNSS
 map EKF, Task1 camera buoy perception/safety clouds, or Task2 LiDAR filtering,
 segmentation/tracking/opponent selection and MPPI. Mission/control/Nav2 are onboard.
 Ground receives telemetry/video, offers mission services, sends critical_link input.
 Zenoh no longer imports perception or odometry back from ground into AGX.
 
 /odometry/filtered/local has parent odom and child base_link. GLIM dynamic TF is
-private; its static mounting TF subscription remains public. Local EKF alone
-owns odom->base_link. GNSS map EKF alone owns map->odom, using GNSS XY, absolute
-ENU heading and local body velocity. It never feeds corrected pose back to local EKF.
+private; its static mounting TF subscription remains public. The GLIM adapter
+publishes odom->base_link and local odometry directly, without a local EKF. The
+GNSS map EKF alone owns map->odom, using GNSS XY and absolute ENU heading; it
+does not fuse GLIM odometry. The direct GLIM output is unfiltered and its
+continuity depends on GLIM remaining healthy.
 Task2 tracker/selector share local odom and use odom for perception/planning.
 
 Existing Task1/Task2 GPS routes use odom. Public /fromLL therefore projects with
@@ -101,7 +103,7 @@ agx_task1.launch.py enable_glim:=false, VGA/15, propulsion/Nav2 disabled.
 
 ```mermaid
 flowchart LR
-  S[AGX: MID360 + IMU] --> G[AGX: GLIM + local EKF]
+  S[AGX: MID360 + IMU] --> G[AGX: GLIM + base adapter]
   N[AGX: GNSS + heading] --> M[AGX: map correction + route projection]
   G --> M
   Z[AGX: ZED2i] --> B[AGX: buoy classification + depth + safety cloud]
@@ -117,7 +119,7 @@ flowchart LR
 
 ```mermaid
 flowchart LR
-  S[AGX: MID360 + IMU] --> G[AGX: GLIM + local EKF]
+  S[AGX: MID360 + IMU] --> G[AGX: GLIM + base adapter]
   S --> F[AGX: filter + cluster + tracker]
   G -->|ego-motion compensation| F
   F --> O[AGX: opponent selection + ground velocity]

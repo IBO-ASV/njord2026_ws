@@ -23,8 +23,8 @@ def generate_launch_description():
         'enable_foxglove_bridge': 'true', 'foxglove_address': '0.0.0.0', 'foxglove_port': '8767',
         'task': 'task1', 'enable_glim': 'true', 'enable_task_perception': 'true',
         'use_sim_time': 'false', 'glim_acc_scale': '1.0',
-        'enable_lidar': 'true',  # uses the configured Livox model (MID360S by default)
-        'lidar_model': 'mid360s',
+        'enable_lidar': 'true',  # AGX vessel's installed sensor is MID360 at 192.168.1.151
+        'lidar_model': 'mid360',
         'enable_zed2i': str(Path(camera).exists()).lower(),
         'enable_um982': str(Path(um982).exists()).lower(),
         'enable_um982_rtk': 'true',
@@ -56,7 +56,7 @@ def generate_launch_description():
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
     return LaunchDescription([
-        SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
+        SetEnvironmentVariable("RMW_IMPLEMENTATION", EnvironmentVariable("RMW_IMPLEMENTATION", default_value="rmw_cyclonedds_cpp")),
         SetEnvironmentVariable("CYCLONEDDS_URI", EnvironmentVariable("CYCLONEDDS_URI", default_value=PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"]))),
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '126'),

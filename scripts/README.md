@@ -71,13 +71,36 @@ With the AGX bringup running from this workspace, start the idle velocity tuner 
 `operations/run_agx_pair.sh vessel`と`operations/run_agx_pair.sh ground`は
 ROS_DOMAIN_ID=126、CycloneDDSで起動し、既定でcritical linkを無効にします。
 Ground側は`/joy`と`/heartbeat/ground_station`をDDSで直接送信します。
+CycloneDDSはマルチキャストで参加者を探索し、データはユニキャストで送信します。
 critical linkを明示的に有効化した場合は専用入力トピックへ切り替わります。
 
 Ground側のDDS NICは`ip -4 route get 10.42.0.233`の送信元IPv4から選択します。
 AGXの接続先が異なる場合は`NJORD_AGX_ADDRESS=<AGXのLAN IP>`を指定してください。
 この変数はNIC選択に使います。DDSの固定peer設定やVPN経由の探索は追加しません。
 独自DDS設定を使う場合は`NJORD_GROUND_CYCLONEDDS_URI=/absolute/path/config.xml`を指定できます。
+この上書きは独自設定の内容が優先されます。
 AGX側は`10.42.0.0/24`を選ぶ`cyclonedds_agx.xml`を使います。
+
+Fast DDSの既定設定を試す場合は、両端で次のように指定します（ROS Jazzyの
+`rmw_fastrtps_cpp` が必要）。独自DDSプロファイルを使わず、NICもFast DDSに任せます。
+launch引数は `--rmw fastdds` の後に渡せます。両端で同じ方式を選択してください。
+
+```bash
+scripts/operations/run_agx_pair.sh vessel --rmw fastdds
+scripts/operations/run_agx_pair.sh ground --rmw fastdds
+```
+
+この選択は起動プロセスに限ります。別端末のROS CLIや速度チューナーも同じRMWと
+ドメインを設定する必要があります。systemdのAGXサービスは既定のCycloneDDSで起動します。
+launchの変更後は `robot` パッケージを再ビルドしてください。
+
+Fast DDSで試験する別端末では、ROSとworkspaceをsourceした後に以下を設定します。
+
+```bash
+export RMW_IMPLEMENTATION=rmw_fastrtps_cpp ROS_DOMAIN_ID=126 ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
+unset ROS_LOCALHOST_ONLY FASTRTPS_DEFAULT_PROFILES_FILE FASTDDS_DEFAULT_PROFILES_FILE RMW_FASTRTPS_USE_QOS_FROM_XML
+ros2 topic list --no-daemon
+```
 
 AGXの別端末から `ros2 topic list` を使う場合も、起動側と同じ設定が必要です。
 通常の端末の `~/.bashrc` に次の設定を入れ、既存の端末では再読み込みしてください。
@@ -107,7 +130,7 @@ if [ -n "${NJORD_GROUND_CYCLONEDDS_URI:-}" ]; then
 else
   njord_ground_address=$(ip -4 route get "${NJORD_AGX_ADDRESS:-10.42.0.233}" 2>/dev/null | awk '{for (i=1;i<NF;i++) if ($i=="src") {print $(i+1); exit}}')
   if [[ "$njord_ground_address" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-    export CYCLONEDDS_URI="<CycloneDDS><Domain Id=\"any\"><General><Interfaces><NetworkInterface address=\"${njord_ground_address}\" /></Interfaces><AllowMulticast>true</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>"
+    export CYCLONEDDS_URI="<CycloneDDS><Domain Id=\"any\"><General><Interfaces><NetworkInterface address=\"${njord_ground_address}\" /></Interfaces><AllowMulticast>spdp</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>"
   else
     unset CYCLONEDDS_URI
     echo "AGXへの経路が見つかりません。接続後に source ~/.bashrc を実行してください。" >&2

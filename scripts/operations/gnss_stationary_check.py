@@ -16,7 +16,7 @@ from geometry_msgs.msg import PoseWithCovarianceStamped
 from sensor_msgs.msg import NavSatFix
 
 
-def summarize(rows, main_x=0.7, main_y=-0.3):
+def summarize(rows, main_x=-0.3, main_y=0.3):
     fixes = [r for r in rows if r['kind'] == 'fix' and r['status'] >= 0]
     headings = [r for r in rows if r['kind'] == 'heading']
     result = {'fix_count': len(fixes), 'heading_count': len(headings),
@@ -81,8 +81,8 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--seconds', type=float, default=180)
     parser.add_argument('--output', type=Path, required=True)
-    parser.add_argument('--main-x', type=float, default=0.7)
-    parser.add_argument('--main-y', type=float, default=-0.3)
+    parser.add_argument('--main-x', type=float, default=-0.3)
+    parser.add_argument('--main-y', type=float, default=0.3)
     args = parser.parse_args()
     args.output.mkdir(parents=True, exist_ok=False)
     rows = []

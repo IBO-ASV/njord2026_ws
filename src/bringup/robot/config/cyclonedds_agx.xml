@@ -3,7 +3,7 @@
   <Domain Id="any">
     <General>
       <Interfaces><NetworkInterface address="10.42.0.0" /></Interfaces>
-      <AllowMulticast>true</AllowMulticast>
+    <AllowMulticast>spdp</AllowMulticast>
     </General>
     <Discovery>
       <ParticipantIndex>auto</ParticipantIndex>

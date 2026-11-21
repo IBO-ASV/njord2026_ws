@@ -167,7 +167,7 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
+            SetEnvironmentVariable("RMW_IMPLEMENTATION", EnvironmentVariable("RMW_IMPLEMENTATION", default_value="rmw_cyclonedds_cpp")),
             SetEnvironmentVariable(
                 "CYCLONEDDS_URI",
                 EnvironmentVariable("CYCLONEDDS_URI", default_value=PathJoinSubstitution([

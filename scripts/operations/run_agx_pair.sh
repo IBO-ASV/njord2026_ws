@@ -4,13 +4,24 @@ set -eo pipefail
 case "${1:-}" in
   vessel) launch_file=agx_bringup.launch.py; domain=126 ;;
   ground) launch_file=ground_pc.launch.py; domain=126 ;;
-  *) echo 'Usage: run_agx_pair.sh <vessel|ground> [launch arguments...]' >&2; exit 64 ;;
+  *) echo 'Usage: run_agx_pair.sh <vessel|ground> [--rmw cyclonedds|fastdds] [launch arguments...]' >&2; exit 64 ;;
 esac
 shift
+rmw=cyclonedds
+if [[ "${1:-}" == --rmw ]]; then
+  [[ $# -ge 2 ]] || { echo 'Missing --rmw value' >&2; exit 64; }
+  rmw="$2"
+  shift 2
+fi
+[[ "$rmw" == cyclonedds || "$rmw" == fastdds ]] || { echo "Unsupported RMW: $rmw" >&2; exit 64; }
 workspace=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/../.." && pwd)
 source /opt/ros/jazzy/setup.bash
 source "${workspace}/install/setup.bash"
 export PATH="${HOME}/.local/bin:${PATH}"
+if [[ "$rmw" == fastdds ]]; then
+  export RMW_IMPLEMENTATION=rmw_fastrtps_cpp
+  unset CYCLONEDDS_URI FASTRTPS_DEFAULT_PROFILES_FILE FASTDDS_DEFAULT_PROFILES_FILE RMW_FASTRTPS_USE_QOS_FROM_XML
+else
 export RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 if [[ "$launch_file" == ground_pc.launch.py ]]; then
   if [[ -n "${NJORD_GROUND_CYCLONEDDS_URI:-}" ]]; then
@@ -24,11 +35,12 @@ if [[ "$launch_file" == ground_pc.launch.py ]]; then
       echo "Cannot select DDS interface for $agx_address; set NJORD_GROUND_CYCLONEDDS_URI explicitly." >&2
       exit 1
     fi
-    export CYCLONEDDS_URI="<CycloneDDS><Domain Id=\"any\"><General><Interfaces><NetworkInterface address=\"${ground_address}\" /></Interfaces><AllowMulticast>true</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>"
+    export CYCLONEDDS_URI="<CycloneDDS><Domain Id=\"any\"><General><Interfaces><NetworkInterface address=\"${ground_address}\" /></Interfaces><AllowMulticast>spdp</AllowMulticast></General><Discovery><ParticipantIndex>auto</ParticipantIndex><MaxAutoParticipantIndex>120</MaxAutoParticipantIndex></Discovery></Domain></CycloneDDS>"
     echo "Ground DDS interface address: $ground_address (route to $agx_address)" >&2
   fi
 else
   export CYCLONEDDS_URI="${workspace}/src/bringup/robot/config/cyclonedds_agx.xml"
+fi
 fi
 export ROS_DOMAIN_ID="${domain}"
 export ROS_AUTOMATIC_DISCOVERY_RANGE=SUBNET
