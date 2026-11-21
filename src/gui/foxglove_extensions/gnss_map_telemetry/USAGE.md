@@ -29,7 +29,7 @@ ros2 run tf2_ros tf2_echo odom base_link
 Foxglove Desktopを開き、次のファイルを画面へドラッグ＆ドロップします。
 
 ```text
-src/gui/foxglove_extensions/gnss_map_telemetry/gnss-map-telemetry-0.4.1.foxe
+src/gui/foxglove_extensions/gnss_map_telemetry/gnss-map-telemetry-0.4.2.foxe
 ```
 
 Foxgloveの Settings > Extensions に **GNSS Map Telemetry** が表示され、有効になっていることを確認してください。

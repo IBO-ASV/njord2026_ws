@@ -60,7 +60,7 @@
           "/heartbeat/driver/camera/front", "/heartbeat/driver/lidar",
           "/joy/set_feedback",
           "/foxglove_log",
-          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/compass/raw",
+          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/gga_quality", "/sensor/vehicle_gnss/compass/raw",
           "/gui/ground_speed_mps",
           "/mission/waypoint_markers",
           "/actual_path_marker", "/local_costmap/costmap",

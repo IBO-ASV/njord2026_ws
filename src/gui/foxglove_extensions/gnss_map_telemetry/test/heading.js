@@ -20,3 +20,10 @@ check(api.selectMapOrientation({orientation: {x:0,y:0,z:0,w:0}, timeSeconds:10},
 check(api.quaternionToBearingDegrees(api.selectMapOrientation(undefined, transforms, 11)) === 90,
       'legacy TF remains available before any GNSS heading is received');
 if (typeof print === 'function') print('7 heading checks passed'); else console.log('7 heading checks passed');
+check(api.qualityLabel({value: 4, timeSeconds: 10}, 11) === 'RTK FIX (4)', 'quality 4 is RTK FIX');
+check(api.qualityLabel({value: 5, timeSeconds: 10}, 11) === 'RTK FLOAT (5)', 'quality 5 is RTK FLOAT');
+check(api.qualityLabel({value: 0, timeSeconds: 10}, 11) === 'NO FIX (0)', 'quality 0 is no fix');
+check(api.qualityLabel({value: 2, timeSeconds: 10}, 11) === 'DGPS (2)', 'quality 2 is DGPS');
+check(api.qualityLabel({value: 9, timeSeconds: 10}, 11) === 'UNKNOWN (9)', 'unknown quality is explicit');
+check(api.qualityLabel({value: 4, timeSeconds: 10}, 14) === '--', 'stale quality is hidden');
+check(api.qualityLabel({value: 4, timeSeconds: 10}, 9) === '--', 'future quality is hidden after seek');

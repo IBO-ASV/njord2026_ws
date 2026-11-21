@@ -1,4 +1,5 @@
 const HEADING_TOPIC = "/sensor/vehicle_gnss/compass/raw";
+const QUALITY_TOPIC = "/sensor/vehicle_gnss/gga_quality";
 const FIX_TOPIC = "/sensor/vehicle_gnss/fix/raw";
 const SPEED_TOPIC = "/gui/ground_speed_mps";
 const BATTERY_PERCENT_TOPIC = "/gui/battery_percent";
@@ -137,6 +138,12 @@ function selectMapOrientation(gnss, transforms, nowSeconds) {
     return age >= 0 && age <= 2 ? normalizeQuaternion(gnss.orientation) : undefined;
   }
   return resolveOrientation(transforms, WORLD_FRAME, VESSEL_FRAME);
+}
+
+function qualityLabel(sample, nowSeconds) {
+  if (!sample || nowSeconds - sample.timeSeconds < 0 || nowSeconds - sample.timeSeconds > 3) return "--";
+  const labels = {0: "NO FIX", 1: "SINGLE", 2: "DGPS", 4: "RTK FIX", 5: "RTK FLOAT", 6: "DEAD RECKONING"};
+  return `${labels[sample.value] || "UNKNOWN"} (${sample.value})`;
 }
 
 function timeSeconds(time) {
@@ -309,12 +316,13 @@ function initGnssMapTelemetry(context) {
     }
   }
 
-  function renderLegend() {
+  function renderLegend(nowSeconds) {
     legend.innerHTML = [
       '<div class="gnss-telemetry-title">VESSEL TELEMETRY</div>',
       `<div>LAT&nbsp;&nbsp; ${format(state.latitude, 6, "°")}</div>`,
       `<div>LON&nbsp; ${format(state.longitude, 6, "°")}</div>`,
       `<div>HDG&nbsp; ${format(state.headingDegrees, 1, "°")}</div>`,
+      `<div>FIX&nbsp;&nbsp; ${qualityLabel(state.quality, nowSeconds)}</div>`,
       '<div class="gnss-telemetry-separator">',
       `SOG&nbsp;&nbsp; ${format(state.speedMps, 2, " m/s")}</div>`,
       `BAT&nbsp;&nbsp; ${format(state.batteryPercent, 0, " %")}</div>`,
@@ -325,7 +333,7 @@ function initGnssMapTelemetry(context) {
   }
 
   context.subscribe([
-    {topic: FIX_TOPIC}, {topic: HEADING_TOPIC}, {topic: SPEED_TOPIC}, {topic: BATTERY_PERCENT_TOPIC},
+    {topic: FIX_TOPIC}, {topic: QUALITY_TOPIC}, {topic: HEADING_TOPIC}, {topic: SPEED_TOPIC}, {topic: BATTERY_PERCENT_TOPIC},
     {topic: TF_TOPIC}, {topic: TF_STATIC_TOPIC}, {topic: GROUND_WAYPOINT_MARKERS_TOPIC}, {topic: COURSE_EDITOR_TOPIC},
   ]);
   context.watch("currentFrame");
@@ -339,6 +347,8 @@ function initGnssMapTelemetry(context) {
         } else if (event.topic === FIX_TOPIC) {
           if (typeof message.latitude === "number") state.latitude = message.latitude;
           if (typeof message.longitude === "number") state.longitude = message.longitude;
+        } else if (event.topic === QUALITY_TOPIC && Number.isInteger(message.data) && message.data >= 0 && message.data <= 255) {
+          state.quality = {value: message.data, timeSeconds: timeSeconds(event.receiveTime) ?? Date.now() / 1000};
         } else if (event.topic === HEADING_TOPIC) {
           state.gnssHeading = {
             orientation: message.pose?.pose?.orientation,
@@ -360,7 +370,7 @@ function initGnssMapTelemetry(context) {
       for (const event of renderState.currentFrame || []) {
         if (event.topic === GROUND_WAYPOINT_MARKERS_TOPIC) updateWaypointMarkers(event.message || {});
       }
-      renderLegend();
+      renderLegend(timeSeconds(renderState.currentTime) ?? Date.now() / 1000);
     } finally {
       done();
     }
@@ -480,7 +490,7 @@ function activate(extensionContext) {
   extensionContext.registerPanel({name: "lidar-mission-splat", initPanel: initLidarMissionSplat});
 }
 
-module.exports = {
+module.exports = {qualityLabel,
   activate,
   multiplyQuaternions,
   normalizeQuaternion,

@@ -90,3 +90,9 @@ is absent. Course fitting now permits zoom 19 so nearby markers remain usable.
 Validation covers repeated telemetry during a drag, buoy type/add/delete,
 save/reload/conflict handling, stale/control locks, YAML comments/aliases,
 revision rejection, sim geometry after reload and real YAML edits over ROS.
+
+The telemetry legend shows the UM982 NMEA GGA quality from
+`/sensor/vehicle_gnss/gga_quality` (`std_msgs/UInt8`): 0 no fix, 1 single,
+2 DGPS, 4 RTK FIX, 5 RTK FLOAT, and 6 dead reckoning. Other values are shown
+as unknown; the indicator becomes `--` if no quality arrives for three seconds.
+The driver publishes quality even when coordinates or GST covariance are absent.

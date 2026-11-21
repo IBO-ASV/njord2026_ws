@@ -93,6 +93,14 @@ void UM982Driver::parse_gga(const std::string& line)
     const auto parts = utils::split(line.substr(0, line.find('*')), ',');
     if (parts.size() < 15) return;
 
+    int quality = 0;
+    if (!utils::parse_int(parts[6], quality) || quality < 0 || quality > 255) return;
+    if (!stop_publish_) {
+        std_msgs::msg::UInt8 quality_msg;
+        quality_msg.data = static_cast<uint8_t>(quality);
+        gga_quality_pub_->publish(quality_msg);
+    }
+
     sensor_msgs::msg::NavSatFix msg;
     msg.header.stamp = this->now();
     // GGA position is the primary antenna, not the vessel origin.
@@ -113,10 +121,6 @@ void UM982Driver::parse_gga(const std::string& line)
     }
     msg.altitude = altitude - separation;
 
-    int quality = 0;
-    if (!parts[6].empty() && !utils::parse_int(parts[6], quality)) {
-        return;
-    }
     msg.status.status = utils::navsat_status_from_gga_quality(quality);
     if (msg.status.status == sensor_msgs::msg::NavSatStatus::STATUS_NO_FIX) {
         msg.position_covariance[0] = -1;

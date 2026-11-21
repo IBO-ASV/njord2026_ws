@@ -26,7 +26,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install static-check dependencies
-        run: python -m pip install PyYAML pytest
+        run: python -m pip install PyYAML pytest numpy
 
       - name: Check diff whitespace
         run: |
@@ -45,7 +45,9 @@ jobs:
           PYTHONPATH: src/sim/njord_sim:src/mission/mission_manager
         run: >-
           python -m pytest -q
-          src/sim/njord_sim/test
+          src/sim/njord_sim/test/test_dependencies.py
+          src/sim/njord_sim/test/test_robustness.py
+          src/sim/njord_sim/test/test_suite_reporting.py
           src/mission/mission_manager/test/test_state_machine.py
           src/mission/mission_manager/test/test_readiness_evidence.py
           src/mission/mission_manager/test/test_geodesy_and_failsafe.py
@@ -54,8 +56,11 @@ jobs:
         with:
           node-version: "22"
 
-      - name: Test Mission GUI service and stale-state behavior
-        run: node --test src/gui/foxglove_extensions/mission_control/test/panel.test.cjs
+      - name: Test Foxglove panels
+        run: |
+          node --test src/gui/foxglove_extensions/mission_control/test/panel.test.cjs
+          node src/gui/foxglove_extensions/gnss_map_telemetry/test/heading.js
+          node --test src/gui/foxglove_extensions/gnss_map_telemetry/test/course_editor.test.cjs
 
   core-simulation-build:
     runs-on: ubuntu-24.04
@@ -94,7 +99,7 @@ jobs:
         run: |
           apt-get update
           apt-get install --no-install-recommends -y \
-            python3-colcon-common-extensions \
+            python3-colcon-common-extensions python3-pytest \
             python3-rosdep
           rosdep update
           rosdep install --from-paths $CORE_PACKAGE_PATHS \
@@ -140,10 +145,11 @@ jobs:
           apt-get update
           apt-get install --no-install-recommends -y \
             python3-colcon-common-extensions python3-pytest python3-yaml \
-            python3-matplotlib python3-torch \
+            python3-matplotlib python3-pip \
             ros-jazzy-navigation2 ros-jazzy-nav2-bringup \
             ros-jazzy-robot-localization ros-jazzy-geographic-msgs \
             ros-jazzy-diagnostic-updater
+          python3 -m pip install --break-system-packages --index-url https://download.pytorch.org/whl/cpu torch
 
       - name: Build the hardware-free mission slice
         run: |

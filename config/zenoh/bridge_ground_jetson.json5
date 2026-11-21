@@ -58,7 +58,7 @@
           "/heartbeat/driver/lidar",
           "/joy/set_feedback",
           "/foxglove_log",
-          "/sensor/vehicle_gnss/fix/raw",
+          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/gga_quality",
           "/sensor/vehicle_gnss/compass/raw",
           "/gui/ground_speed_mps",
           "/mission/waypoint_markers",
