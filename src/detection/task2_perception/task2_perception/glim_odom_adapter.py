@@ -9,12 +9,12 @@ import numpy as np
 from .cloud_ops import quaternion_to_rotation_matrix
 
 
-def convert_state(position, quaternion, world_velocity, yaw_rate):
+def convert_state(position, quaternion, world_velocity, yaw_rate, lidar_mount_roll=math.pi):
     q = np.asarray(quaternion, dtype=float)
     q /= np.linalg.norm(q)
     rotation = quaternion_to_rotation_matrix(*q)
-    # base -> livox: translation (0.5, 0, 0.8), roll pi.
-    sensor_to_base_rotation = np.diag([1.0, -1.0, -1.0])
+    c, s = math.cos(lidar_mount_roll), math.sin(lidar_mount_roll)
+    sensor_to_base_rotation = np.array([[1.0, 0.0, 0.0], [0.0, c, s], [0.0, -s, c]])
     sensor_to_base_offset = -sensor_to_base_rotation @ np.array([0.5, 0.0, 0.8])
     base_rotation = rotation @ sensor_to_base_rotation
     lever_world = rotation @ sensor_to_base_offset
@@ -39,6 +39,7 @@ def main(args=None):
         def __init__(self):
             super().__init__('glim_base_odom_adapter')
             self.last = None
+            self.lidar_mount_roll = self.declare_parameter('lidar_mount_roll', math.pi).value
             self.declare_parameter('publish_tf', False)
             self.tf_broadcaster = TransformBroadcaster(self) if self.get_parameter('publish_tf').value else None
             self.pub = self.create_publisher(Odometry, '/glim_base/odom', 20)
@@ -52,7 +53,7 @@ def main(args=None):
             if not all(math.isfinite(x) for x in values) or sum(x*x for x in values[3:7]) < 1e-12:
                 return
             stamp = msg.header.stamp.sec + msg.header.stamp.nanosec * 1e-9
-            position, yaw, _ = convert_state(values[:3], values[3:7], values[7:], 0.0)
+            position, yaw, _ = convert_state(values[:3], values[3:7], values[7:], 0.0, self.lidar_mount_roll)
             rate = 0.0
             if self.last is not None:
                 dt = stamp - self.last[0]
@@ -63,7 +64,7 @@ def main(args=None):
                     delta = math.atan2(math.sin(yaw-self.last[1]), math.cos(yaw-self.last[1]))
                     rate = delta/dt
             self.last = stamp, yaw
-            position, yaw, velocity = convert_state(values[:3], values[3:7], values[7:], rate)
+            position, yaw, velocity = convert_state(values[:3], values[3:7], values[7:], rate, self.lidar_mount_roll)
             out = Odometry()
             out.header = msg.header
             out.child_frame_id = 'base_link'
