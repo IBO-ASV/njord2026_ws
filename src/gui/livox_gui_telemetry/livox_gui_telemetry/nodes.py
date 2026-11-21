@@ -38,9 +38,12 @@ def transform_point(point, transform):
 class Downsampler(Node):
     def __init__(self):
         super().__init__("livox_gui_downsampler")
-        self.declare_parameter("voxel_size_m", .75); self.declare_parameter("max_points", 2000); self.declare_parameter("publish_rate_hz", 2.0)
+        self.declare_parameter("voxel_size_m", .05); self.declare_parameter("max_points", 20000); self.declare_parameter("publish_rate_hz", 2.0)
+        self.declare_parameter("exclude_hull", False); self.declare_parameter("min_range_m", 0.0); self.declare_parameter("max_range_m", 0.0)
         self.declare_parameter("input_topic", "/livox/lidar"); self.declare_parameter("output_topic", "/gui/livox/points")
         self.voxel = self.get_parameter("voxel_size_m").value; self.limit = self.get_parameter("max_points").value
+        self.exclude_hull = self.get_parameter("exclude_hull").value
+        self.min_range = self.get_parameter("min_range_m").value; self.max_range = self.get_parameter("max_range_m").value
         self.period = 1.0 / self.get_parameter("publish_rate_hz").value; self.last = 0
         self.tf = Buffer(); self.listener = TransformListener(self.tf, self)
         self.pub = self.create_publisher(PointCloud2, self.get_parameter("output_topic").value, 1)
@@ -52,12 +55,20 @@ class Downsampler(Node):
         try: transform = self.tf.lookup_transform("base_link", message.header.frame_id, Time.from_msg(message.header.stamp), timeout=Duration(seconds=.05))
         except TransformException as error:
             self.get_logger().warning("GUI Livox scan skipped: base_link TF unavailable (%s)" % error, throttle_duration_sec=5.0); return
-        filtered = []
-        for point in cloud_points(message):
-            point = transform_point(point, transform); distance = math.sqrt(sum(v*v for v in point[:3]))
-            # Hull exclusion is intentionally conservative: the vessel footprint is 2 x 1.2 m.
-            if 1.0 <= distance <= 50.0 and not (-1.5 < point[0] < 1.5 and -0.9 < point[1] < .9 and -.8 < point[2] < 1.5): filtered.append(point)
-        self.pub.publish(make_cloud(message.header.stamp, "base_link", voxelize(filtered, self.voxel, self.limit))); self.last = now
+        points = cloud_points(message)
+        if not self.exclude_hull and self.min_range <= 0 and self.max_range <= 0:
+            # Voxelize in the sensor frame first so only retained points need TF.
+            filtered = [transform_point(p, transform) for p in voxelize(points, self.voxel, self.limit)]
+        else:
+            # Optional range/hull filters are defined in base_link coordinates.
+            filtered = []
+            for point in points:
+                point = transform_point(point, transform); distance = math.sqrt(sum(v*v for v in point[:3]))
+                if distance < self.min_range or (self.max_range > 0 and distance > self.max_range): continue
+                if self.exclude_hull and (-1.5 < point[0] < 1.5 and -0.9 < point[1] < .9 and -.8 < point[2] < 1.5): continue
+                filtered.append(point)
+            filtered = voxelize(filtered, self.voxel, self.limit)
+        self.pub.publish(make_cloud(message.header.stamp, "base_link", filtered)); self.last = now
 
 
 class Mapper(Node):

@@ -54,8 +54,10 @@ Foxgloveで Layout メニューから Import を選び、ワークスペース�
 
 ## LiDAR Mission Splat
 
-Jetsonはraw `/livox/lidar` をローカルで0.75 m/最大2,000点/2 Hzに間引き、
-Zenohには `/gui/livox/points` だけを流します。Ground PCはこれを `odom` に
+Jetsonはraw `/livox/lidar` をローカルで0.05 m/最大20,000点/2 Hzに間引き、
+`base_link` に変換してZenohには `/gui/livox/points` だけを流します。
+距離と船体による点群の除外は既定では無効です。必要な場合、downsamplerの
+`min_range_m`、`max_range_m`（0は上限なし）、`exclude_hull` で指定できます。Ground PCはこれを `odom` に
 積算して `/gui/livox/splat_map` を1 Hz、最大50,000点でpublishします。
 パネルを追加して **LiDAR Mission Splat** を選び、ドラッグでorbit、ホイールで
 zoomします。左上の ⚙ Topics から全入力topic名を変更でき、設定はパネルに保存
