@@ -99,6 +99,9 @@ void UM982Driver::parse_gga(const std::string& line)
         std_msgs::msg::UInt8 quality_msg;
         quality_msg.data = static_cast<uint8_t>(quality);
         gga_quality_pub_->publish(quality_msg);
+        std_msgs::msg::String raw_msg;
+        raw_msg.data = line;
+        gga_raw_pub_->publish(raw_msg);
     }
 
     sensor_msgs::msg::NavSatFix msg;

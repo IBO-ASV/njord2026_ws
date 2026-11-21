@@ -1,78 +1,51 @@
-# 無料RTK補正を既存NTRIP経路で受ける
+# AGXのRTK補正と基準局の選択
 
-通常の `scripts/operations/run_agx_pair.sh vessel` は、AGX上で固定基準局のRTCMを受け、
-ローカルキャスターの `RTCM3` 経由でUM982へ送る。`robot` と `ntripcaster` のビルドが必要。
-無効化するには `enable_um982_rtk:=false` を指定する。接続先は `ntrip_upstream_host`、
-`ntrip_upstream_port`、`ntrip_upstream_mountpoint` で変更できる。AGXにインターネット接続が必要。
-地上PCで中継する従来の構成も以下の手順で利用できる。
-補正配信元は既定で `geortk.jp:2101/tamtam`（横浜）。今回の試験場所の約9 km先であり、
-他地域でも適した基準局とは限らない。現地の近い稼働局を指定すること。
-
-提供元: https://www.geosense.co.jp/news_ntripcaster_open/
-公開局一覧: https://geortk.jp/mountpoint
-
-無料公開局の座標と国家座標の整合・常時稼働は別途確認する。
-RTK FIXだけで絶対位置の正確さを保証するものではない。
-
-## 地上PC
+`./scripts/operations/run_agx_pair.sh vessel` はUM982とローカルNTRIPキャスターを起動し、既定で `geortk.jp:2101` の稼働中sourcetableから近い固定基準局を選ぶ。地図側EKFには `config/gnss_map_covariance.yaml` の共分散下限が適用される。UM982の有効なGGAを待ってから、座標のあるRTCM 3固定局を距離順に選ぶ。既定の距離上限は50 kmで、局接続やRTCMの受信に失敗すると次の候補を試す。候補がなければ5秒ごとに再確認する。局名と概算距離は `ntrip_relay` のログに出る。運用中は選択した局を維持し、切断時に再選択する。
 
 ```bash
-git pull --ff-only
-git submodule update --init --recursive
-source /opt/ros/jazzy/setup.bash
-colcon build --packages-select robot ntripcaster --symlink-install
-source install/setup.bash
-ros2 launch robot ground_pc.launch.py
+# 既定: 現在位置の近くの固定局を自動選択
+./scripts/operations/run_agx_pair.sh vessel
+
+# 明示的に固定局を選択
+./scripts/operations/run_agx_pair.sh vessel ntrip_upstream_mountpoint:=tamtam
+
+# 距離上限を変更（局の座標が概算の場合あり）
+./scripts/operations/run_agx_pair.sh vessel ntrip_max_distance_km:=30.0
+
+# 別キャスターと手動マウントポイント
+./scripts/operations/run_agx_pair.sh vessel \
+  ntrip_upstream_host:=example.org ntrip_upstream_port:=2101 \
+  ntrip_upstream_mountpoint:=MOUNTPOINT
 ```
 
-`enable_ntrip_caster:=true` と `enable_ntrip_relay:=true` が既定。
-中継の接続先は次の引数で変更する。
+## VRS / NEAR
+
+自動選択は固定局のみ。VRS・NEARや認証の必要なサービスは、提供元の接続情報と契約を確認して手動指定する。`ntrip_require_gga:=true` は有効なUM982の生GGAがないと接続せず、GGAが10秒以上届かないか無効になると中継を切断して再試行する。新鮮なGGAは接続要求直後と以後約5秒ごとに上流へ送られる。
 
 ```bash
-ros2 launch robot ground_pc.launch.py \
-  ntrip_upstream_host:=geortk.jp \
-  ntrip_upstream_port:=2101 \
-  ntrip_upstream_mountpoint:=tamtam
+./scripts/operations/run_agx_pair.sh vessel \
+  ntrip_upstream_host:=caster.example.org ntrip_upstream_port:=2101 \
+  ntrip_upstream_mountpoint:=VRS_MOUNT \
+  ntrip_upstream_user:=USERNAME ntrip_upstream_password:=PASSWORD \
+  ntrip_send_gga:=true ntrip_require_gga:=true
 ```
 
-自前基準局が既存のRTCM3へ送信する場合は `enable_ntrip_relay:=false`。
-同じマウントポイントへ二つの送信元を同時に接続しない。
-`enable_ntrip_caster:=false` なら地上PCのキャスター・中継の両方を起動しない。
-キャスターは既存設定の0.0.0.0:2101を使用する。
+認証情報はコマンド履歴やプロセス引数から見えるため、共有環境では適切に管理する。GGAには位置情報が含まれ、指定した上流に送られる。GGA送信を不要にする場合は `ntrip_send_gga:=false`、RTK自体を無効にする場合は `enable_um982_rtk:=false`。TLSは未対応。サービス側のNTRIP仕様・認証方式によっては利用できない。
 
-この中継は固定局用であり、GGAを要求するVRS/NEAR局には非対応。
-上流NTRIP認証はスクリプト引数で利用可能だが、launchが公開する引数は無料固定局用。
-HTTPSは非対応。NTRIPの非チャンク形式とHTTP chunked転送を応答から自動判別する。
-HTTPエラーや局一覧を補正データとして転送しない。
-CRC24Qが正常なRTCM3フレームのみ転送し、30秒ごとにメッセージ別件数を出す。
-接続切断または15秒間有効フレームがない場合は、両側を閉じ5秒後に再接続する。
-ローカルSOURCE認証は既存のcaster JSONから読むため、サブモジュール内の設定変更は不要。
+## 指定可能な局の一覧
 
-## AGXだけで試験
-
-地上PCのGUI・映像・操作ノードを起動せず、補正経路だけを起動できる。
-同じホストの2101番ポートに別キャスターがないことを確認する。
+[GEORTK公式一覧](https://geortk.jp/mountpoint)には登録局が掲載されるが、登録されていても停止中の局がある。実際に稼働中とキャスターが報告し、RTCM 3・固定局・座標あり・認証不要という自動選択条件を満たす局は次で表示できる。緯度・経度はsourcetableの概算値。
 
 ```bash
-source install/setup.bash
-ros2 launch robot ntrip_corrections.launch.py
+python3 src/bringup/robot/scripts/ntrip_relay.py --list-stations
+# 別のcasterの固定局一覧
+python3 src/bringup/robot/scripts/ntrip_relay.py --list-stations --upstream-host HOST --upstream-port 2101
 ```
 
-別ターミナルでUM982ドライバ単体を起動する（他のUM982ドライバと同時起動しない）。
-DDS設定は実在する `src/bringup/robot/config/cyclonedds_agx.xml` を指定する。
+2026-11-21取得時の例: `tamtam`（横浜、35.55, 139.58）、`sugamafuji2`（35.95, 139.49）、`funabashi_sasaki`（35.73, 140.06）、`ONCT_M2`（36.32, 139.84）。その他の局は上のコマンドまたは公式一覧を参照する。手動指定は一覧に座標がない局やVRSも可能だが、配信の可否・認証・座標精度は提供元に確認する。基準局の座標系や運用状態は自動的に保証されない。
 
-```bash
-source install/setup.bash
-export CYCLONEDDS_URI=file:///home/ibo/njord2026_ws/src/bringup/robot/config/cyclonedds_agx.xml
-ros2 launch um982_driver um982.launch.py \
-  rtk_enable:=true ntrip_server:=127.0.0.1 \
-  ntrip_port:=2101 ntrip_mountpoint:=RTCM3 \
-  log_file_name:=/新しい保存先/um982.raw
-```
+## 処理と確認
 
-上記2つはセンサ/推進全体のbringupを呼ばず、スラスターを起動しない。
-終了はそれぞれCtrl-C。キャスター/中継を常駐サービスへ登録する処理は行わない。
+受信したHTTP通常形式またはchunked形式を判別し、CRC24Q正常なRTCM3フレームのみをローカルcasterへ送る。有効なフレームが15秒届かない場合は再接続する。`/sensor/vehicle_gnss/gga/raw` はUM982が出したチェックサム正常なGGAを、`/sensor/vehicle_gnss/gga_quality` はそのqualityを公開する。quality 1=Single、2=DGPS、5=RTK Float、4=RTK FIX。中継接続、CRC正常な補正、UM982の補正利用、RTK FIXは別々に確認する。
 
-GGA quality: 1=Single、2=DGPS、5=RTK Float、4=RTK FIX。
-ROS標準NavSatStatusはRTK FloatとFIXを区別できないので、生GGAも記録する。
-中継接続成功、CRC正常な受信、UM982の補正利用、RTK FIX成立は別々に確認する。
+地上PCで従来の構成を使う場合、`ros2 launch robot ground_pc.launch.py` は従来通り固定局 `tamtam` が既定。AGX専用の単体中継は `ros2 launch robot ntrip_corrections.launch.py` で起動でき、同launchにも上記の `ntrip_upstream_*`・`ntrip_max_distance_km`・`ntrip_send_gga`・`ntrip_require_gga` 引数がある。

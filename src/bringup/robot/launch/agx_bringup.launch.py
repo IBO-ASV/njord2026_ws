@@ -29,7 +29,10 @@ def generate_launch_description():
         'enable_um982': str(Path(um982).exists()).lower(),
         'enable_um982_rtk': 'true',
         'ntrip_upstream_host': 'geortk.jp', 'ntrip_upstream_port': '2101',
-        'ntrip_upstream_mountpoint': 'tamtam',
+        'ntrip_upstream_mountpoint': 'auto',
+        'ntrip_upstream_user': '', 'ntrip_upstream_password': '',
+        'ntrip_max_distance_km': '50.0', 'ntrip_send_gga': 'true',
+        'ntrip_require_gga': 'false',
         'um982_port': um982,
         'bms_serial_port': ('/dev/serial/by-id/'
                             'usb-Espressif_USB_JTAG_serial_debug_unit_'
@@ -65,6 +68,11 @@ def generate_launch_description():
             'ntrip_upstream_host': cfg('ntrip_upstream_host'),
             'ntrip_upstream_port': cfg('ntrip_upstream_port'),
             'ntrip_upstream_mountpoint': cfg('ntrip_upstream_mountpoint'),
+            'ntrip_upstream_user': cfg('ntrip_upstream_user'),
+            'ntrip_upstream_password': cfg('ntrip_upstream_password'),
+            'ntrip_max_distance_km': cfg('ntrip_max_distance_km'),
+            'ntrip_send_gga': cfg('ntrip_send_gga'),
+            'ntrip_require_gga': cfg('ntrip_require_gga'),
         }, IfCondition(PythonExpression(["'", cfg('enable_um982'), "' == 'true' and '", cfg('enable_um982_rtk'), "' == 'true'"]))),
         include('robot', 'agx_core.launch.py', core_args),
         include('robot', 'foxglove_bridge.launch.py', {

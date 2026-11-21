@@ -14,6 +14,11 @@ def generate_launch_description():
         'ntrip_upstream_host': 'geortk.jp',
         'ntrip_upstream_port': '2101',
         'ntrip_upstream_mountpoint': 'tamtam',
+        'ntrip_upstream_user': '',
+        'ntrip_upstream_password': '',
+        'ntrip_max_distance_km': '50.0',
+        'ntrip_send_gga': 'true',
+        'ntrip_require_gga': 'false',
     }
     return LaunchDescription([
         *[DeclareLaunchArgument(key, default_value=value) for key, value in defaults.items()],
@@ -24,6 +29,11 @@ def generate_launch_description():
                             '--caster-config', C('ntrip_caster_config'),
                             '--upstream-host', C('ntrip_upstream_host'),
                             '--upstream-port', C('ntrip_upstream_port'),
-                            '--upstream-mountpoint', C('ntrip_upstream_mountpoint')],
+                            '--upstream-mountpoint', C('ntrip_upstream_mountpoint'),
+                            '--upstream-user', C('ntrip_upstream_user'),
+                            '--upstream-password', C('ntrip_upstream_password'),
+                            '--max-distance-km', C('ntrip_max_distance_km'),
+                            '--send-gga', C('ntrip_send_gga'),
+                            '--require-gga', C('ntrip_require_gga')],
                        output='screen', condition=IfCondition(C('enable_ntrip_relay'))),
     ])

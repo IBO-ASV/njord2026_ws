@@ -48,7 +48,7 @@
           "/joy/set_feedback", "/foxglove_log", "/mission/waypoint_markers", "/cmd_vel_markers",
           "/joy/set_feedback", "/foxglove_log", "/mission/waypoint_markers",
           "/planned_path_pruned",
-          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/gga_quality", "/sensor/vehicle_gnss/compass/raw",
+          "/sensor/vehicle_gnss/fix/raw", "/sensor/vehicle_gnss/gga_quality", "/sensor/vehicle_gnss/gga/raw", "/sensor/vehicle_gnss/compass/raw",
           "/gui/ground_speed_mps",
           "/gui/battery_percent",
           "/gui/livox/points", "/agx/rosbag/recording_status",

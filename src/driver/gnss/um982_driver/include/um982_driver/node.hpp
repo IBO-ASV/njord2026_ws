@@ -95,6 +95,7 @@ private:
     // ROS Publishers
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr fix_pub_;
     rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr gga_quality_pub_;
+    rclcpp::Publisher<std_msgs::msg::String>::SharedPtr gga_raw_pub_;
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr heading_pub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr feedback_odom_pub_;
 
