@@ -56,7 +56,7 @@ def generate_launch_description():
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
     return LaunchDescription([
-        SetEnvironmentVariable("RMW_IMPLEMENTATION", "rmw_cyclonedds_cpp"),
+        SetEnvironmentVariable("RMW_IMPLEMENTATION", EnvironmentVariable("RMW_IMPLEMENTATION", default_value="rmw_cyclonedds_cpp")),
         SetEnvironmentVariable("CYCLONEDDS_URI", EnvironmentVariable("CYCLONEDDS_URI", default_value=PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"]))),
         SetEnvironmentVariable("ROS_AUTOMATIC_DISCOVERY_RANGE", "SUBNET"),
         SetEnvironmentVariable('ROS_DOMAIN_ID', '126'),
