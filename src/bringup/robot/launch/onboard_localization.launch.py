@@ -14,6 +14,7 @@ def include(name,args):
  return IncludeLaunchDescription(PythonLaunchDescriptionSource(P([FindPackageShare('robot'),'launch',name])),launch_arguments=args.items())
 def generate_launch_description():
  sim=C('use_sim_time')
+ lidar_mount_roll='0.0'
  common={'use_sim_time':sim,'frequency':10.0,'zero_altitude':True,'broadcast_utm_transform':False,'wait_for_datum':False,'use_odometry_yaw':False}
  # Task routes are expressed in the continuous local odom frame.  Its
  # navsat projector must still initialize when the dual-antenna heading is
@@ -24,8 +25,8 @@ def generate_launch_description():
   DeclareLaunchArgument('use_sim_time',default_value='false'),
   DeclareLaunchArgument('enable_gnss_map',default_value='true'),
   DeclareLaunchArgument('glim_acc_scale',default_value='1.0'),
-  include('localization.launch.py',{'use_sim_time':sim,'lidar_mount_roll':'0','enable_glim':'false','enable_local_ekf':'false','enable_global_ekf':'false','enable_navsat_transform':'false','enable_diagnostics':'false'}),
-  include('task2_glim_localization.launch.py',{'use_sim_time':sim,'glim_acc_scale':C('glim_acc_scale'),'local_odom_topic':'/odometry/filtered/local','glim_output_topic':'/odometry/filtered/local','direct_glim':'true','enable_local_ekf':'false'}),
+  include('localization.launch.py',{'use_sim_time':sim,'lidar_mount_roll':lidar_mount_roll,'enable_glim':'false','enable_local_ekf':'false','enable_global_ekf':'false','enable_navsat_transform':'false','enable_diagnostics':'false'}),
+  include('task2_glim_localization.launch.py',{'use_sim_time':sim,'glim_acc_scale':C('glim_acc_scale'),'lidar_mount_roll':lidar_mount_roll,'local_odom_topic':'/odometry/filtered/local','glim_output_topic':'/odometry/filtered/local','direct_glim':'true','enable_local_ekf':'false'}),
   GroupAction(condition=IfCondition(C('enable_gnss_map')),actions=[
    Node(package='robot',executable='gnss_heading_imu',parameters=[{'use_sim_time':sim}, P([FindPackageShare('robot'),'config','gnss_map_covariance.yaml'])]),
    Node(package='robot_localization',executable='ekf_node',name='ekf_onboard_map',parameters=[P([FindPackageShare('robot'),'config','ekf_onboard_map.yaml']),{'use_sim_time':sim}],remappings=[('odometry/filtered','/odometry/filtered/global')]),

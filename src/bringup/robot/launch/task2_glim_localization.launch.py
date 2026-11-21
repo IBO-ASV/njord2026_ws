@@ -29,9 +29,9 @@ def setup(context):
  sim=LaunchConfiguration('use_sim_time')
  return [
   Node(package='glim_ros',executable='glim_rosnode',name='task2_glim',parameters=[{'config_path':str(config),'use_sim_time':sim}],remappings=[('/task2_glim/odom','/task2/glim/raw_odom'),('/tf','/task2/glim/private_tf')],output='screen'),
-  Node(package='task2_perception',executable='glim_base_odom_adapter',name='task2_glim_adapter',parameters=[{'use_sim_time':sim,'publish_tf': LaunchConfiguration('direct_glim')}],remappings=[('/glim_ros/odom','/task2/glim/raw_odom'),('/glim_base/odom',LaunchConfiguration('glim_output_topic'))],output='screen'),
+  Node(package='task2_perception',executable='glim_base_odom_adapter',name='task2_glim_adapter',parameters=[{'use_sim_time':sim,'publish_tf': LaunchConfiguration('direct_glim'),'lidar_mount_roll':float(LaunchConfiguration('lidar_mount_roll').perform(context))}],remappings=[('/glim_ros/odom','/task2/glim/raw_odom'),('/glim_base/odom',LaunchConfiguration('glim_output_topic'))],output='screen'),
   Node(package='robot_localization',executable='ekf_node',name='ekf_filter_node_glim_local',parameters=[str(share/'config/ekf_glim_local.yaml'),{'use_sim_time':sim}],remappings=[('/odom','/task2/glim/base_odom'),('odometry/filtered',LaunchConfiguration('local_odom_topic'))],condition=IfCondition(LaunchConfiguration('enable_local_ekf')),output='screen'),
-  Node(package='tf2_ros',executable='static_transform_publisher',name='task2_bag_livox_mount',arguments=['--x','0.5','--y','0','--z','0.8','--roll','3.141592653589793','--pitch','0','--yaw','0','--frame-id','base_link','--child-frame-id','livox_frame'],condition=IfCondition(LaunchConfiguration('publish_livox_mount_tf')))
+  Node(package='tf2_ros',executable='static_transform_publisher',name='task2_bag_livox_mount',arguments=['--x','0.5','--y','0','--z','0.8','--roll',LaunchConfiguration('lidar_mount_roll'),'--pitch','0','--yaw','0','--frame-id','base_link','--child-frame-id','livox_frame'],condition=IfCondition(LaunchConfiguration('publish_livox_mount_tf')))
  ]
 
 def generate_launch_description():
@@ -43,6 +43,7 @@ def generate_launch_description():
   DeclareLaunchArgument('use_sim_time',default_value='false'),
   DeclareLaunchArgument('glim_imu_topic',default_value='/livox/imu'),
   DeclareLaunchArgument('glim_points_topic',default_value='/livox/lidar'),
+  DeclareLaunchArgument('lidar_mount_roll',default_value='3.141592653589793'),
   DeclareLaunchArgument('glim_acc_scale',default_value='1.0',description='1 for SI IMU; 9.80665 for historical g-unit bags'),
   DeclareLaunchArgument('publish_livox_mount_tf',default_value='false'),
   OpaqueFunction(function=setup)])
