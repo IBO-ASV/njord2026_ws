@@ -69,6 +69,7 @@ UM982Driver::UM982Driver(const rclcpp::NodeOptions & options)
 
     // Publishers
     fix_pub_ = this->create_publisher<sensor_msgs::msg::NavSatFix>("/sensor/vehicle_gnss/fix/raw", 10);
+    gga_quality_pub_ = this->create_publisher<std_msgs::msg::UInt8>("/sensor/vehicle_gnss/gga_quality", 10);
     heading_pub_ = this->create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>("/sensor/vehicle_gnss/compass/raw", 10);
     if (params_.publish_feedback_odometry) {
         feedback_odom_pub_ = this->create_publisher<nav_msgs::msg::Odometry>(

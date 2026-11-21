@@ -6,6 +6,7 @@
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/string.hpp>
+#include <std_msgs/msg/u_int8.hpp>
 #include <std_srvs/srv/trigger.hpp>
 
 #include <boost/asio.hpp>
@@ -93,6 +94,7 @@ private:
 
     // ROS Publishers
     rclcpp::Publisher<sensor_msgs::msg::NavSatFix>::SharedPtr fix_pub_;
+    rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr gga_quality_pub_;
     rclcpp::Publisher<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr heading_pub_;
     rclcpp::Publisher<nav_msgs::msg::Odometry>::SharedPtr feedback_odom_pub_;
 

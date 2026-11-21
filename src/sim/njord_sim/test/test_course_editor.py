@@ -101,6 +101,7 @@ def test_real_yaml_edit_round_trip_over_ros_service(tmp_path, monkeypatch):
             else original_share(package)
         ),
     )
+    original_comment = path.read_text().splitlines()[0]
     rclpy.init(domain_id=122)
     editor = course_editor_node.CourseEditor()
     observer = Node("course_editor_service_test")
@@ -140,7 +141,8 @@ def test_real_yaml_edit_round_trip_over_ros_service(tmp_path, monkeypatch):
             yaml.safe_load(path.read_text())["map_buoys"]["task1_config"][0]["type"]
             == "GREEN"
         )
-        assert "# Task 1 route:" in path.read_text()
+        assert original_comment.startswith("#")
+        assert original_comment in path.read_text()
     finally:
         executor.shutdown()
         editor.destroy_node()
