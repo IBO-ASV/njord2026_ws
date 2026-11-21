@@ -1,5 +1,6 @@
 import math
 import struct
+from collections import deque
 
 import rclpy
 from geometry_msgs.msg import TransformStamped
@@ -67,19 +68,36 @@ class Mapper(Node):
         self.declare_parameter("input_topic", "/gui/livox/points"); self.declare_parameter("output_topic", "/gui/livox/splat_map"); self.declare_parameter("mission_status_topic", "/mission/status")
         self.voxel = self.get_parameter("voxel_size_m").value; self.limit = self.get_parameter("max_points").value; self.map = {}; self.execution_id = ""
         self.tf = Buffer(); self.listener = TransformListener(self.tf, self)
+        self.pending = deque(maxlen=10)
         self.pub = self.create_publisher(PointCloud2, self.get_parameter("output_topic").value, 1)
         self.create_subscription(PointCloud2, self.get_parameter("input_topic").value, self.callback, 10)
         self.create_subscription(MissionStatus, self.get_parameter("mission_status_topic").value, self.status, 10)
+        self.create_timer(0.05, self.accumulate_pending)
         self.create_timer(1.0, self.publish)
 
     def status(self, message):
         if message.execution_id and message.execution_id != self.execution_id:
             self.execution_id, self.map = message.execution_id, {}; self.get_logger().info("GUI splat map reset for execution %s" % self.execution_id)
+            self.pending.clear()
 
     def callback(self, message):
-        try: transform = self.tf.lookup_transform("odom", "base_link", Time.from_msg(message.header.stamp), timeout=Duration(seconds=.05))
-        except TransformException as error:
-            self.get_logger().warning("GUI Livox scan not mapped: odom TF unavailable (%s)" % error, throttle_duration_sec=5.0); return
+        self.pending.append((self.get_clock().now(), message))
+
+    def accumulate_pending(self):
+        now = self.get_clock().now()
+        while self.pending:
+            received_at, message = self.pending[0]
+            try:
+                transform = self.tf.lookup_transform("odom", message.header.frame_id, Time.from_msg(message.header.stamp))
+            except TransformException as error:
+                if now - received_at < Duration(seconds=1.0):
+                    return
+                self.get_logger().warning("GUI Livox scan not mapped: odom TF unavailable (%s)" % error, throttle_duration_sec=5.0)
+            else:
+                self.accumulate(message, transform)
+            self.pending.popleft()
+
+    def accumulate(self, message, transform):
         for point in cloud_points(message):
             point = transform_point(point, transform); self.map[tuple(math.floor(v / self.voxel) for v in point[:3])] = point
         while len(self.map) > self.limit:
