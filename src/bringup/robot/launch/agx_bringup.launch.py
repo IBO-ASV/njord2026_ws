@@ -59,7 +59,7 @@ def generate_launch_description():
                       'back_cam_jpeg_ground_video_host': cfg('ground_video_host'),
                       'enable_autonomy_supervisor': 'true', 'active_nav2_profile': cfg('task'),
                       'thruster_feedback_odometry': '/odometry/um982_feedback',
-                      'thruster_feedback_surge': 'false', 'thruster_feedback_sway': 'false',
+                      'thruster_mmg_feedforward': cfg('thruster_use_velocity_feedback'),
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
                       'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),
                           "' == 'true' or '", cfg('thruster_use_velocity_feedback'),

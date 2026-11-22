@@ -27,7 +27,8 @@ public:
     const Axes & reference, const Axes & measured, double dt,
     const Axes & kp, const Axes & ki, const Axes & limits,
     double reference_tau = 0.0, const Axes & feedforward = {},
-    const Axes & kd = {}, double derivative_tau = 0.0)
+    const Axes & kd = {}, double derivative_tau = 0.0,
+    const Axes & model_wrench = {})
   {
     if (!std::isfinite(dt) || dt <= 0.0) {
       throw std::invalid_argument("invalid control dt");
@@ -47,7 +48,7 @@ public:
     for (std::size_t i = 0; i < 3U; ++i) {
       if (!std::isfinite(reference[i]) || !std::isfinite(measured[i]) ||
         !std::isfinite(kp[i]) || !std::isfinite(ki[i]) ||
-        !std::isfinite(feedforward[i]) || !std::isfinite(kd[i]) ||
+        !std::isfinite(feedforward[i]) || !std::isfinite(kd[i]) || !std::isfinite(model_wrench[i]) ||
         !std::isfinite(limits[i]) || kp[i] < 0.0 || ki[i] < 0.0 ||
         feedforward[i] < 0.0 || kd[i] < 0.0 || limits[i] <= 0.0)
       {
@@ -66,13 +67,13 @@ public:
       }
       const double candidate = std::clamp(
         integral_[i] + ki[i] * error * dt, -limits[i], limits[i]);
-      const double proposed = feedforward[i] * reference_[i] +
+      const double proposed = model_wrench[i] + feedforward[i] * reference_[i] +
         kp[i] * error - kd[i] * derivative_filtered_[i] + candidate;
       if (std::abs(proposed) <= limits[i] || proposed * error < 0.0) {
         integral_[i] = candidate;
       }
       out[i] = std::clamp(
-        feedforward[i] * reference_[i] + kp[i] * error -
+        model_wrench[i] + feedforward[i] * reference_[i] + kp[i] * error -
         kd[i] * derivative_filtered_[i] + integral_[i], -limits[i], limits[i]);
       previous_measurement_[i] = measured[i];
     }

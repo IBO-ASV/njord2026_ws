@@ -3,6 +3,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 #include "thruster_controller/velocity_control.hpp"
+#include "thruster_controller/mmg_feedforward.hpp"
 #include <rcl_interfaces/msg/set_parameters_result.hpp>
 
 #include <geometry_msgs/msg/twist.hpp>
@@ -89,9 +90,8 @@ private:
   double control_rate_hz_{50.0};
   double watchdog_timeout_sec_{0.5};
   bool use_velocity_feedback_{true};
-  bool feedback_surge_{true};
-  bool feedback_sway_{true};
-  bool feedback_yaw_{true};
+  bool use_mmg_feedforward_{false};
+  MmgFeedforwardParameters mmg_ff_;
   double feedback_timeout_sec_{0.5};
   bool stop_on_feedback_timeout_{true};
 

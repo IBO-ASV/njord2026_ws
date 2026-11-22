@@ -62,9 +62,28 @@ ThrusterControllerNode::ThrusterControllerNode(const rclcpp::NodeOptions & optio
   watchdog_timeout_sec_ = this->declare_parameter<double>("safety.watchdog_timeout_sec", 0.5);
   use_velocity_feedback_ =
     this->declare_parameter<bool>("control.use_velocity_feedback", true);
-  feedback_surge_ = this->declare_parameter<bool>("control.feedback_axes.surge", true);
-  feedback_sway_ = this->declare_parameter<bool>("control.feedback_axes.sway", true);
-  feedback_yaw_ = this->declare_parameter<bool>("control.feedback_axes.yaw", true);
+  use_mmg_feedforward_ = this->declare_parameter<bool>("control.mmg_ff.enable", false);
+  auto mmg_param = [this](const std::string & name, double value) {
+      const double result = this->declare_parameter<double>("control.mmg_ff." + name, value);
+      if (!std::isfinite(result)) throw std::runtime_error("MMG feedforward parameters must be finite");
+      return result;
+    };
+  mmg_ff_.Lpp = mmg_param("Lpp", mmg_ff_.Lpp);
+  mmg_ff_.D = mmg_param("D", mmg_ff_.D);
+  mmg_ff_.mass = mmg_param("mass_kg", mmg_ff_.mass);
+  mmg_ff_.x_g = mmg_param("x_G", mmg_ff_.x_g);
+  mmg_ff_.m_x = mmg_param("m_x", mmg_ff_.m_x);
+  mmg_ff_.m_y = mmg_param("m_y", mmg_ff_.m_y);
+  mmg_ff_.R_0 = mmg_param("R_0", mmg_ff_.R_0);
+  mmg_ff_.Y_0 = mmg_param("Y_0", mmg_ff_.Y_0);
+  mmg_ff_.Y_v = mmg_param("Y_v", mmg_ff_.Y_v);
+  mmg_ff_.Y_r = mmg_param("Y_r", mmg_ff_.Y_r);
+  mmg_ff_.N_0 = mmg_param("N_0", mmg_ff_.N_0);
+  mmg_ff_.N_v = mmg_param("N_v", mmg_ff_.N_v);
+  mmg_ff_.N_r = mmg_param("N_r", mmg_ff_.N_r);
+  if (mmg_ff_.Lpp <= 0.0 || mmg_ff_.D <= 0.0 || mmg_ff_.mass <= 0.0 ||
+    mmg_ff_.m_x < 0.0 || mmg_ff_.m_y < 0.0)
+    throw std::runtime_error("invalid MMG feedforward dimensions or mass");
   feedback_timeout_sec_ = this->declare_parameter<double>("control.feedback_timeout_sec", 0.5);
   stop_on_feedback_timeout_ =
     this->declare_parameter<bool>("control.stop_on_feedback_timeout", true);
@@ -502,13 +521,13 @@ std::vector<double> ThrusterControllerNode::computeWrench(double dt)
   const double ref_sway = clamp(latest_cmd_.linear.y, -max_linear_y_, max_linear_y_);
   const double ref_yaw = clamp(latest_cmd_.angular.z, -max_angular_z_, max_angular_z_);
 
+  const VelocityControl::Axes reference{ref_surge, ref_sway, ref_yaw};
+  const auto model_wrench = use_mmg_feedforward_ ? mmgSteadyWrench(reference, mmg_ff_) : VelocityControl::Axes{};
   const auto regulated = velocity_control_.step(
-    {ref_surge, ref_sway, ref_yaw},
-    {feedback_surge_ ? meas_surge_ : 0.0, feedback_sway_ ? meas_sway_ : 0.0,
-      feedback_yaw_ ? meas_yaw_ : 0.0}, dt,
+    reference, {meas_surge_, meas_sway_, meas_yaw_}, dt,
     {kp_surge_, kp_sway_, kp_yaw_}, ki_,
     {max_surge_wrench_, max_sway_wrench_, max_yaw_wrench_}, reference_tau_,
-    {kff_surge_, 0.0, 0.0}, {kd_surge_, 0.0, 0.0}, derivative_tau_);
+    {kff_surge_, 0.0, 0.0}, {kd_surge_, 0.0, 0.0}, derivative_tau_, model_wrench);
   std::vector<double> wrench(regulated.begin(), regulated.end());
 
   if (dob_enable_ && have_prev_meas_) {

@@ -7,6 +7,7 @@
 #include "dutyed_tf_pub_with_disturbance/mmg_doyle_model.hpp"
 #include "dutyed_tf_pub_with_disturbance/thruster_wrench.hpp"
 #include "thruster_controller/allocation.hpp"
+#include "thruster_controller/mmg_feedforward.hpp"
 
 namespace
 {
@@ -99,5 +100,26 @@ TEST(ThrusterMmgConsistency, ForceTopicMatchesDriverAllocation)
     EXPECT_NEAR(sim_wrench.surge_force, driver_wrench[0], 1e-9);
     EXPECT_NEAR(sim_wrench.sway_force, driver_wrench[1], 1e-9);
     EXPECT_NEAR(sim_wrench.yaw_moment, driver_wrench[2], 1e-9);
+  }
+}
+
+TEST(ThrusterMmgConsistency, ModelFeedforwardBalancesTheActualSimulator)
+{
+  for (double x_g : {0.0, 0.1}) {
+    njord::sim::DoyleParams plant_params;
+    plant_params.x_G = x_g;
+    njord::thruster_controller::MmgFeedforwardParameters ff_params;
+    ff_params.x_g = x_g;
+    njord::sim::MMGDoyleModel plant(plant_params);
+    for (const auto velocity : {std::array<double, 3>{0.8, 0.2, -0.3},
+      std::array<double, 3>{-0.4, -0.15, 0.2}, std::array<double, 3>{0.0, 0.0, 0.3}})
+    {
+      const auto wrench = njord::thruster_controller::mmgSteadyWrench(velocity, ff_params);
+      const auto accel = plant.computeAccel({velocity[0], velocity[1], velocity[2]},
+        {wrench[0], wrench[1], wrench[2]});
+      EXPECT_NEAR(accel.du, 0.0, 1e-10);
+      EXPECT_NEAR(accel.dv, 0.0, 1e-10);
+      EXPECT_NEAR(accel.dr, 0.0, 1e-10);
+    }
   }
 }

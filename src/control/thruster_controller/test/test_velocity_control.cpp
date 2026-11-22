@@ -52,6 +52,17 @@ TEST(VelocityControl, FeedForwardMaintainsForceAtZeroVelocityError)
   EXPECT_NEAR(output[0], 7.5, 1e-9);
 }
 
+TEST(VelocityControl, ModelForceRemainsWithZeroPidAndRespectsWrenchLimits)
+{
+  VelocityControl c;
+  const auto output = c.step({1.0, 0.3, 0.2}, {0.0, 0.0, 0.0}, 0.02,
+    {0.0, 0.0, 0.0}, {0.0, 0.0, 0.0}, {10.0, 10.0, 10.0},
+    0.0, {}, {}, 0.0, {5.0, -2.0, 20.0});
+  EXPECT_DOUBLE_EQ(output[0], 5.0);
+  EXPECT_DOUBLE_EQ(output[1], -2.0);
+  EXPECT_DOUBLE_EQ(output[2], 10.0);
+}
+
 TEST(VelocityControl, DerivativeOfMeasuredSpeedOpposesAcceleration)
 {
   VelocityControl c;
