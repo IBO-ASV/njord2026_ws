@@ -62,7 +62,6 @@ ThrusterControllerNode::ThrusterControllerNode(const rclcpp::NodeOptions & optio
   watchdog_timeout_sec_ = this->declare_parameter<double>("safety.watchdog_timeout_sec", 0.5);
   use_velocity_feedback_ =
     this->declare_parameter<bool>("control.use_velocity_feedback", true);
-  use_mmg_feedforward_ = this->declare_parameter<bool>("control.mmg_ff.enable", false);
   auto mmg_param = [this](const std::string & name, double value) {
       const double result = this->declare_parameter<double>("control.mmg_ff." + name, value);
       if (!std::isfinite(result)) throw std::runtime_error("MMG feedforward parameters must be finite");
@@ -524,7 +523,7 @@ std::vector<double> ThrusterControllerNode::computeWrench(double dt)
   const double ref_yaw = clamp(latest_cmd_.angular.z, -max_angular_z_, max_angular_z_);
 
   const VelocityControl::Axes reference{ref_surge, ref_sway, ref_yaw};
-  const auto model_wrench = use_mmg_feedforward_ ? mmgSteadyWrench(reference, mmg_ff_) : VelocityControl::Axes{};
+  const auto model_wrench = mmgSteadyWrench(reference, mmg_ff_);
   const auto regulated = velocity_control_.step(
     reference, {meas_surge_, meas_sway_, meas_yaw_}, dt,
     {kp_surge_, kp_sway_, kp_yaw_}, ki_,

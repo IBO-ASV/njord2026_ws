@@ -90,7 +90,6 @@ private:
   double control_rate_hz_{50.0};
   double watchdog_timeout_sec_{0.5};
   bool use_velocity_feedback_{true};
-  bool use_mmg_feedforward_{false};
   MmgFeedforwardParameters mmg_ff_;
   double feedback_timeout_sec_{0.5};
   bool stop_on_feedback_timeout_{true};

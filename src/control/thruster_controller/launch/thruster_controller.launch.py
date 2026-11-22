@@ -43,7 +43,6 @@ def generate_launch_description():
                 description="Subscribe to feedback odometry and use measured velocity in control.",
             ),
             DeclareLaunchArgument("feedback_odometry", default_value="/odometry/filtered/local"),
-            DeclareLaunchArgument("mmg_feedforward", default_value="false"),
             DeclareLaunchArgument(
                 "stop_on_feedback_timeout",
                 default_value="true",
@@ -72,7 +71,6 @@ def generate_launch_description():
                             value_type=bool,
                         ),
                         "topics.feedback_odometry": LaunchConfiguration("feedback_odometry"),
-                        "control.mmg_ff.enable": ParameterValue(LaunchConfiguration("mmg_feedforward"), value_type=bool),
                     },
                 ],
             ),

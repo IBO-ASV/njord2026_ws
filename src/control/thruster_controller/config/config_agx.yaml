@@ -15,12 +15,10 @@ thruster_controller_node:
       use_velocity_feedback: true
       feedback_timeout_sec: 0.5
       stop_on_feedback_timeout: true
-      # Synthetic MMG coefficients, matching the simulator's default model.
-      # Current diagonal FF uses only Lpp, D, R_0, Y_v and N_r.
-      # The remaining coefficients are recorded but do not affect this FF.
-      # FF enable is set by the AGX launch's thruster_use_velocity_feedback argument.
+      # Synthetic MMG coefficients; tune from real-vessel measurements.
+      # The FF is always enabled. I_zG and J_z only affect acceleration,
+      # and therefore are not used in this steady-state FF.
       mmg_ff:
-        enable: false
         Lpp: 1.0
         D: 0.25
         mass_kg: 10.0
