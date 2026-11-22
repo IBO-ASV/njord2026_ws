@@ -10,9 +10,9 @@ the P/I velocity-error output; surge additionally supports the existing linear
 FF and measured-velocity D terms. The MMG term participates in saturation and
 anti-windup. Feedforward uses the raw clamped command, not the reference filter.
 
-`control.mmg_ff.*` startup parameters default to the simulator's MMG values in
+`control.mmg_ff.*` startup parameters are listed in `config/config_agx.yaml` and default to the simulator's MMG values in
 `dutyed_tf_pub_with_disturbance/config/node_config.yaml`: `Lpp`, `D`, `mass_kg`,
-`x_G`, `m_x`, `m_y`, `R_0`, `Y_0`, `Y_v`, `Y_r`, `N_0`, `N_v`, `N_r`.
+`I_zG`, `x_G`, `m_x`, `m_y`, `J_z`, `R_0`, `Y_0`, `Y_v`, `Y_r`, `N_0`, `N_v`, `N_r`.
 Override them in the controller YAML only after vessel identification. These
 values are synthetic. Cross-axis terms, including Y_r, N_v, mass coupling and
 the Y_0 and N_0 bias terms, are not applied by the feedforward. The simulator

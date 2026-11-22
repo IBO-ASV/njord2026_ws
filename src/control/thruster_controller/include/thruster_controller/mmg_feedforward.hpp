@@ -9,7 +9,7 @@ namespace njord::thruster_controller
 // Diagonal terms of the simulator's steady-state MMG inverse.
 struct MmgFeedforwardParameters
 {
-  double Lpp{1.0}, D{0.25}, mass{10.0}, x_g{0.0}, m_x{1.0}, m_y{10.0};
+  double Lpp{1.0}, D{0.25}, mass{10.0}, I_zG{1.5}, x_g{0.0}, m_x{1.0}, m_y{10.0}, J_z{1.5};
   double R_0{-0.2}, Y_0{0.001}, Y_v{-0.2}, Y_r{0.02};
   double N_0{0.001}, N_v{-0.2}, N_r{-0.02};
 };

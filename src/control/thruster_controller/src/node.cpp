@@ -71,9 +71,11 @@ ThrusterControllerNode::ThrusterControllerNode(const rclcpp::NodeOptions & optio
   mmg_ff_.Lpp = mmg_param("Lpp", mmg_ff_.Lpp);
   mmg_ff_.D = mmg_param("D", mmg_ff_.D);
   mmg_ff_.mass = mmg_param("mass_kg", mmg_ff_.mass);
+  mmg_ff_.I_zG = mmg_param("I_zG", mmg_ff_.I_zG);
   mmg_ff_.x_g = mmg_param("x_G", mmg_ff_.x_g);
   mmg_ff_.m_x = mmg_param("m_x", mmg_ff_.m_x);
   mmg_ff_.m_y = mmg_param("m_y", mmg_ff_.m_y);
+  mmg_ff_.J_z = mmg_param("J_z", mmg_ff_.J_z);
   mmg_ff_.R_0 = mmg_param("R_0", mmg_ff_.R_0);
   mmg_ff_.Y_0 = mmg_param("Y_0", mmg_ff_.Y_0);
   mmg_ff_.Y_v = mmg_param("Y_v", mmg_ff_.Y_v);
