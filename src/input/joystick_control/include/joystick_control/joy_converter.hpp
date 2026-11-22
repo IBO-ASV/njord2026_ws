@@ -19,8 +19,7 @@ struct JoyConfig
 {
   int64_t linear_x_axis{1};
   int64_t linear_y_axis{0};
-  int64_t yaw_positive_button{6};
-  int64_t yaw_negative_button{7};
+  int64_t angular_z_axis{3};
   int64_t emergency_button{0};
   int64_t green_button{1};
   int64_t yellow_button{2};

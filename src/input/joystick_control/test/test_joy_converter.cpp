@@ -9,7 +9,7 @@
 TEST(JoyConversion, UsesDefaultMapping)
 {
   sensor_msgs::msg::Joy joy;
-  joy.axes = {0.5F, -0.75F};
+  joy.axes = {0.5F, -0.75F, 0.0F, 1.0F};
   joy.buttons.resize(8, 0);
   joy.buttons[0] = 1;
   joy.buttons[2] = 1;
@@ -30,8 +30,7 @@ TEST(JoyConversion, UsesConfiguredMappingAndSafeMissingInputs)
   joystick_control::JoyConfig config;
   config.linear_x_axis = 0;
   config.linear_y_axis = 4;
-  config.yaw_positive_button = 1;
-  config.yaw_negative_button = 5;
+  config.angular_z_axis = 0;
   config.emergency_button = 3;
   config.green_button = 6;
   config.linear_x_scale = -0.4;
@@ -43,11 +42,24 @@ TEST(JoyConversion, UsesConfiguredMappingAndSafeMissingInputs)
   const auto output = joystick_control::convert_joy(joy, config);
   EXPECT_DOUBLE_EQ(output.cmd_vel.linear.x, -0.1);
   EXPECT_DOUBLE_EQ(output.cmd_vel.linear.y, 0.0);
-  EXPECT_DOUBLE_EQ(output.cmd_vel.angular.z, 0.5);
+  EXPECT_DOUBLE_EQ(output.cmd_vel.angular.z, 0.125);
   EXPECT_FALSE(output.emergency);
   EXPECT_FALSE(output.green);
   EXPECT_FALSE(output.yellow);
   EXPECT_FALSE(output.red);
+}
+
+TEST(JoyConversion, YawUsesAxisAndIgnoresFormerYawButtons)
+{
+  sensor_msgs::msg::Joy joy;
+  joy.axes = {0.0F, 0.0F, 0.0F, -0.5F};
+  joy.buttons.resize(8, 0);
+  joy.buttons[6] = 1;
+  joystick_control::JoyConfig config;
+  config.angular_z_scale = 1.0;
+  EXPECT_DOUBLE_EQ(joystick_control::convert_joy(joy, config).cmd_vel.angular.z, -0.5);
+  joy.axes.resize(3);
+  EXPECT_DOUBLE_EQ(joystick_control::convert_joy(joy, config).cmd_vel.angular.z, 0.0);
 }
 
 TEST(JoyConversion, DetectsManualAndAutoModeButtons)
@@ -78,13 +90,18 @@ TEST(JoyConverterParameters, AcceptsValidAndRejectsInvalidValues)
   auto node = std::make_shared<joystick_control::JoyConverter>();
   auto results = node->set_parameters(
   {
-    rclcpp::Parameter("axis.linear_x", 3),
+    rclcpp::Parameter("axis.angular_z", 4),
     rclcpp::Parameter("scale.angular_z", -0.7)});
   ASSERT_EQ(results.size(), 2U);
   EXPECT_TRUE(results[0].successful);
   EXPECT_TRUE(results[1].successful);
-  EXPECT_EQ(node->get_parameter("axis.linear_x").as_int(), 3);
+  EXPECT_EQ(node->get_parameter("axis.angular_z").as_int(), 4);
   EXPECT_DOUBLE_EQ(node->get_parameter("scale.angular_z").as_double(), -0.7);
+
+  results = node->set_parameters({rclcpp::Parameter("axis.angular_z", -1)});
+  ASSERT_EQ(results.size(), 1U);
+  EXPECT_FALSE(results[0].successful);
+  EXPECT_EQ(node->get_parameter("axis.angular_z").as_int(), 4);
 
   results = node->set_parameters({rclcpp::Parameter("button.red", -1)});
   ASSERT_EQ(results.size(), 1U);

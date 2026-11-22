@@ -27,9 +27,7 @@ JoyOutput convert_joy(const sensor_msgs::msg::Joy & msg, const JoyConfig & confi
   JoyOutput output;
   output.cmd_vel.linear.x = config.linear_x_scale * axis_value(msg, config.linear_x_axis);
   output.cmd_vel.linear.y = config.linear_y_scale * axis_value(msg, config.linear_y_axis);
-  output.cmd_vel.angular.z = config.angular_z_scale *
-    (static_cast<double>(button_value(msg, config.yaw_positive_button)) -
-    static_cast<double>(button_value(msg, config.yaw_negative_button)));
+  output.cmd_vel.angular.z = config.angular_z_scale * axis_value(msg, config.angular_z_axis);
   // Positive logic: pressing the designated button requests an emergency
   // stop; its normal released state keeps the communication E-stop clear.
   output.emergency = button_value(msg, config.emergency_button);
@@ -46,8 +44,7 @@ JoyConverter::JoyConverter(const rclcpp::NodeOptions & options)
 {
   config_.linear_x_axis = declare_parameter<int64_t>("axis.linear_x", 1);
   config_.linear_y_axis = declare_parameter<int64_t>("axis.linear_y", 0);
-  config_.yaw_positive_button = declare_parameter<int64_t>("button.yaw_positive", 6);
-  config_.yaw_negative_button = declare_parameter<int64_t>("button.yaw_negative", 7);
+  config_.angular_z_axis = declare_parameter<int64_t>("axis.angular_z", 3);
   config_.emergency_button = declare_parameter<int64_t>("button.emergency", 0);
   config_.green_button = declare_parameter<int64_t>("button.green", 1);
   config_.yellow_button = declare_parameter<int64_t>("button.yellow", 2);
@@ -112,10 +109,8 @@ rcl_interfaces::msg::SetParametersResult JoyConverter::on_parameters(
       candidate.linear_x_axis = parameter.as_int();
     } else if (name == "axis.linear_y") {
       candidate.linear_y_axis = parameter.as_int();
-    } else if (name == "button.yaw_positive") {
-      candidate.yaw_positive_button = parameter.as_int();
-    } else if (name == "button.yaw_negative") {
-      candidate.yaw_negative_button = parameter.as_int();
+    } else if (name == "axis.angular_z") {
+      candidate.angular_z_axis = parameter.as_int();
     } else if (name == "button.emergency") {
       candidate.emergency_button = parameter.as_int();
     } else if (name == "button.green") {
@@ -136,7 +131,7 @@ rcl_interfaces::msg::SetParametersResult JoyConverter::on_parameters(
   }
 
   const bool valid_indices = candidate.linear_x_axis >= 0 && candidate.linear_y_axis >= 0 &&
-    candidate.yaw_positive_button >= 0 && candidate.yaw_negative_button >= 0 &&
+    candidate.angular_z_axis >= 0 &&
     candidate.emergency_button >= 0 && candidate.green_button >= 0 &&
     candidate.yellow_button >= 0 && candidate.red_button >= 0 &&
     candidate.manual_mode_button >= 0 && candidate.auto_mode_button >= 0;

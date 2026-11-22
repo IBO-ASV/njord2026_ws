@@ -3,9 +3,8 @@ joy_converter:
     axis:
       linear_x: 1
       linear_y: 0
+      angular_z: 3
     button:
-      yaw_positive: 6
-      yaw_negative: 7
       emergency: 0
       green: 1
       yellow: 2
