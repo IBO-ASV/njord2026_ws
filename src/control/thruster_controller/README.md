@@ -5,7 +5,7 @@
 `scripts/operations/run_agx_pair.sh vessel thruster_use_velocity_feedback:=true`
 starts a separate UM982-only EKF and uses `/odometry/um982_feedback` for all
 three body velocity axes. Its TF publication is disabled so it does not compete
-with GLIM. The controller adds steady-state MMG inverse-model force/moment to
+with GLIM. The controller adds the independent-axis terms of the steady-state MMG inverse-model force/moment to
 the P/I velocity-error output; surge additionally supports the existing linear
 FF and measured-velocity D terms. The MMG term participates in saturation and
 anti-windup. Feedforward uses the raw clamped command, not the reference filter.
@@ -14,7 +14,9 @@ anti-windup. Feedforward uses the raw clamped command, not the reference filter.
 `dutyed_tf_pub_with_disturbance/config/node_config.yaml`: `Lpp`, `D`, `mass_kg`,
 `x_G`, `m_x`, `m_y`, `R_0`, `Y_0`, `Y_v`, `Y_r`, `N_0`, `N_v`, `N_r`.
 Override them in the controller YAML only after vessel identification. These
-values are synthetic; the simulator model has little resistance in pure yaw at
+values are synthetic. Cross-axis terms, including Y_r, N_v, mass coupling and
+the Y_0 and N_0 bias terms, are not applied by the feedforward. The simulator
+plant itself is unchanged. The model has little resistance in pure yaw at
 zero translation. This is steady-state compensation, not acceleration feedforward.
 The EKF can continue predicting after GNSS measurements stop, so the odometry
 topic timeout alone does not establish GNSS validity.
