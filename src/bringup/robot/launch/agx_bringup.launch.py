@@ -38,6 +38,7 @@ def generate_launch_description():
                             'usb-Espressif_USB_JTAG_serial_debug_unit_'
                             'E0:72:A1:1D:4B:14-if00'),
         'enable_thruster': 'true',
+        'thruster_use_velocity_feedback': 'false',
         'enable_bms': 'true', 'enable_alert_lamp': 'true',
         'enable_sbus': 'false',  # no SBUS XIAO is attached to this AGX
         'enable_back_cam': str(Path('/dev/v4l/by-id/usb-Sonix_Technology_Co.__Ltd._Adesso_CyberTrack_H7_SN0001-video-index0').exists()).lower(),
@@ -49,7 +50,8 @@ def generate_launch_description():
     }
     core_args = {key: cfg(key) for key in (
         'enable_um982', 'enable_um982_rtk', 'um982_port', 'bms_serial_port', 'enable_thruster', 'enable_bms',
-        'enable_alert_lamp', 'enable_sbus', 'enable_back_cam', 'enable_nav2', 'use_sim_time')}
+        'enable_alert_lamp', 'enable_sbus', 'enable_back_cam', 'enable_nav2', 'use_sim_time',
+        'thruster_use_velocity_feedback')}
     core_args.update({'heartbeat_role': 'agx', 'enable_zenoh_bridge': 'false', 'enable_critical_link': 'false',
                       'ntrip_server': '127.0.0.1',
                       'enable_back_cam_ground_video': 'false',
