@@ -18,6 +18,28 @@ thruster_controller_node:
       # Synthetic MMG coefficients; tune from real-vessel measurements.
       # The FF is always enabled. I_zG and J_z only affect acceleration,
       # and therefore are not used in this steady-state FF.
+      #
+      # u, v [m/s]: body surge and sway; r [rad/s]: yaw rate.
+      # X, Y [N] and N [N m] are thruster force and yaw moment.
+      # U = sqrt(u^2 + v^2 + 1e-6); rho = 1025 kg/m^3 (fixed in code).
+      # Hull force/moment (the simulator's MMG equations):
+      #   X_H = 0.5*rho*Lpp*D*u*U*R_0
+      #   Y_H = 0.5*rho*Lpp*D*U^2*(Y_0 + Y_v*v/U + Y_r*r*Lpp/U)
+      #   N_H = 0.5*rho*Lpp^2*D*U^2*(N_0 + N_v*v/U + N_r*r*Lpp/U)
+      #
+      # M * [du/dt, dv/dt, dr/dt]^T = [X, Y, N]^T + [X_H, Y_H, N_H]^T + C
+      #       [mass_kg + m_x, 0,                 0                       ]
+      #   M = [0,             mass_kg + m_y,     mass_kg*x_G             ]
+      #       [0,             mass_kg*x_G,       I_zG + J_z + mass_kg*x_G^2]
+      #   C = [(mass_kg+m_y)*v*r + mass_kg*x_G*r^2,
+      #        -(mass_kg+m_x)*u*r, -mass_kg*x_G*u*r]^T
+      #
+      # Steady-state FF sets the acceleration vector to zero and evaluates
+      # the following at the commanded u, v, r (not the measured velocity):
+      #   X_FF = -X_H - (mass_kg+m_y)*v*r - mass_kg*x_G*r^2
+      #   Y_FF = -Y_H + (mass_kg+m_x)*u*r
+      #   N_FF = -N_H + mass_kg*x_G*u*r
+      # PID velocity-error terms are added separately; no acceleration FF.
       mmg_ff:
         Lpp: 1.0
         D: 0.25
