@@ -287,6 +287,9 @@ def generate_launch_description():
             "config_file": thruster_config_file,
             "robot_description_file": thruster_robot_description_file,
             "use_velocity_feedback": thruster_use_velocity_feedback,
+            "feedback_odometry": LaunchConfiguration("thruster_feedback_odometry"),
+            "feedback_surge": LaunchConfiguration("thruster_feedback_surge"),
+            "feedback_sway": LaunchConfiguration("thruster_feedback_sway"),
         },
     )
 
@@ -755,6 +758,9 @@ def generate_launch_description():
             ),
             DeclareLaunchArgument("heartbeat_role", default_value="agx", choices=["agx"]),
             DeclareLaunchArgument("thruster_config_file", default_value=default_thruster_config),
+            DeclareLaunchArgument("thruster_feedback_odometry", default_value="/odometry/filtered/local"),
+            DeclareLaunchArgument("thruster_feedback_surge", default_value="true"),
+            DeclareLaunchArgument("thruster_feedback_sway", default_value="true"),
             DeclareLaunchArgument(
                 "thruster_robot_description_file", default_value=default_thruster_urdf
             ),

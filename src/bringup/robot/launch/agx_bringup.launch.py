@@ -58,8 +58,12 @@ def generate_launch_description():
                       'enable_back_cam_jpeg_ground_video': cfg('enable_back_cam_jpeg_ground_video'),
                       'back_cam_jpeg_ground_video_host': cfg('ground_video_host'),
                       'enable_autonomy_supervisor': 'true', 'active_nav2_profile': cfg('task'),
+                      'thruster_feedback_odometry': '/odometry/um982_feedback',
+                      'thruster_feedback_surge': 'false', 'thruster_feedback_sway': 'false',
                       'enable_localization': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"]),
-                      'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),"' == 'true' else 'true'"])})
+                      'enable_feedback_filter': PythonExpression(["'false' if '",cfg('enable_glim'),
+                          "' == 'true' or '", cfg('thruster_use_velocity_feedback'),
+                          "'.lower() in ('true', '1', 'yes', 'on') else 'true'"])})
     return LaunchDescription([
         SetEnvironmentVariable("RMW_IMPLEMENTATION", EnvironmentVariable("RMW_IMPLEMENTATION", default_value="rmw_cyclonedds_cpp")),
         SetEnvironmentVariable("CYCLONEDDS_URI", EnvironmentVariable("CYCLONEDDS_URI", default_value=PathJoinSubstitution([FindPackageShare("robot"), "config", "cyclonedds_agx.xml"]))),
@@ -77,6 +81,14 @@ def generate_launch_description():
             'ntrip_require_gga': cfg('ntrip_require_gga'),
         }, IfCondition(PythonExpression(["'", cfg('enable_um982'), "' == 'true' and '", cfg('enable_um982_rtk'), "' == 'true'"]))),
         include('robot', 'agx_core.launch.py', core_args),
+        Node(package='robot_localization', executable='ekf_node', name='um982_feedback_ekf',
+             condition=IfCondition(PythonExpression(["'", cfg('thruster_use_velocity_feedback'),
+                 "'.lower() in ('true', '1', 'yes', 'on') and '", cfg('enable_um982'),
+                 "'.lower() in ('true', '1', 'yes', 'on')"])),
+             parameters=[PathJoinSubstitution([FindPackageShare('um982_feedback_filter'), 'config', 'um982_feedback_ekf.yaml']),
+                         {'publish_tf': False, 'use_sim_time': cfg('use_sim_time')}],
+             remappings=[('odometry/feedback', '/odometry/feedback'),
+                         ('odometry/filtered', '/odometry/um982_feedback')]),
         include('robot', 'foxglove_bridge.launch.py', {
             'foxglove_address': cfg('foxglove_address'), 'foxglove_port': cfg('foxglove_port'),
         }, IfCondition(cfg('enable_foxglove_bridge'))),

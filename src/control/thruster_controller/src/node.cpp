@@ -62,6 +62,9 @@ ThrusterControllerNode::ThrusterControllerNode(const rclcpp::NodeOptions & optio
   watchdog_timeout_sec_ = this->declare_parameter<double>("safety.watchdog_timeout_sec", 0.5);
   use_velocity_feedback_ =
     this->declare_parameter<bool>("control.use_velocity_feedback", true);
+  feedback_surge_ = this->declare_parameter<bool>("control.feedback_axes.surge", true);
+  feedback_sway_ = this->declare_parameter<bool>("control.feedback_axes.sway", true);
+  feedback_yaw_ = this->declare_parameter<bool>("control.feedback_axes.yaw", true);
   feedback_timeout_sec_ = this->declare_parameter<double>("control.feedback_timeout_sec", 0.5);
   stop_on_feedback_timeout_ =
     this->declare_parameter<bool>("control.stop_on_feedback_timeout", true);
@@ -500,7 +503,9 @@ std::vector<double> ThrusterControllerNode::computeWrench(double dt)
   const double ref_yaw = clamp(latest_cmd_.angular.z, -max_angular_z_, max_angular_z_);
 
   const auto regulated = velocity_control_.step(
-    {ref_surge, ref_sway, ref_yaw}, {meas_surge_, meas_sway_, meas_yaw_}, dt,
+    {ref_surge, ref_sway, ref_yaw},
+    {feedback_surge_ ? meas_surge_ : 0.0, feedback_sway_ ? meas_sway_ : 0.0,
+      feedback_yaw_ ? meas_yaw_ : 0.0}, dt,
     {kp_surge_, kp_sway_, kp_yaw_}, ki_,
     {max_surge_wrench_, max_sway_wrench_, max_yaw_wrench_}, reference_tau_,
     {kff_surge_, 0.0, 0.0}, {kd_surge_, 0.0, 0.0}, derivative_tau_);
